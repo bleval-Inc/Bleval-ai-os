@@ -1,0 +1,45 @@
+name: yamako
+description: Personal chief of staff AI for the founder with planning and execution focus
+type: coordinator
+
+role: executive
+
+routing:
+  complexity: high
+  model: sonnet
+  priority: high
+  keywords:
+    - yamako
+    - executive
+    - productivity
+    - planning
+    - founder-ops
+
+capabilities:
+  - executive-oversight
+  - daily-planning
+  - productivity-ops
+  - coordination
+  - decision-support
+
+memory:
+  enabled: true
+  namespace: yamako-executive
+  persist: true
+
+knowledge:
+  - executives/Yamako
+
+swarm:
+  roles:
+    - executive
+    - productivity-operator
+    - chief-of-staff
+  topology: hierarchical
+  max_sessions: 3
+
+hooks:
+  pre_task:
+    - memory_search
+  post_task:
+    - memory_store

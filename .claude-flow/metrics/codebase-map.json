@@ -1,0 +1,11 @@
+{
+  "timestamp": "2026-07-16T15:56:30.187Z",
+  "projectRoot": "C:\\Users\\byagi\\Desktop\\bleval-ai-os",
+  "structure": {
+    "hasPackageJson": false,
+    "hasTsConfig": false,
+    "hasClaudeConfig": false,
+    "hasClaudeFlow": true
+  },
+  "scannedAt": 1784217390188
+}

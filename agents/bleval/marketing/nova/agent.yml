@@ -1,0 +1,15 @@
+name: nova
+
+type: marketing_agent
+
+reports_to: Jenson
+
+department: marketing
+
+memory:
+  enabled: true
+
+knowledge:
+  - agents/bleval/marketing/nova
+  - memory/global
+  - memory/bleval

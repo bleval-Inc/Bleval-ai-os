@@ -1,0 +1,46 @@
+name: jenson
+description: Executive AI for Bleval Inc with COO-style operational leadership
+version: 1.0.0
+type: coordinator
+
+role: executive
+
+routing:
+  complexity: high
+  model: sonnet
+  priority: high
+  keywords:
+    - jenson
+    - executive
+    - operations
+    - bleval
+    - strategy
+
+capabilities:
+  - executive-oversight
+  - strategic-planning
+  - delegation
+  - operational-review
+  - decision-support
+
+memory:
+  enabled: true
+  namespace: jenson-executive
+  persist: true
+
+knowledge:
+  - executives/Jenson
+
+swarm:
+  roles:
+    - executive
+    - operator
+    - strategist
+  topology: hierarchical
+  max_sessions: 3
+
+hooks:
+  pre_task:
+    - memory_search
+  post_task:
+    - memory_store

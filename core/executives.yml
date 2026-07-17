@@ -1,0 +1,15 @@
+executives:
+
+  - name: Jenson
+    domain: bleval
+    role: CEO
+
+
+  - name: ValtaPrime
+    domain: house_of_valta
+    role: CEO
+
+
+  - name: Yamako
+    domain: personal
+    role: chief_of_staff

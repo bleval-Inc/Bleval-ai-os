@@ -1,0 +1,15 @@
+name: tester
+
+type: development_agent
+
+reports_to: Forge
+
+department: development
+
+memory:
+  enabled: true
+
+knowledge:
+  - agents/bleval/development/tester
+  - memory/global
+  - memory/bleval
