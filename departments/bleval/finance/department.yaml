@@ -1,0 +1,33 @@
+# Finance Department — Bleval Inc
+# Version: 3.0.0
+
+id: finance
+org: bleval
+manager: jenson
+description: "Budget management, financial planning, auditing, and compliance"
+
+agents:
+  - id: treasury
+    role: financial_management
+    capabilities: [budget-management, cash-flow-tracking, financial-planning]
+  - id: auditor
+    role: compliance_auditor
+    capabilities: [auditing, compliance-checking, risk-assessment]
+
+workflows: []
+
+metrics:
+  - name: budget_accuracy
+    description: "Budget vs actual variance"
+    collection: monthly
+  - name: cash_flow_health
+    description: "Cash flow positive months"
+    collection: monthly
+  - name: audit_findings
+    description: "Number of audit findings per period"
+    collection: quarterly
+
+memory_access:
+  org_memory: read
+  dept_memory: read_write
+  agent_memory: read

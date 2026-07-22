@@ -1,0 +1,5 @@
+# Atlas — Event Subscriptions
+
+agent: atlas
+subscribes_to:
+  - executive-message

@@ -1,0 +1,55 @@
+# Content Production Workflow
+# Version: 3.0.0
+
+name: Content Production
+org: bleval
+department: marketing
+coordinator: jenson
+
+agents:
+  - nova
+  - creator
+  - analyst
+
+steps:
+  - id: 1
+    name: "Market Research"
+    agent: nova
+    description: "Research trends, competitors, and content opportunities"
+    outputs:
+      - research-brief
+    events_emitted:
+      - content-researched
+
+  - id: 2
+    name: "Content Creation"
+    agent: creator
+    description: "Create content based on research direction"
+    inputs:
+      - research-brief
+    outputs:
+      - content-draft
+    events_emitted:
+      - content-created
+
+  - id: 3
+    name: "Review and Publish"
+    agent: creator
+    description: "Publish content to distribution channels"
+    inputs:
+      - content-draft
+    outputs:
+      - published-content
+    events_emitted:
+      - content-published
+
+  - id: 4
+    name: "Performance Analysis"
+    agent: analyst
+    description: "Measure content performance and extract insights"
+    inputs:
+      - published-content
+    outputs:
+      - performance-report
+    events_emitted:
+      - metric-updated

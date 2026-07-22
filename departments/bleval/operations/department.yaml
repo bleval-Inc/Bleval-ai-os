@@ -1,0 +1,36 @@
+# Operations Department — Bleval Inc
+# Version: 3.0.0
+
+id: operations
+org: bleval
+manager: jenson
+description: "Finance tracking, customer success, and operational health monitoring"
+
+agents:
+  - id: ledger
+    role: finance_intelligence
+    capabilities: [financial-tracking, expense-monitoring, financial-reporting]
+  - id: pulse
+    role: customer_success
+    capabilities: [health-monitoring, client-onboarding, retention-management, status-reporting]
+
+workflows:
+  - daily-report
+  - weekly-review
+  - metric-collection
+
+metrics:
+  - name: revenue_tracked
+    description: "Revenue recorded and verified"
+    collection: daily
+  - name: client_satisfaction
+    description: "Client satisfaction score"
+    collection: monthly
+  - name: retention_rate
+    description: "Client retention percentage"
+    collection: monthly
+
+memory_access:
+  org_memory: read
+  dept_memory: read_write
+  agent_memory: read

@@ -1,0 +1,25 @@
+# Schema: Opportunity Created Event
+
+name: opportunity-created
+version: "1.0"
+
+payload:
+  opportunity_id:
+    type: string
+    required: true
+  lead_id:
+    type: string
+    required: true
+  company:
+    type: string
+    required: true
+  deal_value:
+    type: number
+    required: false
+  expected_close:
+    type: string
+    required: false
+    format: date
+  notes:
+    type: string
+    required: false

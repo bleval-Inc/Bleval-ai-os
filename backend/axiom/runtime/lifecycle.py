@@ -1,0 +1,305 @@
+"""Lifecycle Manager — system bootstrap, runtime orchestration, and graceful shutdown.
+
+The AxiomRuntime is the central orchestrator.  It initialises all engines and
+runtime subsystems, starts background processors, and provides a unified
+interface for the API layer and CLI.
+
+Integration wiring performed during bootstrap:
+  - WorkflowEngine ← EventEngine (for event emissions)
+  - WorkflowEngine ← Dispatcher (for task dispatching on step start)
+  - EventEngine → auto-launch workflows on trigger_event matches
+  - Dispatcher → auto-advance workflow on task completion
+"""
+
+import asyncio
+from typing import Any, Dict, List, Optional
+
+from axiom.config import settings
+from axiom.engine.event import EventEngine
+from axiom.engine.executive import ExecutiveEngine
+from axiom.engine.intelligence import IntelligenceEngine
+from axiom.engine.memory import MemoryEngine
+from axiom.engine.tool import ToolEngine
+from axiom.engine.workflow import WorkflowEngine
+from axiom.runtime.approval import ApprovalManager
+from axiom.runtime.dispatcher import Dispatcher
+from axiom.runtime.executive_loop import ExecutiveBoard
+from axiom.runtime.logging import RuntimeLogger
+from axiom.runtime.monitor import HealthMonitor
+from axiom.runtime.recovery import RecoveryManager
+from axiom.runtime.scheduler import Scheduler
+
+
+class AxiomRuntime:
+    """Central runtime orchestrator for Axiom OS.
+
+    Initialises all engines, wires cross-component integration,
+    manages background tasks, and provides a unified interface
+    for the API and CLI layers.
+    """
+
+    def __init__(self) -> None:
+        self._initialised = False
+        self._running = False
+
+        # Engines (lazily initialised)
+        self.memory: Optional[MemoryEngine] = None
+        self.event: Optional[EventEngine] = None
+        self.tool: Optional[ToolEngine] = None
+        self.workflow: Optional[WorkflowEngine] = None
+        self.executive: Optional[ExecutiveEngine] = None
+        self.intelligence: Optional[IntelligenceEngine] = None
+
+        # Runtime subsystems
+        self.scheduler: Optional[Scheduler] = None
+        self.dispatcher: Optional[Dispatcher] = None
+        self.monitor: Optional[HealthMonitor] = None
+        self.recovery: Optional[RecoveryManager] = None
+        self.approval: Optional[ApprovalManager] = None
+        self.executive_board: Optional[ExecutiveBoard] = None
+        self.logger: Optional[RuntimeLogger] = None
+
+    # ── Bootstrap ────────────────────────────────────────────────────────
+
+    async def bootstrap(self) -> None:
+        """Initialise all engines and wire cross-component integration.
+
+        Called once at system startup.
+        """
+        if self._initialised:
+            return
+
+        # Ensure runtime directories exist
+        settings.ensure_dirs()
+
+        # Logger first (used by all other components)
+        self.logger = RuntimeLogger()
+
+        # Initialise engines in dependency order
+        self.memory = MemoryEngine()
+        self.tool = ToolEngine()
+        self.executive = ExecutiveEngine()
+        # Intelligence engine with memory + tool integration
+        self.intelligence = IntelligenceEngine(
+            memory=self.memory,
+            tool=self.tool,
+        )
+
+        # Event engine (must be created before WorkflowEngine so we can wire it)
+        self.event = EventEngine()
+
+        # Workflow engine with event + dispatcher wiring
+        self.workflow = WorkflowEngine(
+            event_engine=self.event,
+            dispatcher=None,  # Set after dispatcher is created (circular ref)
+        )
+
+        # Runtime subsystems (get runtime reference)
+        self.scheduler = Scheduler(self)
+        self.dispatcher = Dispatcher(self)
+        self.monitor = HealthMonitor(self)
+        self.recovery = RecoveryManager(self)
+        self.approval = ApprovalManager(self)
+
+        # Wire cross-references after all components exist
+        self.workflow.set_dispatcher(self.dispatcher)
+
+        # Wire approval manager two-way with workflow engine
+        self.approval.set_workflow_engine(self.workflow)
+        self.workflow.set_approval_manager(self.approval)
+
+        # Executive Board — autonomous executive runtime loops
+        self.executive_board = ExecutiveBoard(self)
+
+        self._initialised = True
+
+        if self.logger:
+            self.logger.info("lifecycle", "Axiom OS runtime initialised")
+
+    async def start(self) -> None:
+        """Start all background processors and wire event subscriptions."""
+        if self._running:
+            return
+
+        await self.bootstrap()
+
+        # Start event engine first (background pub/sub processor)
+        if self.event:
+            await self.event.start()
+            # Wire event → workflow auto-launch subscriptions
+            await self._wire_event_workflow_auto_launch()
+
+        # Start scheduler (background cron loop)
+        if self.scheduler:
+            await self.scheduler.start()
+
+        # Start dispatcher (background task processing)
+        if self.dispatcher:
+            await self.dispatcher.start()
+
+        # Start health monitor (background health checks)
+        if self.monitor:
+            await self.monitor.start()
+
+        # Load any persisted workflow state from disk
+        if self.workflow:
+            persisted = self.workflow.load_all_persisted()
+            if self.logger:
+                self.logger.info(
+                    "lifecycle",
+                    f"Loaded {len(persisted)} persisted workflow instances",
+                )
+
+        # Start Executive Board (autonomous executive runtime loops)
+        if self.executive_board:
+            await self.executive_board.start_all()
+
+        self._running = True
+
+        if self.logger:
+            self.logger.info("lifecycle", "Axiom OS runtime started")
+
+    async def shutdown(self) -> None:
+        """Graceful shutdown of all background processors."""
+        self._running = False
+
+        if self.logger:
+            self.logger.info("lifecycle", "Axiom OS runtime shutting down")
+
+        # Stop in reverse order
+        if self.executive_board:
+            await self.executive_board.stop_all()
+
+        if self.monitor:
+            await self.monitor.stop()
+
+        if self.scheduler:
+            await self.scheduler.stop()
+
+        if self.dispatcher:
+            await self.dispatcher.stop()
+
+        if self.event:
+            await self.event.stop()
+
+        if self.logger:
+            self.logger.info("lifecycle", "Axiom OS runtime stopped")
+
+    # ── Event → Workflow Auto-Launch ────────────────────────────────────
+
+    async def _wire_event_workflow_auto_launch(self) -> None:
+        """Subscribe to all event types that have matching workflow triggers.
+
+        When a matching event fires, auto-create and start a workflow instance.
+        """
+        if not self.event or not self.workflow:
+            return
+
+        workflows = self.workflow.list_workflows()
+        subscribed = 0
+
+        for wf_id, wf_def in workflows.items():
+            trigger = getattr(wf_def, "trigger_event", None) or getattr(wf_def, "triggers_on", None)
+            if not trigger:
+                continue
+
+            # Capture wf_id and wf_def in the closure via default arguments
+            async def _on_event(
+                event: Any,
+                _wf_id: str = wf_id,
+                _wf_def: Any = wf_def,
+            ) -> None:
+                """Callback: auto-launch workflow when trigger event fires."""
+                await self._auto_launch_workflow(_wf_id, _wf_def, event)
+
+            try:
+                self.event.subscribe_to_event(trigger, _on_event)
+                subscribed += 1
+            except ValueError:
+                continue
+
+        if self.logger:
+            self.logger.info(
+                "lifecycle",
+                f"Subscribed {subscribed} workflow triggers (event → auto-launch)",
+            )
+
+    async def _auto_launch_workflow(
+        self,
+        wf_id: str,
+        wf_def: Any,
+        event: Any,
+    ) -> None:
+        """Create and start a workflow instance triggered by an event."""
+        if not self.workflow:
+            return
+        try:
+            context = {
+                "trigger": "event",
+                "trigger_event": event.event_type if hasattr(event, "event_type") else "",
+                "event_id": event.event_id if hasattr(event, "event_id") else "",
+                "event_payload": event.payload if hasattr(event, "payload") else {},
+            }
+            instance = self.workflow.create_instance(wf_id, context=context)
+            await self.workflow.start(instance.instance_id)
+            if self.logger:
+                self.logger.info(
+                    "workflow",
+                    f"Auto-launched {wf_id} from event {event.event_type} "
+                    f"(instance: {instance.instance_id})",
+                )
+        except Exception as exc:
+            if self.logger:
+                self.logger.error(
+                    "workflow",
+                    f"Failed to auto-launch {wf_id} from event: {exc}",
+                )
+
+    # ── Status ───────────────────────────────────────────────────────────
+
+    @property
+    def is_running(self) -> bool:
+        return self._running
+
+    @property
+    def is_initialised(self) -> bool:
+        return self._initialised
+
+    def get_status(self) -> Dict[str, Any]:
+        """Return a status summary of the runtime and all components."""
+        return {
+            "version": "3.0.0",
+            "initialised": self._initialised,
+            "running": self._running,
+            "components": {
+                "memory": self.memory is not None,
+                "event": self.event is not None,
+                "tool": self.tool is not None,
+                "workflow": self.workflow is not None,
+                "executive": self.executive is not None,
+                "intelligence": self.intelligence is not None,
+                "scheduler": self.scheduler is not None,
+                "dispatcher": self.dispatcher is not None,
+                "monitor": self.monitor is not None,
+                "recovery": self.recovery is not None,
+                "approval": self.approval is not None,
+                "executive_board": self.executive_board is not None,
+                "logger": self.logger is not None,
+            },
+        }
+
+    def get_summary(self) -> Dict[str, Any]:
+        """Return a rich summary of the runtime state."""
+        status = self.get_status()
+        monitor_summary = self.monitor.get_summary() if self.monitor else {}
+        workflows = self.workflow.list_workflows() if self.workflow else {}
+        agents = self.executive.list_executives() if self.executive else []
+        orgs = self.executive._org_loader.list_organizations() if self.executive else []
+
+        return {
+            **status,
+            "health": monitor_summary,
+            "workflows_defined": len(workflows),
+            "executives": len(agents),
+            "org_count": len(orgs),
+        }

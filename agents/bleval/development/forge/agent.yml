@@ -1,15 +1,61 @@
 name: forge
+version: "3.0"
 
-type: development_agent
-
-reports_to: Jenson
-
+org: bleval
 department: development
+type: specialist
+
+reports_to: jenson
+reports_to_type: executive
+
+description: "Lead development agent for Bleval Inc — build websites, applications, and automation systems"
+
+capabilities:
+  - id: software-development
+    description: "Build and implement software systems"
+    level: advanced
+  - id: system-architecture
+    description: "Design system architecture and technical specifications"
+    level: advanced
+  - id: code-implementation
+    description: "Write production code"
+    level: advanced
+  - id: automation-engineering
+    description: "Build automated systems and workflows"
+    level: advanced
 
 memory:
   enabled: true
+  namespace: bleval-development-forge
+  persist: true
+  layers:
+    agent: agents/bleval/development/forge
+    department: memory/bleval-departments/development
+    organization: memory/bleval
 
 knowledge:
   - agents/bleval/development/forge
-  - memory/global
+  - memory/bleval-departments/development
   - memory/bleval
+
+tools:
+  interfaces: [github]
+  subscribes_events:
+    - feature-requested
+    - test-completed
+    - executive-message
+  emits_events:
+    - development-completed
+
+permissions:
+  can:
+    - build_websites
+    - build_applications
+    - create_automation_systems
+    - review_code
+    - maintain_technical_standards
+    - read_org_memory
+    - write_dept_memory
+  cannot:
+    - deploy_to_production_without_review
+    - override_security_or_compliance

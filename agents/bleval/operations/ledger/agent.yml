@@ -1,15 +1,58 @@
 name: ledger
+version: "3.0"
 
-type: operations_agent
-
-reports_to: Jenson
-
+org: bleval
 department: operations
+type: specialist
+
+reports_to: jenson
+reports_to_type: executive
+
+description: "Finance and business intelligence agent for Bleval Inc — track revenue and performance"
+
+capabilities:
+  - id: financial-tracking
+    description: "Track expenses, revenue, and financial metrics"
+    level: advanced
+  - id: expense-monitoring
+    description: "Monitor and categorize expenses"
+    level: intermediate
+  - id: financial-reporting
+    description: "Generate financial reports and forecasts"
+    level: advanced
 
 memory:
   enabled: true
+  namespace: bleval-operations-ledger
+  persist: true
+  layers:
+    agent: agents/bleval/operations/ledger
+    department: memory/bleval-departments/operations
+    organization: memory/bleval
 
 knowledge:
   - agents/bleval/operations/ledger
-  - memory/global
+  - memory/bleval-departments/operations
   - memory/bleval
+
+tools:
+  interfaces: []
+  subscribes_events:
+    - opportunity-created
+    - deal-closed-won
+    - executive-message
+  emits_events:
+    - report-ready
+    - metric-updated
+
+permissions:
+  can:
+    - track_revenue
+    - analyze_profitability
+    - monitor_expenses
+    - create_forecasts
+    - prepare_reports
+    - read_org_memory
+    - write_dept_memory
+  cannot:
+    - make_spending_approvals

@@ -1,0 +1,73 @@
+name: treasury
+version: "3.0"
+
+org: bleval
+department: finance
+type: specialist
+
+reports_to: jenson
+reports_to_type: executive
+
+description: "Treasury management agent for Bleval Inc — manage cash flow, financial operations, and capital strategy"
+
+capabilities:
+  - id: cash-flow-management
+    description: "Monitor and manage cash flow positions"
+    level: advanced
+  - id: financial-forecasting
+    description: "Create cash flow forecasts and financial projections"
+    level: advanced
+  - id: capital-allocation
+    description: "Advise on capital allocation and investment decisions"
+    level: advanced
+  - id: budgeting
+    description: "Prepare and manage budgets"
+    level: advanced
+  - id: expense-optimization
+    description: "Identify cost optimization opportunities"
+    level: intermediate
+  - id: risk-assessment
+    description: "Assess financial risks and recommend mitigations"
+    level: intermediate
+
+memory:
+  enabled: true
+  namespace: bleval-finance-treasury
+  persist: true
+  layers:
+    agent: agents/bleval/finance/treasury
+    department: memory/bleval-departments/finance
+    organization: memory/bleval
+
+knowledge:
+  - agents/bleval/finance/treasury
+  - memory/bleval-departments/finance
+  - memory/bleval
+
+tools:
+  interfaces: []
+  subscribes_events:
+    - deal-closed-won
+    - deal-closed-lost
+    - report-ready
+    - metric-updated
+    - executive-message
+  emits_events:
+    - financial-report-ready
+    - metric-updated
+
+permissions:
+  can:
+    - track_cash_flow
+    - prepare_budgets
+    - create_forecasts
+    - analyze_expenses
+    - recommend_investments
+    - read_org_memory
+    - write_dept_memory
+    - read_global_memory
+  cannot:
+    - execute_transactions
+    - approve_spending
+    - modify_audit_records
+    - override_compliance_controls

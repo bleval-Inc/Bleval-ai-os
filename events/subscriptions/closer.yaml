@@ -1,0 +1,8 @@
+# Closer — Event Subscriptions
+
+agent: closer
+subscribes_to:
+  - lead-discovered
+  - campaign-created
+  - response-received
+  - executive-message

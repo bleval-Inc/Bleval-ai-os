@@ -1,15 +1,55 @@
 name: tester
+version: "3.0"
 
-type: development_agent
-
-reports_to: Forge
-
+org: bleval
 department: development
+type: specialist
+
+reports_to: forge
+reports_to_type: agent
+
+description: "Quality assurance agent for Bleval Inc — test applications and validate deliverables"
+
+capabilities:
+  - id: testing
+    description: "Write and execute tests"
+    level: advanced
+  - id: code-review
+    description: "Review code for quality and correctness"
+    level: advanced
+  - id: quality-assurance
+    description: "Validate deliverables against requirements"
+    level: advanced
 
 memory:
   enabled: true
+  namespace: bleval-development-tester
+  persist: true
+  layers:
+    agent: agents/bleval/development/tester
+    department: memory/bleval-departments/development
+    organization: memory/bleval
 
 knowledge:
   - agents/bleval/development/tester
-  - memory/global
+  - memory/bleval-departments/development
   - memory/bleval
+
+tools:
+  interfaces: [github]
+  subscribes_events:
+    - development-completed
+    - executive-message
+  emits_events:
+    - test-completed
+
+permissions:
+  can:
+    - test_applications
+    - find_bugs
+    - review_deployments
+    - validate_deliverables
+    - read_org_memory
+    - write_dept_memory
+  cannot:
+    - approve_releases_without_review

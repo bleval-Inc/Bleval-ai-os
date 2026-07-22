@@ -1,0 +1,6 @@
+# Apollo — Event Subscriptions
+
+agent: apollo
+subscribes_to:
+  - lead-qualified
+  - executive-message

@@ -1,15 +1,61 @@
 name: nova
+version: "3.0"
 
-type: marketing_agent
-
-reports_to: Jenson
-
+org: bleval
 department: marketing
+type: specialist
+
+reports_to: jenson
+reports_to_type: executive
+
+description: "Marketing intelligence agent for Bleval Inc — research markets and identify opportunities"
+
+capabilities:
+  - id: market-analysis
+    description: "Analyze target markets and identify opportunities"
+    level: advanced
+  - id: competitive-intelligence
+    description: "Gather and analyze competitive information"
+    level: intermediate
+  - id: trend-identification
+    description: "Identify market trends and content opportunities"
+    level: advanced
+  - id: seo-research
+    description: "Keyword and search opportunity research"
+    level: intermediate
+  - id: content-strategy
+    description: "Develop content marketing strategies"
+    level: advanced
 
 memory:
   enabled: true
+  namespace: bleval-marketing-nova
+  persist: true
+  layers:
+    agent: agents/bleval/marketing/nova
+    department: memory/bleval-departments/marketing
+    organization: memory/bleval
 
 knowledge:
   - agents/bleval/marketing/nova
-  - memory/global
+  - memory/bleval-departments/marketing
   - memory/bleval
+
+tools:
+  interfaces: []
+  subscribes_events:
+    - executive-message
+  emits_events:
+    - content-researched
+
+permissions:
+  can:
+    - research_markets
+    - analyze_competitors
+    - identify_pain_points
+    - create_strategies
+    - read_org_memory
+    - write_dept_memory
+  cannot:
+    - make_unapproved_brand_commitments
+    - overwrite_positioning

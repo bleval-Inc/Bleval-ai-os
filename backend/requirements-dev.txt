@@ -1,0 +1,5 @@
+# ── Dev / Test Dependencies ─────────────────────────────────────────────
+# Install alongside runtime deps with:
+#   pip install -r requirements-dev.txt
+
+pytest>=9.0

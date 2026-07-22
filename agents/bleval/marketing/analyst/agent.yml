@@ -1,15 +1,56 @@
 name: analyst
+version: "3.0"
 
-type: marketing_agent
-
-reports_to: Jenson
-
+org: bleval
 department: marketing
+type: specialist
+
+reports_to: jenson
+reports_to_type: executive
+
+description: "Marketing analytics agent for Bleval Inc — measure and optimize performance"
+
+capabilities:
+  - id: performance-analysis
+    description: "Analyze content and campaign performance"
+    level: advanced
+  - id: campaign-tracking
+    description: "Track campaign metrics and ROI"
+    level: advanced
+  - id: trend-analysis
+    description: "Identify performance trends and patterns"
+    level: intermediate
 
 memory:
   enabled: true
+  namespace: bleval-marketing-analyst
+  persist: true
+  layers:
+    agent: agents/bleval/marketing/analyst
+    department: memory/bleval-departments/marketing
+    organization: memory/bleval
 
 knowledge:
   - agents/bleval/marketing/analyst
-  - memory/global
+  - memory/bleval-departments/marketing
   - memory/bleval
+
+tools:
+  interfaces: []
+  subscribes_events:
+    - content-created
+    - content-published
+    - executive-message
+  emits_events:
+    - metric-updated
+
+permissions:
+  can:
+    - analyze_performance
+    - track_trends
+    - measure_campaigns
+    - recommend_improvements
+    - read_org_memory
+    - write_dept_memory
+  cannot:
+    - change_strategy_without_review

@@ -1,0 +1,238 @@
+# Bleval AI OS — Workflow Registry
+# Version: 3.0.0
+# Jenson launches workflows. Workflows coordinate participating agents.
+
+version: "3.0"
+
+workflows:
+  # ── Sales Workflows ─────────────────────────────────────
+  sales/prospect-research:
+    description: "Research and qualify new prospects"
+    org: bleval
+    department: sales
+    coordinator: jenson
+    agents: [atlas]
+    events: [lead-discovered]
+    steps:
+      - name: research
+        agent: atlas
+        action: "Research target market segment and identify ICP-matching businesses"
+        output: lead-discovered event
+      - name: qualify
+        agent: jenson
+        action: "Review research and qualify leads for outreach"
+        output: lead-qualified event
+
+  sales/outreach-campaign:
+    description: "Design and execute outbound outreach campaign"
+    org: bleval
+    department: sales
+    coordinator: jenson
+    agents: [apollo]
+    events: [lead-qualified]
+    trigger_event: lead-qualified
+    steps:
+      - name: design
+        agent: apollo
+        action: "Design outreach sequence (channel, messaging, cadence)"
+      - name: execute
+        agent: apollo
+        action: "Execute outreach sequence and track responses"
+      - name: report
+        agent: apollo
+        action: "Report campaign performance metrics"
+
+  sales/deal-closing:
+    description: "Prepare proposals and close deals"
+    org: bleval
+    department: sales
+    coordinator: jenson
+    agents: [closer]
+    events: [response-received]
+    trigger_event: response-received
+    steps:
+      - name: prepare
+        agent: closer
+        action: "Prepare prospect profile, objection handling, and strategy"
+      - name: propose
+        agent: closer
+        action: "Create tailored proposal"
+      - name: close
+        agent: closer
+        action: "Execute closing strategy"
+      - name: analyze
+        agent: closer
+        action: "Post-deal analysis"
+
+  # ── Marketing Workflows ─────────────────────────────────
+  marketing/content-production:
+    description: "Research, create, and publish content"
+    org: bleval
+    department: marketing
+    coordinator: jenson
+    agents: [nova, creator, analyst]
+    events: [content-researched, content-created, content-published]
+    steps:
+      - name: research
+        agent: nova
+        action: "Research market trends and content opportunities"
+        output: content-researched event
+      - name: create
+        agent: creator
+        action: "Produce content based on research direction"
+        output: content-created event
+      - name: publish
+        agent: creator
+        action: "Publish content to distribution channels"
+        output: content-published event
+      - name: measure
+        agent: analyst
+        action: "Track performance and extract learnings"
+
+  marketing/campaign-launch:
+    description: "Plan and launch marketing campaigns"
+    org: bleval
+    department: marketing
+    coordinator: jenson
+    agents: [nova, creator, analyst]
+    events: []
+    steps:
+      - name: plan
+        agent: nova
+        action: "Develop campaign strategy and direction"
+      - name: produce
+        agent: creator
+        action: "Create campaign assets"
+      - name: launch
+        agent: jenson
+        action: "Approve and launch campaign"
+      - name: monitor
+        agent: analyst
+        action: "Track campaign performance and ROI"
+
+  marketing/market-research:
+    description: "Research market trends and competitive landscape"
+    org: bleval
+    department: marketing
+    coordinator: jenson
+    agents: [nova]
+    events: [content-researched]
+    steps:
+      - name: research
+        agent: nova
+        action: "Research target markets, competitors, and trends"
+        output: content-researched event
+
+  # ── Development Workflows ───────────────────────────────
+  development/feature-development:
+    description: "Design, build, and deliver a feature or fix"
+    org: bleval
+    department: development
+    coordinator: jenson
+    agents: [forge, tester]
+    events: [feature-requested, development-completed, test-completed]
+    trigger_event: feature-requested
+    steps:
+      - name: design
+        agent: forge
+        action: "Design architecture and implementation plan"
+      - name: implement
+        agent: forge
+        action: "Build the feature or fix"
+        output: development-completed event
+      - name: test
+        agent: tester
+        action: "Test and validate the implementation"
+        output: test-completed event
+      - name: review
+        agent: jenson
+        action: "Review and approve deliverable"
+
+  development/code-review:
+    description: "Review code for quality and correctness"
+    org: bleval
+    department: development
+    coordinator: jenson
+    agents: [tester]
+    events: []
+    steps:
+      - name: review
+        agent: tester
+        action: "Review code against quality standards"
+      - name: report
+        agent: tester
+        action: "Report findings and recommendations"
+
+  # ── Operations Workflows ────────────────────────────────
+  operations/daily-report:
+    description: "Generate daily operational status report"
+    org: bleval
+    department: operations
+    coordinator: jenson
+    agents: [ledger, pulse]
+    events: [report-ready]
+    steps:
+      - name: collect-financials
+        agent: ledger
+        action: "Gather financial metrics and updates"
+      - name: check-health
+        agent: pulse
+        action: "Check client health and operational status"
+      - name: compile
+        agent: jenson
+        action: "Compile daily report"
+
+  operations/weekly-review:
+    description: "Generate weekly review with insights and recommendations"
+    org: bleval
+    department: operations
+    coordinator: jenson
+    agents: [ledger, pulse]
+    events: [report-ready]
+    steps:
+      - name: financial-summary
+        agent: ledger
+        action: "Prepare weekly financial summary"
+      - name: client-summary
+        agent: pulse
+        action: "Prepare weekly client status summary"
+      - name: review
+        agent: jenson
+        action: "Review and generate recommendations"
+
+  # ── Cross-org Workflows ─────────────────────────────────
+  cross-org/executive-sync:
+    description: "Synchronize across all executives"
+    org: all
+    department: executive
+    coordinator: jenson
+    agents: [jenson, valta_prime, yamako]
+    events: [executive-message]
+    steps:
+      - name: collect
+        agent: jenson
+        action: "Gather updates from all organizations"
+      - name: sync
+        agent: jenson, valta_prime, yamako
+        action: "Synchronize priorities and cross-org dependencies"
+      - name: report
+        agent: jenson
+        action: "Report to founder"
+
+  cross-org/escalation:
+    description: "Handle cross-org escalations"
+    org: all
+    department: executive
+    coordinator: jenson
+    agents: [jenson, valta_prime, yamako]
+    events: [escalation]
+    steps:
+      - name: assess
+        agent: jenson
+        action: "Assess escalation severity and impact"
+      - name: resolve
+        agent: jenson, valta_prime, yamako
+        action: "Coordinate resolution across organizations"
+      - name: document
+        agent: jenson
+        action: "Document escalation and resolution"

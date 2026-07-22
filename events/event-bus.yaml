@@ -1,0 +1,35 @@
+# Bleval AI OS — Event Bus Definition
+# Version: 3.0.0
+# Event-driven communication backbone. Agents subscribe to events instead of polling.
+
+version: "3.0"
+name: "Bleval Event Bus"
+description: "Event-driven communication backbone for all agents"
+
+channels:
+  - name: organization
+    description: "Organization-wide events visible to all agents in the org"
+    scope: org
+
+  - name: department
+    description: "Department-specific events scoped to department agents"
+    scope: department
+
+  - name: executive
+    description: "Cross-org executive communication channel"
+    scope: all_orgs
+
+delivery:
+  type: publish-subscribe
+  guarantees: at-least-once
+  ordering: per-channel
+  persistence: memory/events/log.yaml
+
+rules:
+  - "Every action generates at least one event"
+  - "Agents subscribe to events, never poll"
+  - "Events carry context references, not large payloads"
+  - "Event payloads link to memory for full context"
+  - "Failed deliveries are logged for retry"
+  - "Events have a defined schema in events/schemas/"
+  - "Subscriptions are defined in events/subscriptions/"

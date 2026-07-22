@@ -1,15 +1,15 @@
 executives:
-
   - name: Jenson
     domain: bleval
     role: CEO
+    organization: bleval
 
-
-  - name: ValtaPrime
+  - name: Valta Prime
     domain: house_of_valta
     role: CEO
-
+    organization: hov
 
   - name: Yamako
     domain: personal
     role: chief_of_staff
+    organization: personal

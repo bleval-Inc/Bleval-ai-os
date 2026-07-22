@@ -1,0 +1,51 @@
+# Prospect Research Workflow
+# Version: 3.0.0
+
+name: Prospect Research
+org: bleval
+department: sales
+coordinator: jenson
+
+agents:
+  - atlas
+
+steps:
+  - id: 1
+    name: "Market Research"
+    agent: atlas
+    description: "Research target market segment"
+    outputs:
+      - market-overview
+    events_emitted: []
+
+  - id: 2
+    name: "Lead Identification"
+    agent: atlas
+    description: "Identify businesses matching ICP"
+    inputs:
+      - market-overview
+    outputs:
+      - lead-list
+    events_emitted: []
+
+  - id: 3
+    name: "Lead Analysis"
+    agent: atlas
+    description: "Analyze digital presence and identify problems"
+    inputs:
+      - lead-list
+    outputs:
+      - lead-reports
+    events_emitted:
+      - lead-discovered
+
+  - id: 4
+    name: "Qualification"
+    agent: jenson
+    description: "Review and qualify leads"
+    inputs:
+      - lead-reports
+    outputs:
+      - qualified-leads
+    events_emitted:
+      - lead-qualified

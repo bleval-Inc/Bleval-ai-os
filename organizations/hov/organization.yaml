@@ -1,0 +1,53 @@
+# House of Valta — Organization Definition
+# Version: 3.0.0
+
+id: hov
+name: House of Valta
+description: "Brand strategy, creative direction, and disciplined growth"
+founded: 2024
+founder: Tounga
+
+executives:
+  - id: valta_prime
+    role: CEO
+    scope: all_hov
+
+departments:
+  brand:
+    manager: valta
+    agents: []
+    workflows: []
+  creative:
+    manager: valta
+    agents: []
+    workflows: []
+  research:
+    manager: valta
+    agents: []
+    workflows: []
+  content:
+    manager: valta
+    agents: []
+    workflows: []
+  growth:
+    manager: valta
+    agents: []
+    workflows: []
+  operations:
+    manager: valta
+    agents: []
+    workflows: []
+
+boundaries:
+  can_control: [hov_systems]
+  cannot_control: [bleval_systems, personal_systems]
+
+tools_enabled:
+  - slack
+  - calendly
+
+memory_access:
+  global: read
+  organization: read_write
+  departments: read_write
+  agents: read

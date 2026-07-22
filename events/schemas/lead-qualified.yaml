@@ -1,0 +1,24 @@
+# Schema: Lead Qualified Event
+
+name: lead-qualified
+version: "1.0"
+
+payload:
+  lead_id:
+    type: string
+    required: true
+  qualified_by:
+    type: string
+    required: true
+    description: "Who qualified this lead"
+  qualification_notes:
+    type: string
+    required: false
+  priority:
+    type: string
+    required: true
+    enum: [high, medium, low]
+  assigned_to:
+    type: string
+    required: true
+    description: "Agent assigned for outreach"

@@ -1,0 +1,13 @@
+# Brand Department — House of Valta
+# Version: 3.0.0
+
+id: brand
+org: hov
+manager: valta_prime
+description: "Brand identity, positioning, and coherence"
+agents: []
+workflows: []
+memory_access:
+  org_memory: read
+  dept_memory: read_write
+  agent_memory: read

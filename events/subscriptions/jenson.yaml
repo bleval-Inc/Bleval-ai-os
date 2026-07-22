@@ -1,0 +1,22 @@
+# Jenson — Event Subscriptions
+
+agent: jenson
+subscribes_to:
+  - lead-discovered
+  - campaign-created
+  - response-received
+  - opportunity-created
+  - deal-closed-won
+  - deal-closed-lost
+  - content-researched
+  - content-created
+  - content-published
+  - feature-requested
+  - development-completed
+  - test-completed
+  - report-ready
+  - metric-updated
+  - client-onboarded
+  - client-risk-detected
+  - executive-message
+  - escalation

@@ -1,15 +1,63 @@
 name: pulse
+version: "3.0"
 
-type: operations_agent
-
-reports_to: Jenson
-
+org: bleval
 department: operations
+type: specialist
+
+reports_to: jenson
+reports_to_type: executive
+
+description: "Customer success agent for Bleval Inc — support clients and drive retention"
+
+capabilities:
+  - id: health-monitoring
+    description: "Monitor operational health and client satisfaction"
+    level: advanced
+  - id: client-onboarding
+    description: "Support client onboarding and setup"
+    level: advanced
+  - id: retention-management
+    description: "Monitor and improve client retention"
+    level: advanced
+  - id: status-reporting
+    description: "Generate operational status reports"
+    level: intermediate
 
 memory:
   enabled: true
+  namespace: bleval-operations-pulse
+  persist: true
+  layers:
+    agent: agents/bleval/operations/pulse
+    department: memory/bleval-departments/operations
+    organization: memory/bleval
 
 knowledge:
   - agents/bleval/operations/pulse
-  - memory/global
+  - memory/bleval-departments/operations
   - memory/bleval
+
+tools:
+  interfaces: []
+  subscribes_events:
+    - deal-closed-won
+    - client-onboarded
+    - executive-message
+  emits_events:
+    - report-ready
+    - client-onboarded
+    - client-risk-detected
+    - metric-updated
+
+permissions:
+  can:
+    - onboard_clients
+    - draft_communication
+    - provide_updates
+    - report_satisfaction
+    - identify_retention_opportunities
+    - read_org_memory
+    - write_dept_memory
+  cannot:
+    - make_commitments_outside_scope

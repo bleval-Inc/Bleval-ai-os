@@ -1,4 +1,4 @@
-name: valtaprime
+name: valta
 description: Executive AI for House of Valta with brand, strategy, and growth leadership
 type: coordinator
 
@@ -9,7 +9,7 @@ routing:
   model: sonnet
   priority: high
   keywords:
-    - valtaprime
+    - valta
     - executive
     - brand
     - strategy
@@ -24,11 +24,11 @@ capabilities:
 
 memory:
   enabled: true
-  namespace: valtaprime-executive
+  namespace: valta-executive
   persist: true
 
 knowledge:
-  - executives/ValtaPrime
+  - executives/Valta
 
 swarm:
   roles:
