@@ -20,16 +20,16 @@ layers:
     access: org_executives_read_write
     flow: "downward to departments, upward to global"
     locations:
-      bleval: memory/bleval/
-      hov: memory/hov/
-      personal: memory/personal/
+      bleval: bleval/
+      hov: hov/
+      personal: personal/
 
   department:
     description: "Per-department operational knowledge, KPIs, and learnings"
     access: dept_agents_read_write
     flow: "downward to agents, upward to organization"
     locations:
-      bleval: memory/bleval-departments/
+      bleval: bleval-departments/
 
   agent:
     description: "Per-agent working memory and learned patterns"

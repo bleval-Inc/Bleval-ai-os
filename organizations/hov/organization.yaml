@@ -14,27 +14,27 @@ executives:
 
 departments:
   brand:
-    manager: valta
+    manager: valta_prime
     agents: []
     workflows: []
   creative:
-    manager: valta
+    manager: valta_prime
     agents: []
     workflows: []
   research:
-    manager: valta
+    manager: valta_prime
     agents: []
     workflows: []
   content:
-    manager: valta
+    manager: valta_prime
     agents: []
     workflows: []
   growth:
-    manager: valta
+    manager: valta_prime
     agents: []
     workflows: []
   operations:
-    manager: valta
+    manager: valta_prime
     agents: []
     workflows: []
 

@@ -10,11 +10,9 @@ The Executive Engine provides the runtime for executive agents to:
 - Communicate with other executives
 """
 
-from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Tuple
 
 from axiom.models.configs import AgentDetail, AgentEntry
-from axiom.models.workflows import ApprovalRequest, WorkflowInstance, WorkflowStatus
 from axiom.registry.agent import AgentRegistryLoader
 from axiom.registry.capability import CapabilityRegistryLoader
 from axiom.registry.department import DepartmentRegistryLoader
@@ -57,7 +55,7 @@ class ExecutiveEngine:
     # ── Department Management ────────────────────────────────────────────
 
     def get_departments(self, org_id: str) -> List[Dict[str, Any]]:
-        """Return all departments in an organisation with agent info."""
+        """Return all departments in an organization with agent info."""
         depts = self._dept_loader.list_departments(org_id)
         results: List[Dict[str, Any]] = []
         for dept in depts:
@@ -119,24 +117,26 @@ class ExecutiveEngine:
     def find_workflows_for_department(self, org_id: str, dept_id: str) -> List[Dict[str, Any]]:
         """Find all workflows owned by a department."""
         wfs = self._wf_loader.find_by_department(org_id, dept_id)
-        return [
-            {"id": wf_id, "description": wf.description, "steps": len(wf.steps)}
-            for wf_id, wf in [
-                (wf_id, wf) for wf_id, wf in [
-                    (wfi, self._wf_loader.get_workflow(wfi))
-                    for wfi in [getattr(w, 'id', w) for w in wfs]
-                ] if wf is not None
-            ]
-        ]
+        result = []
+        for entry in wfs:
+            wf_id = getattr(entry, 'id', entry) if not isinstance(entry, str) else entry
+            wf = self._wf_loader.get_workflow(wf_id)
+            if wf is not None:
+                result.append({
+                    "id": wf_id,
+                    "description": wf.description,
+                    "steps": len(wf.steps),
+                })
+        return result
 
     # ── Public API wrappers ──────────────────────────────────────────────
 
     def list_organizations(self) -> List[Any]:
-        """Return all registered organisations (public API)."""
+        """Return all registered organizations (public API)."""
         return self._org_loader.list_organizations()
 
     def get_organization_detail(self, org_id: str) -> Optional[Any]:
-        """Return organisation detail (public API)."""
+        """Return organization detail (public API)."""
         return self._org_loader.load_org_detail(org_id)
 
     def list_all_agents(self) -> List[AgentEntry]:

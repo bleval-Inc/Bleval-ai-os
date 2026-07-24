@@ -429,3 +429,240 @@ async def respond_to_approval(approval_id: str, request: ApprovalResponse):
         return {"approval_id": approval_id, "approved": request.approved}
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+
+# ── Learning Engine Routes ────────────────────────────────────────────────
+
+
+@router.get("/learning/status")
+async def get_learning_status():
+    """Get the Learning Engine status summary."""
+    rt = _get_runtime()
+    if rt.learning:
+        return rt.learning.get_summary()
+    return {"error": "Learning Engine not available"}
+
+
+@router.get("/learning/scores")
+async def list_learning_scores():
+    """List all tracked performance scores."""
+    rt = _get_runtime()
+    if rt.learning:
+        scores = rt.learning.score_tracker.get_all()
+        return [
+            {
+                "entity_id": s.entity_id,
+                "entity_type": s.entity_type,
+                "running_average": s.running_average,
+                "trend": s.trend,
+                "total_scores": len(s.scores),
+                "last_updated": s.last_updated.isoformat() if s.last_updated else None,
+            }
+            for s in scores
+        ]
+    return []
+
+
+@router.get("/learning/scores/{entity_type}/{entity_id}")
+async def get_entity_score_history(entity_type: str, entity_id: str):
+    """Get score history for a specific entity."""
+    rt = _get_runtime()
+    if rt.learning:
+        history = rt.learning.score_tracker.get_history(entity_id, entity_type)
+        if history:
+            return {
+                "entity_id": history.entity_id,
+                "entity_type": history.entity_type,
+                "running_average": history.running_average,
+                "trend": history.trend,
+                "scores": [
+                    {
+                        "overall": s.overall_score,
+                        "categories": {k.value: v for k, v in s.categories.items()},
+                        "duration": s.duration_seconds,
+                        "step_count": s.step_count,
+                        "error_count": s.error_count,
+                        "retry_count": s.retry_count,
+                        "timestamp": s.timestamp.isoformat() if s.timestamp else None,
+                    }
+                    for s in history.scores[-20:]
+                ],
+            }
+        raise HTTPException(status_code=404, detail=f"No scores for {entity_type}:{entity_id}")
+    raise HTTPException(status_code=503, detail="Learning Engine not available")
+
+
+@router.get("/learning/analytics/workflows")
+async def get_workflow_analytics(workflow_id: Optional[str] = None):
+    """Get workflow performance analytics."""
+    rt = _get_runtime()
+    if rt.learning:
+        return [
+            {
+                "workflow_id": s.workflow_id,
+                "total_runs": s.total_runs,
+                "success_rate": round(s.success_rate, 4),
+                "avg_duration_seconds": round(s.avg_duration_seconds, 2),
+                "avg_retries": round(s.avg_retries_per_run, 2),
+                "trend": s.trend,
+                "failure_reasons": s.failure_reasons,
+                "last_run": s.last_run.isoformat() if s.last_run else None,
+            }
+            for s in rt.learning.get_workflow_analytics(workflow_id)
+        ]
+    return []
+
+
+@router.get("/learning/analytics/executives")
+async def get_executive_analytics(exec_id: Optional[str] = None):
+    """Get executive performance analytics."""
+    rt = _get_runtime()
+    if rt.learning:
+        return rt.learning.get_executive_analytics(exec_id)
+    return []
+
+
+@router.get("/learning/analytics/agents")
+async def get_agent_analytics(agent_id: Optional[str] = None):
+    """Get agent performance analytics."""
+    rt = _get_runtime()
+    if rt.learning:
+        return rt.learning.get_agent_analytics(agent_id)
+    return []
+
+
+@router.get("/learning/patterns")
+async def get_learning_patterns(severity: Optional[str] = None):
+    """Get detected learning patterns, optionally filtered by severity."""
+    rt = _get_runtime()
+    if rt.learning:
+        from axiom.models.learning import PatternSeverity
+        sev = PatternSeverity(severity) if severity else None
+        patterns = rt.learning.get_patterns(sev)
+        return [
+            {
+                "pattern_id": p.pattern_id,
+                "pattern_type": p.pattern_type,
+                "severity": p.severity.value,
+                "title": p.title,
+                "description": p.description,
+                "entities_involved": p.entities_involved,
+                "frequency": p.frequency,
+                "impact_score": p.impact_score,
+                "first_detected": p.first_detected.isoformat(),
+                "last_detected": p.last_detected.isoformat(),
+            }
+            for p in patterns
+        ]
+    return []
+
+
+@router.get("/learning/recommendations")
+async def get_learning_recommendations(status: Optional[str] = None):
+    """Get learning recommendations, optionally filtered by status."""
+    rt = _get_runtime()
+    if rt.learning:
+        from axiom.models.learning import RecommendationStatus
+        st = RecommendationStatus(status) if status else None
+        recs = rt.learning.get_recommendations(st)
+        return [
+            {
+                "recommendation_id": r.recommendation_id,
+                "title": r.title,
+                "description": r.description[:200] if r.description else "",
+                "expected_impact": r.expected_impact,
+                "confidence": r.confidence,
+                "status": r.status.value,
+                "change_type": r.change_type,
+                "suggested_action": r.suggested_action,
+                "created_at": r.created_at.isoformat(),
+                "approved_by": r.approved_by,
+            }
+            for r in recs
+        ]
+    return []
+
+
+@router.get("/learning/knowledge")
+async def get_learning_knowledge():
+    """Get consolidated knowledge entries."""
+    rt = _get_runtime()
+    if rt.learning:
+        entries = rt.learning.get_knowledge()
+        return [
+            {
+                "entry_id": e.entry_id,
+                "title": e.title,
+                "content": e.content[:300] if e.content else "",
+                "source": e.source.value,
+                "confidence": e.confidence,
+                "tags": e.tags,
+                "created_at": e.created_at.isoformat(),
+            }
+            for e in entries
+        ]
+    return []
+
+
+@router.get("/learning/cycles")
+async def get_learning_cycles(limit: int = 10):
+    """Get recent learning cycles."""
+    rt = _get_runtime()
+    if rt.learning:
+        cycles = rt.learning.get_learning_cycles(limit)
+        return [
+            {
+                "cycle_id": c.cycle_id,
+                "source_entity": f"{c.source_entity_type}:{c.source_entity_id}",
+                "scores": c.scores,
+                "patterns_detected": len(c.patterns_detected),
+                "recommendations": len(c.recommendations_generated),
+                "knowledge_written": len(c.knowledge_written),
+                "duration_seconds": round(c.duration_seconds, 2),
+                "success": c.success,
+                "completed_at": c.completed_at.isoformat() if c.completed_at else None,
+            }
+            for c in cycles
+        ]
+    return []
+
+
+@router.post("/learning/cycle/run")
+async def run_learning_cycle(entity_id: str = "system", entity_type: str = "system"):
+    """Manually trigger a learning cycle."""
+    rt = _get_runtime()
+    if not rt.learning:
+        raise HTTPException(status_code=503, detail="Learning Engine not available")
+    try:
+        cycle = await rt.learning.run_learning_cycle(entity_id, entity_type)
+        return {
+            "cycle_id": cycle.cycle_id,
+            "source": f"{entity_type}:{entity_id}",
+            "patterns_detected": len(cycle.patterns_detected),
+            "recommendations": len(cycle.recommendations_generated),
+            "knowledge_written": len(cycle.knowledge_written),
+            "duration_seconds": round(cycle.duration_seconds, 2),
+            "success": cycle.success,
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/learning/playbook-evolutions")
+async def get_playbook_evolutions():
+    """Get recorded playbook evolutions."""
+    rt = _get_runtime()
+    if rt.learning:
+        evolutions = rt.learning.get_playbook_evolutions()
+        return [
+            {
+                "playbook_name": e.playbook_name,
+                "version": e.version,
+                "change_description": e.change_description,
+                "triggered_by_pattern": e.triggered_by_pattern,
+                "applied_at": e.applied_at.isoformat(),
+                "approved_by": e.approved_by,
+            }
+            for e in evolutions
+        ]
+    return []

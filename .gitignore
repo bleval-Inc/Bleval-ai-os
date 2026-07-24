@@ -35,3 +35,10 @@ backend/runtime/logs/
 
 # Claude
 .claude/worktrees/
+
+# Legacy tooling
+.claude-flow/
+.swarm/
+/model-router-state.json
+ruvector.db
+test-install/

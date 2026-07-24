@@ -1,7 +1,7 @@
 """Registry loader for agents."""
 
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional
 
 from axiom.config import agents_path
 from axiom.models.configs import (

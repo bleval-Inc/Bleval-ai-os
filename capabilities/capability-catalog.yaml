@@ -355,7 +355,7 @@ capabilities:
     category: coordination
     name: "Executive Oversight"
     description: "High-level strategic oversight and coordination"
-    agents: [jenson, valta, yamako]
+    agents: [jenson, valta_prime, yamako]
     workflows: [cross-org/executive-sync, cross-org/escalation]
     level: advanced
 
@@ -379,6 +379,6 @@ capabilities:
     category: coordination
     name: "Decision Support"
     description: "Provide analysis and recommendations"
-    agents: [jenson, valta, yamako]
+    agents: [jenson, valta_prime, yamako]
     workflows: [cross-org/escalation]
     level: advanced

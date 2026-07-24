@@ -1,6 +1,5 @@
 """Registry loader for event types, schemas, and subscriptions."""
 
-from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from axiom.config import events_path
@@ -9,7 +8,6 @@ from axiom.models.events import (
     EventBusChannel,
     EventDeliveryConfig,
     EventSchema,
-    EventSchemaField,
     EventTypeDef,
     EventTypeRegistry,
     SubscriptionDef,

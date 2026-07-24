@@ -1,6 +1,6 @@
 """Pydantic models for all YAML-based configuration files.
 
-Every config file under the organisation / agent / workflow / etc. directories
+Every config file under the organization / agent / workflow / etc. directories
 has a corresponding model here.  The models are used by the registry loaders
 to deserialise YAML into typed Python objects.
 """
@@ -13,7 +13,7 @@ from pydantic import BaseModel, ConfigDict, Field
 # ── Organisation Models ──────────────────────────────────────────────────
 
 class OrganizationEntry(BaseModel):
-    """Entry in the top-level organisations/organisation.yaml registry."""
+    """Entry in the top-level organizations/organization.yaml registry."""
     id: str
     name: str
     description: str
@@ -56,7 +56,7 @@ class MemoryAccessConfig(BaseModel):
 
 
 class OrgDetail(BaseModel):
-    """Detailed organisation definition from organisations/<id>/organisation.yaml."""
+    """Detailed organization definition from organizations/<id>/organization.yaml."""
     id: str
     name: str
     description: str = ""
@@ -235,7 +235,7 @@ class ExecutiveRegistry(BaseModel):
 # ── Tool Models ──────────────────────────────────────────────────────────
 
 class ToolDef(BaseModel):
-    """Tool definition from organisations/<org>/tools/tools.yaml."""
+    """Tool definition from organizations/<org>/tools/tools.yaml."""
     id: str
     interface: str = ""
     description: str = ""

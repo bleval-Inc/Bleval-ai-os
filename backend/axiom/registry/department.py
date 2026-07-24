@@ -24,7 +24,7 @@ class DepartmentRegistryLoader:
         return DepartmentRegistry(**data)
 
     def list_departments(self, org_id: Optional[str] = None) -> List[DepartmentEntry]:
-        """List all departments, optionally filtered by organisation."""
+        """List all departments, optionally filtered by organization."""
         registry = self.load_registry()
         if org_id:
             return [d for d in registry.departments if d.org == org_id]

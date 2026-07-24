@@ -25,7 +25,6 @@ class AxiomSettings:
     def __init__(self) -> None:
         self.openai_api_key: Optional[str] = os.getenv("OPENAI_API_KEY")
         self.anthropic_api_key: Optional[str] = os.getenv("ANTHROPIC_API_KEY")
-        self.ruflo_env: str = os.getenv("RUFLO_ENV", "development")
 
         self.state_dir: Path = Path(
             os.getenv("AXIOM_STATE_DIR", str(REPO_ROOT / "backend" / "runtime" / "state"))

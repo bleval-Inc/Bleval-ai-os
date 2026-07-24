@@ -1,12 +1,10 @@
 """Registry loader for workflows."""
 
-from pathlib import Path
 from typing import Dict, List, Optional
 
 from axiom.config import workflows_path
 from axiom.models.configs import (
     WorkflowDetail,
-    WorkflowDetailStep,
     WorkflowEntry,
     WorkflowIndex,
 )

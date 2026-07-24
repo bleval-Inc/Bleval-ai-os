@@ -5,7 +5,7 @@ Usage:
     python -m axiom.cli.main workflows       # List all workflows
     python -m axiom.cli.main launch <id>     # Launch a workflow
     python -m axiom.cli.main agents          # List all agents
-    python -m axiom.cli.main organisations   # List organisations
+    python -m axiom.cli.main organizations   # List organizations
     python -m axiom.cli.main capabilities    # List capabilities
     python -m axiom.cli.main search <query>  # Search for capabilities
     python -m axiom.cli.main events          # List event types
@@ -112,8 +112,8 @@ def agents():
 
 
 @app.command()
-def organisations():
-    """List all organisations."""
+def organizations():
+    """List all organizations."""
     rt = _sync_run(_bootstrap_and_get())
     orgs = [
         {"id": o.id, "name": o.name, "executives": o.executives,

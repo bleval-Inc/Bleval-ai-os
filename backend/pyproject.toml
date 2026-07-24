@@ -1,6 +1,6 @@
 [build-system]
 requires = ["setuptools>=64"]
-build-backend = "setuptools.backends._legacy:_Backend"
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "axiom-os"
@@ -37,4 +37,4 @@ repository = "https://github.com/bleval/axiom-os"
 axiom = "axiom.cli.main:app"
 
 [tool.pytest.ini_options]
-testpaths = ["tests"]
+testpaths = ["backend"]

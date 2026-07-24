@@ -18,6 +18,7 @@ from axiom.config import settings
 from axiom.engine.event import EventEngine
 from axiom.engine.executive import ExecutiveEngine
 from axiom.engine.intelligence import IntelligenceEngine
+from axiom.engine.learning import LearningEngine
 from axiom.engine.memory import MemoryEngine
 from axiom.engine.tool import ToolEngine
 from axiom.engine.workflow import WorkflowEngine
@@ -49,6 +50,7 @@ class AxiomRuntime:
         self.workflow: Optional[WorkflowEngine] = None
         self.executive: Optional[ExecutiveEngine] = None
         self.intelligence: Optional[IntelligenceEngine] = None
+        self.learning: Optional[LearningEngine] = None
 
         # Runtime subsystems
         self.scheduler: Optional[Scheduler] = None
@@ -111,6 +113,9 @@ class AxiomRuntime:
         # Executive Board — autonomous executive runtime loops
         self.executive_board = ExecutiveBoard(self)
 
+        # Learning Engine — continuous learning (observes all executions)
+        self.learning = LearningEngine(runtime=self)
+
         self._initialised = True
 
         if self.logger:
@@ -136,6 +141,11 @@ class AxiomRuntime:
         # Start dispatcher (background task processing)
         if self.dispatcher:
             await self.dispatcher.start()
+
+        # Start learning engine (background consolidation loop + event subscriptions)
+        if self.learning:
+            await self._wire_learning_engine()
+            await self.learning.start()
 
         # Start health monitor (background health checks)
         if self.monitor:
@@ -172,6 +182,9 @@ class AxiomRuntime:
 
         if self.monitor:
             await self.monitor.stop()
+
+        if self.learning:
+            await self.learning.stop()
 
         if self.scheduler:
             await self.scheduler.stop()
@@ -255,6 +268,181 @@ class AxiomRuntime:
                     f"Failed to auto-launch {wf_id} from event: {exc}",
                 )
 
+    # ── Learning Engine Wiring ──────────────────────────────────────────
+
+    async def _wire_learning_engine(self) -> None:
+        """Wire the Learning Engine to observe all execution events.
+
+        The Learning Engine subscribes to workflow lifecycle events (started,
+        completed, failed) and agent task events through the Event Engine.
+        This is event-driven observation — no direct component coupling.
+
+        Additionally, the dispatcher is instrumented to notify the Learning
+        Engine on task completion, and the executive board records cycles.
+        """
+        if not self.event or not self.learning:
+            return
+
+        engine = self.learning
+
+        async def _on_workflow_completed(event: Any) -> None:
+            """Record learning data when a workflow completes."""
+            if not event or not hasattr(event, "event_type"):
+                return
+            wf_status = ""
+            if event.event_type == "workflow-completed":
+                wf_status = "completed"
+            elif event.event_type == "workflow-failed":
+                wf_status = "failed"
+            elif event.event_type == "workflow-cancelled":
+                wf_status = "cancelled"
+
+            payload = getattr(event, "payload", {}) or {}
+            instance_id = payload.get("instance_id", "")
+            workflow_id = payload.get("workflow_id", "unknown")
+
+            # Look up the workflow instance for detailed data
+            wf_instance = None
+            if self.workflow:
+                try:
+                    wf_instance = self.workflow.get_instance(instance_id)
+                except Exception:
+                    pass
+
+            total_steps = 0
+            completed_steps = 0
+            failed_steps = 0
+            retries = 0
+            approval_requests = 0
+            agents_involved = []
+            error = payload.get("error", "")
+
+            if wf_instance:
+                total_steps = len(wf_instance.steps)
+                completed_steps = sum(
+                    1 for s in wf_instance.steps
+                    if hasattr(s, "status") and s.status in ("completed", "COMPLETED")
+                )
+                failed_steps = sum(
+                    1 for s in wf_instance.steps
+                    if hasattr(s, "status") and s.status in ("failed", "FAILED")
+                )
+                retries = sum(
+                    getattr(s, "retry_count", 0) for s in wf_instance.steps
+                ) if wf_instance.steps else 0
+
+            await engine.record_workflow_execution(
+                workflow_id=workflow_id,
+                instance_id=instance_id or event.event_id,
+                status=wf_status,
+                total_steps=max(total_steps, 1),
+                completed_steps=completed_steps,
+                failed_steps=failed_steps,
+                retries=retries,
+                agents_involved=agents_involved,
+                org=payload.get("org", ""),
+                department=payload.get("department", ""),
+                error=error,
+            )
+
+        async def _on_workflow_started(event: Any) -> None:
+            """Track workflow start time."""
+            pass  # Learning happens on completion, not start
+
+        # Subscribe to workflow lifecycle events through the event engine
+        for event_type in ("workflow-completed", "workflow-failed", "workflow-cancelled"):
+            try:
+                self.event.subscribe_to_event(event_type, _on_workflow_completed)
+            except ValueError:
+                pass  # Event type may not be registered yet
+
+        # Also wire the dispatcher for agent task learning
+        if self.dispatcher:
+            original_execute = self.dispatcher._execute_task
+
+            async def _instrumented_execute(task: Any) -> None:
+                """Execute a task and record learning data."""
+                import time
+                start_time = time.monotonic()
+                original_retries = getattr(task, "retry_count", 0)
+
+                try:
+                    await original_execute(task)
+                    duration = time.monotonic() - start_time
+                    success = getattr(task, "status", None) in (
+                        "completed", "COMPLETED",
+                    ) if hasattr(task, "status") else True
+                    await engine.record_agent_task(
+                        agent_id=getattr(task, "agent_id", ""),
+                        success=success,
+                        duration=duration,
+                        retries=original_retries,
+                        action=getattr(task, "action", ""),
+                        task_id=getattr(task, "task_id", ""),
+                        workflow_instance_id=getattr(task, "workflow_instance_id", ""),
+                        error=getattr(task, "error", None),
+                    )
+                except Exception:
+                    duration = time.monotonic() - start_time
+                    await engine.record_agent_task(
+                        agent_id=getattr(task, "agent_id", ""),
+                        success=False,
+                        duration=duration,
+                        retries=original_retries,
+                        action=getattr(task, "action", ""),
+                        task_id=getattr(task, "task_id", ""),
+                        workflow_instance_id=getattr(task, "workflow_instance_id", ""),
+                        error="Task execution raised exception",
+                    )
+                    raise
+
+            self.dispatcher._execute_task = _instrumented_execute  # type: ignore[method-assign]
+
+        # Wire executive board for learning
+        if self.executive_board:
+            for exec_id in self.executive_board.EXECUTIVE_IDS:
+                loop = self.executive_board.get_loop(exec_id)
+                if loop:
+                    original_cycle = loop._execute_cycle
+
+                    async def _make_instrumented_cycle(
+                        _exec_id: str = exec_id,
+                        _orig: Any = original_cycle,
+                    ) -> Any:
+                        """Execute a cycle and record learning data."""
+                        import time
+                        start = time.monotonic()
+                        try:
+                            result = await _orig(exec_id) if callable(_orig) else None
+                            # Re-derive the exec_id from closure; _exec_id is stable
+                            duration = time.monotonic() - start
+                            await engine.record_executive_cycle(
+                                exec_id=_exec_id,
+                                decision_type="cycle",
+                                outcome="success",
+                                duration=duration,
+                                reasoning="Executive cycle completed successfully",
+                            )
+                            return result
+                        except Exception as exc:
+                            duration = time.monotonic() - start
+                            await engine.record_executive_cycle(
+                                exec_id=_exec_id,
+                                decision_type="cycle",
+                                outcome="failure",
+                                duration=duration,
+                                reasoning=f"Executive cycle failed: {exc}",
+                            )
+                            raise
+
+                    loop._execute_cycle = _make_instrumented_cycle
+
+        if self.logger:
+            self.logger.info(
+                "lifecycle",
+                "Learning Engine wired to observe workflow, agent, and executive events",
+            )
+
     # ── Status ───────────────────────────────────────────────────────────
 
     @property
@@ -285,6 +473,7 @@ class AxiomRuntime:
                 "approval": self.approval is not None,
                 "executive_board": self.executive_board is not None,
                 "logger": self.logger is not None,
+                "learning": self.learning is not None,
             },
         }
 
@@ -294,7 +483,7 @@ class AxiomRuntime:
         monitor_summary = self.monitor.get_summary() if self.monitor else {}
         workflows = self.workflow.list_workflows() if self.workflow else {}
         agents = self.executive.list_executives() if self.executive else []
-        orgs = self.executive._org_loader.list_organizations() if self.executive else []
+        orgs = self.executive.list_organizations() if self.executive else []
 
         return {
             **status,

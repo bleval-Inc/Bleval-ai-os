@@ -1,6 +1,5 @@
 """Registry loader for capabilities."""
 
-from pathlib import Path
 from typing import Dict, List, Optional
 
 from axiom.config import capabilities_path

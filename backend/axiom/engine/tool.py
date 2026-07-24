@@ -1,7 +1,7 @@
 """Tool Engine — permission checking and capability resolution.
 
 The Tool Engine provides:
-- Tool discovery per organisation
+- Tool discovery per organization
 - Permission checking (can/cannot rules)
 - Capability-to-agent resolution
 - Audit logging
@@ -12,10 +12,10 @@ would be the Provider Abstraction layer in a future phase.
 """
 
 from datetime import datetime, timezone
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List
 
 from axiom.config import settings
-from axiom.models.configs import AgentDetail, ToolDef, ToolRegistry
+from axiom.models.configs import ToolDef
 from axiom.registry.agent import AgentRegistryLoader
 from axiom.registry.capability import CapabilityRegistryLoader
 from axiom.registry.organization import OrganizationRegistryLoader
@@ -33,10 +33,10 @@ class ToolEngine:
         self._tool_cache: Dict[str, List[ToolDef]] = {}
 
     def get_available_tools(self, org_id: str) -> List[ToolDef]:
-        """Return all tools enabled for an organisation."""
+        """Return all tools enabled for an organization."""
         if org_id not in self._tool_cache:
-            tools = self._org_loader.load_tools(org_id)
-            self._tool_cache[org_id] = tools.tools if tools else []
+            registry = self._org_loader.load_tools(org_id)
+            self._tool_cache[org_id] = registry.tools if registry else []
         return self._tool_cache[org_id]
 
     def check_permission(self, agent_id: str, action: str) -> bool:

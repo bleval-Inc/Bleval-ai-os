@@ -7,7 +7,6 @@ a full logging framework in production.
 
 import json
 from datetime import datetime, timezone
-from pathlib import Path
 from typing import Any, Dict, Optional
 
 from axiom.config import settings

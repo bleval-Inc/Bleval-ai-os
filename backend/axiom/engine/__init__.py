@@ -10,6 +10,13 @@ from axiom.engine.tool import ToolEngine
 from axiom.engine.workflow import WorkflowEngine
 from axiom.engine.executive import ExecutiveEngine
 from axiom.engine.intelligence import IntelligenceEngine
+from axiom.engine.learning import (
+    LearningEngine,
+    ScoreTracker,
+    PatternDetector,
+    RecommendationEngine,
+    KnowledgeConsolidator,
+)
 
 __all__ = [
     "MemoryEngine",
@@ -18,4 +25,9 @@ __all__ = [
     "WorkflowEngine",
     "ExecutiveEngine",
     "IntelligenceEngine",
+    "LearningEngine",
+    "ScoreTracker",
+    "PatternDetector",
+    "RecommendationEngine",
+    "KnowledgeConsolidator",
 ]

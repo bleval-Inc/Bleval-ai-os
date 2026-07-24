@@ -1,6 +1,6 @@
 """Memory Engine — layered memory retrieval and persistence.
 
-Architecture: Global -> Organisation -> Department -> Agent
+Architecture: Global -> Organization -> Department -> Agent
 Knowledge flows downward.  Learning flows upward.
 
 This implementation is file-based.  Every layer resolves to Markdown files
@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from axiom.config import memory_path as get_memory_root
-from axiom.models.configs import MemoryIndex, MemoryLayer, MemoryAccessConfig
+from axiom.models.configs import MemoryIndex, MemoryLayer
 from axiom.registry.loader import YAMLLoader
 
 
@@ -48,7 +48,7 @@ class MemoryEngine:
         return self._read_files(self._base, layer.files)
 
     def load_org_memory(self, org_id: str) -> Dict[str, str]:
-        """Load all organisation-level memory files for a given org."""
+        """Load all organization-level memory files for a given org."""
         layer = self.get_layer("organization")
         if layer is None or layer.locations is None:
             return {}
@@ -94,14 +94,14 @@ class MemoryEngine:
     ) -> Dict[str, str]:
         """Resolve memory context for an agent by merging layers.
 
-        Priority order (highest wins):  agent -> department -> organisation -> global
+        Priority order (highest wins):  agent -> department -> organization -> global
         """
         merged: Dict[str, str] = {}
 
         # Start with global (lowest priority)
         merged.update(self.load_global_memory())
 
-        # Overlay organisation memory
+        # Overlay organization memory
         if org_id:
             merged.update(self.load_org_memory(org_id))
 
@@ -149,7 +149,7 @@ class MemoryEngine:
     def write_department_memory(self, org_id: str, dept_id: str, key: str, content: str) -> Path:
         """Write a memory entry at the department layer.
 
-        Departments write organisational learnings upward.
+        Departments write organizational learnings upward.
         """
         dept_dir = self._base / f"{org_id}-departments" / dept_id
         dept_dir.mkdir(parents=True, exist_ok=True)
