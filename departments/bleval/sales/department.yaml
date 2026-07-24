@@ -1,0 +1,42 @@
+# Sales Department — Bleval Inc
+# Version: 3.0.0
+
+id: sales
+org: bleval
+manager: jenson
+description: "Lead generation, qualification, outreach, and deal progression"
+
+agents:
+  - id: atlas
+    role: lead_researcher
+    capabilities: [lead-research, market-analysis, competitive-intelligence, opportunity-scoring]
+  - id: apollo
+    role: outbound_automation
+    capabilities: [email-campaigns, linkedin-outreach, whatsapp-sequences, follow-up-automation, ab-testing]
+  - id: closer
+    role: closing_strategist
+    capabilities: [proposal-creation, call-preparation, objection-handling, deal-closing, lost-deal-analysis]
+
+workflows:
+  - prospect-research
+  - outreach-campaign
+  - deal-closing
+
+metrics:
+  - name: leads_generated
+    description: "Total qualified leads produced"
+    collection: weekly
+  - name: outreach_conversion
+    description: "Conversion rate from outreach to qualified meeting"
+    collection: weekly
+  - name: deals_closed
+    description: "Number of closed deals"
+    collection: monthly
+  - name: close_rate
+    description: "Percentage of opportunities that closed won"
+    collection: monthly
+
+memory_access:
+  org_memory: read
+  dept_memory: read_write
+  agent_memory: read

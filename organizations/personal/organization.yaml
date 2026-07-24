@@ -1,0 +1,37 @@
+# Personal Operations — Organization Definition
+# Version: 3.0.0
+
+id: personal
+name: Personal Operations
+description: "Founder productivity, knowledge management, and personal systems"
+founded: 2024
+founder: Tounga
+
+executives:
+  - id: yamako
+    role: chief_of_staff
+    scope: all_personal
+
+departments:
+  productivity:
+    manager: yamako
+    agents: []
+    workflows: []
+  knowledge:
+    manager: yamako
+    agents: []
+    workflows: []
+
+boundaries:
+  can_control: [personal_systems]
+  cannot_control: [bleval_systems, hov_systems]
+
+tools_enabled:
+  - calendar
+  - email
+
+memory_access:
+  global: read
+  organization: read_write
+  departments: read_write
+  agents: read

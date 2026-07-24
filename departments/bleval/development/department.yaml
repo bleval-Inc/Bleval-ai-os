@@ -1,0 +1,36 @@
+# Development Department — Bleval Inc
+# Version: 3.0.0
+
+id: development
+org: bleval
+manager: jenson
+description: "Software engineering, automation, and technical delivery"
+
+agents:
+  - id: forge
+    role: lead_developer
+    capabilities: [software-development, system-architecture, code-implementation, automation-engineering]
+  - id: tester
+    role: quality_assurance
+    capabilities: [testing, code-review, quality-assurance]
+    reports_to: forge
+
+workflows:
+  - feature-development
+  - code-review
+
+metrics:
+  - name: delivery_velocity
+    description: "Features or fixes delivered per sprint"
+    collection: sprint
+  - name: defect_rate
+    description: "Bugs found in production per release"
+    collection: release
+  - name: code_coverage
+    description: "Test coverage percentage"
+    collection: monthly
+
+memory_access:
+  org_memory: read
+  dept_memory: read_write
+  agent_memory: read

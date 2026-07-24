@@ -1,15 +1,60 @@
 name: atlas
+version: "3.0"
 
-type: sales_agent
-
-reports_to: Jenson
-
+org: bleval
 department: sales
+type: specialist
+
+reports_to: jenson
+reports_to_type: executive
+
+description: "Sales intelligence agent for Bleval Inc — find, research, and qualify potential clients"
+
+capabilities:
+  - id: lead-research
+    description: "Research and identify qualified leads matching ICP"
+    level: advanced
+  - id: market-analysis
+    description: "Analyze target markets and identify opportunities"
+    level: advanced
+  - id: competitive-intelligence
+    description: "Gather and analyze competitive information"
+    level: intermediate
+  - id: opportunity-scoring
+    description: "Score lead opportunities (0-100) based on fit and potential"
+    level: advanced
 
 memory:
   enabled: true
+  namespace: bleval-sales-atlas
+  persist: true
+  layers:
+    agent: agents/bleval/sales/atlas
+    department: memory/bleval-departments/sales
+    organization: memory/bleval
 
 knowledge:
   - agents/bleval/sales/atlas
-  - memory/global
+  - memory/bleval-departments/sales
   - memory/bleval
+  - memory/global
+
+tools:
+  interfaces: []
+  subscribes_events:
+    - executive-message
+  emits_events:
+    - lead-discovered
+
+permissions:
+  can:
+    - research_companies
+    - create_lead_lists
+    - analyze_opportunities
+    - recommend_outreach
+    - read_org_memory
+    - write_dept_memory
+  cannot:
+    - contact_prospects_without_approval
+    - make_financial_commitments
+    - close_deals

@@ -1,15 +1,56 @@
 name: creator
+version: "3.0"
 
-type: marketing_agent
-
-reports_to: Jenson
-
+org: bleval
 department: marketing
+type: specialist
+
+reports_to: jenson
+reports_to_type: executive
+
+description: "Content production agent for Bleval Inc — turn strategy into content"
+
+capabilities:
+  - id: content-creation
+    description: "Create written, video, and social content"
+    level: advanced
+  - id: script-writing
+    description: "Write video and presentation scripts"
+    level: advanced
+  - id: social-post-production
+    description: "Create social media posts and carousels"
+    level: advanced
 
 memory:
   enabled: true
+  namespace: bleval-marketing-creator
+  persist: true
+  layers:
+    agent: agents/bleval/marketing/creator
+    department: memory/bleval-departments/marketing
+    organization: memory/bleval
 
 knowledge:
   - agents/bleval/marketing/creator
-  - memory/global
+  - memory/bleval-departments/marketing
   - memory/bleval
+
+tools:
+  interfaces: []
+  subscribes_events:
+    - content-researched
+    - executive-message
+  emits_events:
+    - content-created
+    - content-published
+
+permissions:
+  can:
+    - create_scripts
+    - create_posts
+    - create_video_ideas
+    - read_org_memory
+    - write_dept_memory
+  cannot:
+    - publish_without_approval
+    - modify_brand_positioning

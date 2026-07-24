@@ -1,15 +1,64 @@
 name: apollo
+version: "3.0"
 
-type: sales_agent
-
-reports_to: Jenson
-
+org: bleval
 department: sales
+type: specialist
+
+reports_to: jenson
+reports_to_type: executive
+
+description: "Outbound sales automation agent for Bleval Inc"
+
+capabilities:
+  - id: email-campaigns
+    description: "Design and manage email outreach sequences"
+    level: advanced
+  - id: linkedin-outreach
+    description: "Generate LinkedIn connection and message sequences"
+    level: intermediate
+  - id: whatsapp-sequences
+    description: "Create WhatsApp outreach scripts and sequences"
+    level: intermediate
+  - id: follow-up-automation
+    description: "Design follow-up cadences and timing strategies"
+    level: advanced
+  - id: ab-testing
+    description: "Design and analyze A/B tests for outreach"
+    level: intermediate
 
 memory:
   enabled: true
+  namespace: bleval-sales-apollo
+  persist: true
+  layers:
+    agent: agents/bleval/sales/apollo
+    department: memory/bleval-departments/sales
+    organization: memory/bleval
 
 knowledge:
   - agents/bleval/sales/apollo
-  - memory/global
+  - memory/bleval-departments/sales
   - memory/bleval
+
+tools:
+  interfaces: [email]
+  subscribes_events:
+    - lead-qualified
+    - executive-message
+  emits_events:
+    - campaign-created
+    - outreach-sent
+    - response-received
+
+permissions:
+  can:
+    - create_campaigns
+    - write_sequences
+    - generate_messages
+    - read_org_memory
+    - write_dept_memory
+  cannot:
+    - send_externally_without_approval
+    - make_financial_commitments
+    - close_deals

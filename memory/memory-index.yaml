@@ -1,0 +1,47 @@
+# Bleval AI OS — Memory Architecture Index
+# Version: 3.0.0
+# Layered memory: Global → Organization → Department → Agent
+# Knowledge flows downward. Learning flows upward.
+
+version: "3.0"
+architecture: layered
+
+layers:
+  global:
+    description: "Platform-wide truths that apply to all organizations"
+    access: read_only
+    flow: "downward to organizations"
+    files:
+      - architecture.md
+      - glossary.md
+
+  organization:
+    description: "Per-organization knowledge and identity"
+    access: org_executives_read_write
+    flow: "downward to departments, upward to global"
+    locations:
+      bleval: bleval/
+      hov: hov/
+      personal: personal/
+
+  department:
+    description: "Per-department operational knowledge, KPIs, and learnings"
+    access: dept_agents_read_write
+    flow: "downward to agents, upward to organization"
+    locations:
+      bleval: bleval-departments/
+
+  agent:
+    description: "Per-agent working memory and learned patterns"
+    access: agent_owner_read_write
+    flow: "upward to department learnings"
+    location: memory/agents/{agent_name}/
+
+rules:
+  - "Knowledge flows downward: global → organization → department → agent"
+  - "Learning flows upward: agent → department → organization"
+  - "No duplication: write at the most specific layer, inherit from above"
+  - "Agents inherit department → organization → global memory in priority order"
+  - "Agent memory is private unless shared via events"
+  - "Department memory is shared among all agents in that department"
+  - "Organization memory is shared among all executives and departments"

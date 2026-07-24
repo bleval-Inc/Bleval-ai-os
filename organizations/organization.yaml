@@ -1,0 +1,71 @@
+# Bleval AI OS — Organization Registry
+# Version: 3.0.0
+# All organizations register here. New orgs are added as top-level entries.
+
+organizations:
+  - id: bleval
+    name: Bleval Inc
+    description: "AI-powered revenue systems for service businesses"
+    executives:
+      - jenson
+    departments:
+      - sales
+      - marketing
+      - development
+      - operations
+      - finance
+    enabled_tools:
+      - slack
+      - github
+      - crm
+      - email
+      - calendly
+    workflows:
+      - sales/prospect-research
+      - sales/outreach-campaign
+      - sales/deal-closing
+      - marketing/content-production
+      - marketing/campaign-launch
+      - marketing/market-research
+      - development/feature-development
+      - development/code-review
+      - operations/daily-report
+      - operations/weekly-review
+    memory_locations:
+      - memory/bleval
+      - memory/bleval-departments
+
+  - id: hov
+    name: House of Valta
+    description: "Brand strategy, creative direction, and disciplined growth"
+    executives:
+      - valta_prime
+    departments:
+      - brand
+      - creative
+      - research
+      - content
+      - growth
+      - operations
+    enabled_tools:
+      - slack
+      - calendly
+    workflows:
+      - marketing/campaign-launch
+    memory_locations:
+      - memory/hov
+
+  - id: personal
+    name: Personal Operations
+    description: "Founder productivity, knowledge management, and personal systems"
+    executives:
+      - yamako
+    departments:
+      - productivity
+      - knowledge
+    enabled_tools:
+      - calendar
+      - email
+    workflows: []
+    memory_locations:
+      - memory/personal

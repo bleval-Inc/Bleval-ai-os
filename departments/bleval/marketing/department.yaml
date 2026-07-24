@@ -1,0 +1,39 @@
+# Marketing Department — Bleval Inc
+# Version: 3.0.0
+
+id: marketing
+org: bleval
+manager: jenson
+description: "Market research, content production, and campaign optimization"
+
+agents:
+  - id: nova
+    role: market_intelligence
+    capabilities: [market-analysis, competitive-intelligence, trend-identification, seo-research, content-strategy]
+  - id: creator
+    role: content_production
+    capabilities: [content-creation, script-writing, social-post-production]
+  - id: analyst
+    role: performance_analytics
+    capabilities: [performance-analysis, campaign-tracking, trend-analysis]
+
+workflows:
+  - content-production
+  - campaign-launch
+  - market-research
+
+metrics:
+  - name: content_pieces
+    description: "Content pieces produced per week"
+    collection: weekly
+  - name: engagement_rate
+    description: "Average engagement rate on published content"
+    collection: weekly
+  - name: campaign_roi
+    description: "ROI of marketing campaigns"
+    collection: monthly
+
+memory_access:
+  org_memory: read
+  dept_memory: read_write
+  agent_memory: read

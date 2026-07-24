@@ -1,0 +1,127 @@
+# Bleval AI OS — Department Registry
+# Version: 3.0.0
+# Cross-org department index. Departments belong to organizations.
+
+departments:
+  # ── Bleval Inc ──────────────────────────────────────────
+  - org: bleval
+    id: sales
+    manager: jenson
+    agents: [atlas, apollo, closer]
+    capabilities:
+      - lead-research
+      - market-analysis
+      - competitive-intelligence
+      - email-campaigns
+      - linkedin-outreach
+      - whatsapp-sequences
+      - follow-up-automation
+      - ab-testing
+      - proposal-creation
+      - call-preparation
+      - objection-handling
+      - deal-closing
+      - lost-deal-analysis
+
+  - org: bleval
+    id: marketing
+    manager: jenson
+    agents: [nova, creator, analyst]
+    capabilities:
+      - trend-identification
+      - seo-research
+      - content-strategy
+      - content-creation
+      - script-writing
+      - social-post-production
+      - performance-analysis
+      - campaign-tracking
+      - trend-analysis
+
+  - org: bleval
+    id: development
+    manager: jenson
+    agents: [forge, tester]
+    capabilities:
+      - software-development
+      - system-architecture
+      - code-implementation
+      - automation-engineering
+      - testing
+      - code-review
+      - quality-assurance
+
+  - org: bleval
+    id: operations
+    manager: jenson
+    agents: [ledger, pulse]
+    capabilities:
+      - financial-tracking
+      - expense-monitoring
+      - financial-reporting
+      - health-monitoring
+      - client-onboarding
+      - retention-management
+      - status-reporting
+
+  - org: bleval
+    id: finance
+    manager: jenson
+    agents: [treasury, auditor]
+    capabilities:
+      - budget-management
+      - cash-flow-tracking
+      - financial-planning
+      - auditing
+      - compliance-checking
+      - risk-assessment
+
+  # ── House of Valta ──────────────────────────────────────
+  - org: hov
+    id: brand
+    manager: valta_prime
+    agents: []
+    capabilities: []
+
+  - org: hov
+    id: creative
+    manager: valta_prime
+    agents: []
+    capabilities: []
+
+  - org: hov
+    id: research
+    manager: valta_prime
+    agents: []
+    capabilities: []
+
+  - org: hov
+    id: content
+    manager: valta_prime
+    agents: []
+    capabilities: []
+
+  - org: hov
+    id: growth
+    manager: valta_prime
+    agents: []
+    capabilities: []
+
+  - org: hov
+    id: operations
+    manager: valta_prime
+    agents: []
+    capabilities: []
+
+  # ── Personal Operations ─────────────────────────────────
+  - org: personal
+    id: productivity
+    manager: yamako
+    agents: []
+    capabilities: []
+
+  - org: personal
+    id: knowledge
+    manager: yamako
+    agents: []
+    capabilities: []

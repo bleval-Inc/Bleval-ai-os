@@ -1,0 +1,19 @@
+# Personal Operations — Tool Registry
+# Version: 3.0.0
+
+tools:
+  - id: calendar
+    interface: scheduling
+    description: "Personal calendar management"
+    capabilities:
+      - read_events
+      - create_events
+      - manage_schedule
+
+  - id: email
+    interface: communication
+    description: "Personal email management"
+    capabilities:
+      - read_email
+      - send_email
+      - organize_inbox

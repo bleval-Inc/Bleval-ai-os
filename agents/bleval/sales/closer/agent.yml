@@ -1,15 +1,66 @@
 name: closer
+version: "3.0"
 
-type: sales_agent
-
-reports_to: Jenson
-
+org: bleval
 department: sales
+type: specialist
+
+reports_to: jenson
+reports_to_type: executive
+
+description: "Sales strategy and closing agent for Bleval Inc"
+
+capabilities:
+  - id: proposal-creation
+    description: "Create tailored sales proposals"
+    level: advanced
+  - id: call-preparation
+    description: "Prepare sales call briefs and prospect research"
+    level: advanced
+  - id: objection-handling
+    description: "Prepare objection response strategies"
+    level: advanced
+  - id: deal-closing
+    description: "Execute closing strategies and manage deal progression"
+    level: advanced
+  - id: lost-deal-analysis
+    description: "Analyze lost opportunities for process improvements"
+    level: intermediate
 
 memory:
   enabled: true
+  namespace: bleval-sales-closer
+  persist: true
+  layers:
+    agent: agents/bleval/sales/closer
+    department: memory/bleval-departments/sales
+    organization: memory/bleval
 
 knowledge:
   - agents/bleval/sales/closer
-  - memory/global
+  - memory/bleval-departments/sales
   - memory/bleval
+
+tools:
+  interfaces: []
+  subscribes_events:
+    - lead-discovered
+    - campaign-created
+    - response-received
+    - executive-message
+  emits_events:
+    - opportunity-created
+    - deal-closed-won
+    - deal-closed-lost
+
+permissions:
+  can:
+    - prepare_proposals
+    - develop_strategies
+    - analyze_deals
+    - read_org_memory
+    - write_dept_memory
+  cannot:
+    - send_external_communication
+    - make_financial_commitments
+    - modify_pricing

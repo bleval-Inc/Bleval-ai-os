@@ -1,0 +1,82 @@
+# Bleval AI OS — Capability Search Index
+# Version: 3.0.0
+# Jenson uses this to dynamically discover who can do what.
+
+version: "3.0"
+type: searchable-index
+
+keywords:
+  # Research keywords
+  lead: [lead-research, lead-qualification, opportunity-scoring, market-analysis]
+  research: [lead-research, market-analysis, competitive-intelligence, trend-identification, seo-research]
+  market: [market-analysis, competitive-intelligence, trend-identification]
+  competitor: [competitive-intelligence]
+  trend: [trend-identification]
+  seo: [seo-research]
+  keyword: [seo-research]
+
+  # Outreach keywords
+  email: [email-campaigns, ab-testing]
+  outreach: [email-campaigns, linkedin-outreach, whatsapp-sequences]
+  linkedin: [linkedin-outreach]
+  whatsapp: [whatsapp-sequences]
+  followup: [follow-up-automation]
+  follow-up: [follow-up-automation]
+  ab-test: [ab-testing]
+
+  # Content keywords
+  content: [content-creation, content-strategy, script-writing, social-post-production]
+  script: [script-writing]
+  social: [social-post-production]
+  video: [script-writing]
+  copy: [content-creation]
+  strategy: [content-strategy, strategic-planning]
+
+  # Sales keywords
+  sales: [proposal-creation, call-preparation, objection-handling, deal-closing]
+  proposal: [proposal-creation]
+  objection: [objection-handling]
+  closing: [deal-closing]
+  lost: [lost-deal-analysis]
+
+  # Development keywords
+  development: [software-development, code-implementation, automation-engineering]
+  software: [software-development]
+  code: [code-implementation, code-review]
+  system: [system-architecture]
+  architecture: [system-architecture]
+  automation: [automation-engineering]
+  test: [testing, quality-assurance]
+  qa: [quality-assurance]
+
+  # Analysis keywords
+  analysis: [performance-analysis, trend-analysis, campaign-tracking, lost-deal-analysis]
+  performance: [performance-analysis]
+  campaign: [campaign-tracking]
+  metrics: [campaign-tracking, financial-tracking]
+  report: [financial-reporting, status-reporting]
+
+  # Operations keywords
+  tracking: [financial-tracking, expense-monitoring, health-monitoring]
+  expense: [expense-monitoring]
+  finance: [financial-tracking, financial-reporting, budget-management]
+  budget: [budget-management]
+  cash: [cash-flow-tracking]
+  plan: [financial-planning, strategic-planning]
+  forecast: [financial-planning]
+  client: [client-onboarding, retention-management]
+  onboarding: [client-onboarding]
+  retention: [retention-management]
+  status: [status-reporting]
+
+  # Finance keywords
+  treasury: [budget-management, cash-flow-tracking]
+  audit: [auditing, compliance-checking]
+  compliance: [compliance-checking]
+  risk: [risk-assessment]
+
+  # Coordination keywords
+  oversee: [executive-oversight]
+  delegate: [delegation]
+  decide: [decision-support]
+  coordinate: [executive-oversight, delegation]

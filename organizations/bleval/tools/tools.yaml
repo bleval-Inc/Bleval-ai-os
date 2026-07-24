@@ -1,0 +1,46 @@
+# Bleval Inc — Tool Registry
+# Version: 3.0.0
+# Organizations own tools. Agents request tool access through interfaces.
+# The AI runtime (Ruflo) maps these interfaces to concrete implementations.
+
+tools:
+  - id: slack
+    interface: messaging
+    description: "Team communication and notifications"
+    capabilities:
+      - send_message
+      - read_channel
+      - notify_agent
+
+  - id: github
+    interface: version_control
+    description: "Code repository and version control"
+    capabilities:
+      - read_repository
+      - create_pr
+      - review_code
+      - manage_issues
+
+  - id: crm
+    interface: customer_management
+    description: "Customer relationship management"
+    capabilities:
+      - read_contacts
+      - update_leads
+      - track_opportunities
+
+  - id: email
+    interface: communication
+    description: "Email outreach and communication"
+    capabilities:
+      - send_email
+      - create_sequence
+      - track_response
+
+  - id: calendly
+    interface: scheduling
+    description: "Meeting scheduling and availability"
+    capabilities:
+      - check_availability
+      - schedule_meeting
+      - manage_calendar

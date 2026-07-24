@@ -1,0 +1,384 @@
+# Bleval AI OS — Capability Catalog
+# Version: 3.0.0
+# Every agent exposes capabilities. Jenson assigns work based on capabilities, not names.
+# New capabilities can be added without modifying existing agents.
+
+version: "3.0"
+type: master-catalog
+
+capabilities:
+  # ── Research ──────────────────────────────────────────────
+  - id: lead-research
+    category: research
+    name: "Lead Research"
+    description: "Research and identify qualified leads matching ICP"
+    agents: [atlas]
+    workflows: [sales/prospect-research]
+    level: advanced
+
+  - id: market-analysis
+    category: research
+    name: "Market Analysis"
+    description: "Analyze target markets and identify opportunities"
+    agents: [atlas, nova]
+    workflows: [sales/prospect-research, marketing/market-research]
+    level: advanced
+
+  - id: competitive-intelligence
+    category: research
+    name: "Competitive Intelligence"
+    description: "Gather and analyze competitive positioning"
+    agents: [atlas, nova]
+    workflows: [sales/prospect-research, marketing/market-research]
+    level: intermediate
+
+  - id: trend-identification
+    category: research
+    name: "Trend Identification"
+    description: "Identify market trends and content opportunities"
+    agents: [nova]
+    workflows: [marketing/market-research]
+    level: advanced
+
+  - id: seo-research
+    category: research
+    name: "SEO Research"
+    description: "Keyword and search opportunity research"
+    agents: [nova]
+    workflows: [marketing/market-research]
+    level: intermediate
+
+  # ── Outreach ──────────────────────────────────────────────
+  - id: email-campaigns
+    category: outreach
+    name: "Email Campaigns"
+    description: "Design and manage email outreach sequences"
+    agents: [apollo]
+    workflows: [sales/outreach-campaign]
+    level: advanced
+
+  - id: linkedin-outreach
+    category: outreach
+    name: "LinkedIn Outreach"
+    description: "LinkedIn message and connection campaigns"
+    agents: [apollo]
+    workflows: [sales/outreach-campaign]
+    level: intermediate
+
+  - id: whatsapp-sequences
+    category: outreach
+    name: "WhatsApp Sequences"
+    description: "WhatsApp outreach scripts and sequences"
+    agents: [apollo]
+    workflows: [sales/outreach-campaign]
+    level: intermediate
+
+  - id: follow-up-automation
+    category: outreach
+    name: "Follow-up Automation"
+    description: "Design follow-up cadences and timing"
+    agents: [apollo]
+    workflows: [sales/outreach-campaign]
+    level: advanced
+
+  - id: ab-testing
+    category: outreach
+    name: "A/B Testing"
+    description: "Design and analyze outreach experiments"
+    agents: [apollo]
+    workflows: [sales/outreach-campaign]
+    level: intermediate
+
+  # ── Closing ───────────────────────────────────────────────
+  - id: proposal-creation
+    category: closing
+    name: "Proposal Creation"
+    description: "Create tailored sales proposals"
+    agents: [closer]
+    workflows: [sales/deal-closing]
+    level: advanced
+
+  - id: call-preparation
+    category: closing
+    name: "Call Preparation"
+    description: "Prepare sales call briefs and research"
+    agents: [closer]
+    workflows: [sales/deal-closing]
+    level: advanced
+
+  - id: objection-handling
+    category: closing
+    name: "Objection Handling"
+    description: "Prepare objection response strategies"
+    agents: [closer]
+    workflows: [sales/deal-closing]
+    level: advanced
+
+  - id: deal-closing
+    category: closing
+    name: "Deal Closing"
+    description: "Sales closing strategies and execution"
+    agents: [closer]
+    workflows: [sales/deal-closing]
+    level: advanced
+
+  - id: lost-deal-analysis
+    category: closing
+    name: "Lost Deal Analysis"
+    description: "Analyze lost opportunities for insights"
+    agents: [closer]
+    workflows: [sales/deal-closing]
+    level: intermediate
+
+  # ── Content ───────────────────────────────────────────────
+  - id: content-creation
+    category: content
+    name: "Content Creation"
+    description: "Produce written, video, and social content"
+    agents: [creator]
+    workflows: [marketing/content-production]
+    level: advanced
+
+  - id: script-writing
+    category: content
+    name: "Script Writing"
+    description: "Write video and presentation scripts"
+    agents: [creator]
+    workflows: [marketing/content-production]
+    level: advanced
+
+  - id: social-post-production
+    category: content
+    name: "Social Post Production"
+    description: "Create social media posts and carousels"
+    agents: [creator]
+    workflows: [marketing/content-production]
+    level: advanced
+
+  - id: content-strategy
+    category: content
+    name: "Content Strategy"
+    description: "Develop content marketing strategies"
+    agents: [nova]
+    workflows: [marketing/content-production]
+    level: advanced
+
+  - id: performance-analysis
+    category: analysis
+    name: "Performance Analysis"
+    description: "Analyze content and campaign performance"
+    agents: [analyst]
+    workflows: [marketing/campaign-launch]
+    level: advanced
+
+  - id: campaign-tracking
+    category: analysis
+    name: "Campaign Tracking"
+    description: "Track campaign metrics and ROI"
+    agents: [analyst]
+    workflows: [marketing/campaign-launch]
+    level: advanced
+
+  - id: trend-analysis
+    category: analysis
+    name: "Trend Analysis"
+    description: "Identify performance trends and patterns"
+    agents: [analyst]
+    workflows: [marketing/campaign-launch]
+    level: intermediate
+
+  # ── Development ───────────────────────────────────────────
+  - id: software-development
+    category: development
+    name: "Software Development"
+    description: "Build and implement software systems"
+    agents: [forge]
+    workflows: [development/feature-development]
+    level: advanced
+
+  - id: system-architecture
+    category: development
+    name: "System Architecture"
+    description: "Design system architecture and technical specs"
+    agents: [forge]
+    workflows: [development/feature-development]
+    level: advanced
+
+  - id: code-implementation
+    category: development
+    name: "Code Implementation"
+    description: "Write production code"
+    agents: [forge]
+    workflows: [development/feature-development]
+    level: advanced
+
+  - id: automation-engineering
+    category: development
+    name: "Automation Engineering"
+    description: "Build automated systems and workflows"
+    agents: [forge]
+    workflows: [development/feature-development]
+    level: advanced
+
+  - id: testing
+    category: development
+    name: "Testing"
+    description: "Write and execute tests"
+    agents: [tester]
+    workflows: [development/code-review]
+    level: advanced
+
+  - id: code-review
+    category: development
+    name: "Code Review"
+    description: "Review code for quality and correctness"
+    agents: [tester]
+    workflows: [development/code-review]
+    level: advanced
+
+  - id: quality-assurance
+    category: development
+    name: "Quality Assurance"
+    description: "Validate deliverables against requirements"
+    agents: [tester]
+    workflows: [development/code-review]
+    level: advanced
+
+  # ── Operations ────────────────────────────────────────────
+  - id: financial-tracking
+    category: operations
+    name: "Financial Tracking"
+    description: "Track expenses, revenue, and financial metrics"
+    agents: [ledger]
+    workflows: [operations/daily-report, operations/weekly-review]
+    level: advanced
+
+  - id: expense-monitoring
+    category: operations
+    name: "Expense Monitoring"
+    description: "Monitor and categorize expenses"
+    agents: [ledger]
+    workflows: [operations/daily-report]
+    level: intermediate
+
+  - id: financial-reporting
+    category: operations
+    name: "Financial Reporting"
+    description: "Generate financial reports and forecasts"
+    agents: [ledger]
+    workflows: [operations/weekly-review]
+    level: advanced
+
+  - id: health-monitoring
+    category: operations
+    name: "Health Monitoring"
+    description: "Monitor operational health and performance"
+    agents: [pulse]
+    workflows: [operations/daily-report]
+    level: advanced
+
+  - id: client-onboarding
+    category: operations
+    name: "Client Onboarding"
+    description: "Support client onboarding and setup"
+    agents: [pulse]
+    workflows: [operations/daily-report]
+    level: advanced
+
+  - id: retention-management
+    category: operations
+    name: "Retention Management"
+    description: "Monitor and improve client retention"
+    agents: [pulse]
+    workflows: [operations/weekly-review]
+    level: advanced
+
+  - id: status-reporting
+    category: operations
+    name: "Status Reporting"
+    description: "Generate operational status reports"
+    agents: [pulse]
+    workflows: [operations/daily-report, operations/weekly-review]
+    level: intermediate
+
+  # ── Finance ───────────────────────────────────────────────
+  - id: budget-management
+    category: finance
+    name: "Budget Management"
+    description: "Track and manage budgets"
+    agents: [treasury]
+    workflows: []
+    level: advanced
+
+  - id: cash-flow-tracking
+    category: finance
+    name: "Cash Flow Tracking"
+    description: "Monitor cash flow and projections"
+    agents: [treasury]
+    workflows: []
+    level: advanced
+
+  - id: financial-planning
+    category: finance
+    name: "Financial Planning"
+    description: "Create financial plans and forecasts"
+    agents: [treasury]
+    workflows: []
+    level: advanced
+
+  - id: auditing
+    category: finance
+    name: "Auditing"
+    description: "Audit financial records and processes"
+    agents: [auditor]
+    workflows: []
+    level: advanced
+
+  - id: compliance-checking
+    category: finance
+    name: "Compliance Checking"
+    description: "Verify compliance with financial policies"
+    agents: [auditor]
+    workflows: []
+    level: advanced
+
+  - id: risk-assessment
+    category: finance
+    name: "Risk Assessment"
+    description: "Identify and assess financial risks"
+    agents: [auditor]
+    workflows: []
+    level: advanced
+
+  # ── Executive ─────────────────────────────────────────────
+  - id: executive-oversight
+    category: coordination
+    name: "Executive Oversight"
+    description: "High-level strategic oversight and coordination"
+    agents: [jenson, valta_prime, yamako]
+    workflows: [cross-org/executive-sync, cross-org/escalation]
+    level: advanced
+
+  - id: strategic-planning
+    category: coordination
+    name: "Strategic Planning"
+    description: "Strategic planning and execution"
+    agents: [jenson, valta_prime]
+    workflows: [cross-org/executive-sync]
+    level: advanced
+
+  - id: delegation
+    category: coordination
+    name: "Delegation"
+    description: "Assign work based on capabilities"
+    agents: [jenson, yamako]
+    workflows: []
+    level: advanced
+
+  - id: decision-support
+    category: coordination
+    name: "Decision Support"
+    description: "Provide analysis and recommendations"
+    agents: [jenson, valta_prime, yamako]
+    workflows: [cross-org/escalation]
+    level: advanced

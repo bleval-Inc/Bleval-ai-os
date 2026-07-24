@@ -1,0 +1,54 @@
+# Outreach Campaign Workflow
+# Version: 3.0.0
+
+name: Outreach Campaign
+org: bleval
+department: sales
+coordinator: jenson
+trigger_event: lead-qualified
+
+agents:
+  - apollo
+
+steps:
+  - id: 1
+    name: "Campaign Design"
+    agent: apollo
+    description: "Design the outreach sequence based on lead profile"
+    inputs:
+      - qualified-lead
+    outputs:
+      - campaign-plan
+    events_emitted: []
+
+  - id: 2
+    name: "Execute Outreach"
+    agent: apollo
+    description: "Execute outreach across selected channels"
+    inputs:
+      - campaign-plan
+    outputs:
+      - outreach-results
+    events_emitted:
+      - outreach-sent
+
+  - id: 3
+    name: "Track Responses"
+    agent: apollo
+    description: "Monitor and track prospect responses"
+    inputs:
+      - outreach-results
+    outputs:
+      - response-data
+    events_emitted:
+      - response-received
+
+  - id: 4
+    name: "Performance Report"
+    agent: apollo
+    description: "Report campaign performance metrics"
+    inputs:
+      - response-data
+    outputs:
+      - campaign-report
+    events_emitted: []

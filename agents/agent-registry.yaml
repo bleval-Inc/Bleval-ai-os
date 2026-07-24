@@ -1,0 +1,179 @@
+# Bleval AI OS — Agent Registry
+# Version: 3.0.0
+# Agents self-register here. No hardcoded references.
+# Jenson discovers agents dynamically from this registry.
+
+version: "3.0"
+type: self-registering
+
+agents:
+  # ── Executives ──────────────────────────────────────────
+  - id: jenson
+    org: bleval
+    type: executive
+    department: executive
+    reports_to: founder
+    capabilities:
+      - executive-oversight
+      - strategic-planning
+      - delegation
+      - decision-support
+      - operational-review
+
+  - id: valta_prime
+    org: hov
+    type: executive
+    department: executive
+    reports_to: founder
+    capabilities:
+      - executive-oversight
+      - strategic-planning
+      - brand-guidance
+      - growth-ops
+      - decision-support
+
+  - id: yamako
+    org: personal
+    type: executive
+    department: executive
+    reports_to: founder
+    capabilities:
+      - executive-oversight
+      - daily-planning
+      - productivity-ops
+      - coordination
+      - decision-support
+
+  # ── Sales Department ────────────────────────────────────
+  - id: atlas
+    org: bleval
+    department: sales
+    type: specialist
+    reports_to: jenson
+    capabilities:
+      - lead-research
+      - market-analysis
+      - competitive-intelligence
+      - opportunity-scoring
+
+  - id: apollo
+    org: bleval
+    department: sales
+    type: specialist
+    reports_to: jenson
+    capabilities:
+      - email-campaigns
+      - linkedin-outreach
+      - whatsapp-sequences
+      - follow-up-automation
+      - ab-testing
+
+  - id: closer
+    org: bleval
+    department: sales
+    type: specialist
+    reports_to: jenson
+    capabilities:
+      - proposal-creation
+      - call-preparation
+      - objection-handling
+      - deal-closing
+      - lost-deal-analysis
+
+  # ── Marketing Department ────────────────────────────────
+  - id: nova
+    org: bleval
+    department: marketing
+    type: specialist
+    reports_to: jenson
+    capabilities:
+      - market-analysis
+      - competitive-intelligence
+      - trend-identification
+      - seo-research
+      - content-strategy
+
+  - id: creator
+    org: bleval
+    department: marketing
+    type: specialist
+    reports_to: jenson
+    capabilities:
+      - content-creation
+      - script-writing
+      - social-post-production
+
+  - id: analyst
+    org: bleval
+    department: marketing
+    type: specialist
+    reports_to: jenson
+    capabilities:
+      - performance-analysis
+      - campaign-tracking
+      - trend-analysis
+
+  # ── Development Department ──────────────────────────────
+  - id: forge
+    org: bleval
+    department: development
+    type: specialist
+    reports_to: jenson
+    capabilities:
+      - software-development
+      - system-architecture
+      - code-implementation
+      - automation-engineering
+
+  - id: tester
+    org: bleval
+    department: development
+    type: specialist
+    reports_to: forge
+    capabilities:
+      - testing
+      - code-review
+      - quality-assurance
+
+  # ── Operations Department ───────────────────────────────
+  - id: ledger
+    org: bleval
+    department: operations
+    type: specialist
+    reports_to: jenson
+    capabilities:
+      - financial-tracking
+      - expense-monitoring
+      - financial-reporting
+
+  - id: pulse
+    org: bleval
+    department: operations
+    type: specialist
+    reports_to: jenson
+    capabilities:
+      - health-monitoring
+      - client-onboarding
+      - retention-management
+      - status-reporting
+
+  # ── Finance Department ──────────────────────────────────
+  - id: treasury
+    org: bleval
+    department: finance
+    type: specialist
+    reports_to: jenson
+    capabilities:
+      - budget-management
+      - cash-flow-tracking
+      - financial-planning
+
+  - id: auditor
+    org: bleval
+    department: finance
+    type: specialist
+    reports_to: jenson
+    capabilities:
+      - auditing
+      - compliance-checking
+      - risk-assessment

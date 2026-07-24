@@ -1,0 +1,18 @@
+# House of Valta — Tool Registry
+# Version: 3.0.0
+
+tools:
+  - id: slack
+    interface: messaging
+    description: "Team communication and notifications"
+    capabilities:
+      - send_message
+      - read_channel
+
+  - id: calendly
+    interface: scheduling
+    description: "Meeting scheduling and availability"
+    capabilities:
+      - check_availability
+      - schedule_meeting
+      - manage_calendar

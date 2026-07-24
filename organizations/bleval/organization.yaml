@@ -1,0 +1,65 @@
+# Bleval Inc — Organization Definition
+# Version: 3.0.0
+
+id: bleval
+name: Bleval Inc
+description: "Build AI-powered revenue systems for service businesses"
+founded: 2024
+founder: Tounga
+
+executives:
+  - id: jenson
+    role: CEO
+    scope: all_bleval
+
+departments:
+  sales:
+    manager: jenson
+    agents: [atlas, apollo, closer]
+    workflows: [prospect-research, outreach-campaign, deal-closing]
+  marketing:
+    manager: jenson
+    agents: [nova, creator, analyst]
+    workflows: [content-production, campaign-launch, market-research]
+  development:
+    manager: jenson
+    agents: [forge, tester]
+    workflows: [feature-development, code-review, release]
+  operations:
+    manager: jenson
+    agents: [ledger, pulse]
+    workflows: [daily-report, weekly-review, metric-collection]
+  finance:
+    manager: jenson
+    agents: [treasury, auditor]
+    workflows: []
+
+boundaries:
+  can_control: [bleval_systems]
+  cannot_control: [hov_systems, personal_systems]
+  spending_limit: 0
+
+tools_enabled:
+  - slack
+  - github
+  - crm
+  - email
+  - calendly
+
+memory_access:
+  global: read
+  organization: read_write
+  departments: read_write
+  agents: read
+
+workflows_enabled:
+  - sales/prospect-research
+  - sales/outreach-campaign
+  - sales/deal-closing
+  - marketing/content-production
+  - marketing/campaign-launch
+  - marketing/market-research
+  - development/feature-development
+  - development/code-review
+  - operations/daily-report
+  - operations/weekly-review

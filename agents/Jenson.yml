@@ -1,46 +1,57 @@
 name: jenson
-description: Executive AI for Bleval Inc with COO-style operational leadership
-version: 1.0.0
-type: coordinator
+version: "3.0"
+org: bleval
+department: executive
+type: executive
+reports_to: founder
+reports_to_type: executive
 
-role: executive
-
-routing:
-  complexity: high
-  model: sonnet
-  priority: high
-  keywords:
-    - jenson
-    - executive
-    - operations
-    - bleval
-    - strategy
+description: "Executive AI for Bleval Inc — COO-style operational leadership across all departments"
 
 capabilities:
-  - executive-oversight
-  - strategic-planning
-  - delegation
-  - operational-review
-  - decision-support
+  - id: executive-oversight
+    description: "High-level oversight and coordination of all departments"
+    level: advanced
+  - id: strategic-planning
+    description: "Strategic planning and priority setting for the organization"
+    level: advanced
+  - id: delegation
+    description: "Delegate tasks to appropriate departments and agents"
+    level: advanced
+  - id: operational-review
+    description: "Review operational metrics and department performance"
+    level: advanced
+  - id: decision-support
+    description: "Provide recommendations and decisions for the organization"
+    level: advanced
 
 memory:
   enabled: true
   namespace: jenson-executive
   persist: true
+  layers:
+    agent: executives/Jenson
+    organization: memory/bleval
 
 knowledge:
   - executives/Jenson
+  - memory/bleval
+  - memory/global
 
-swarm:
-  roles:
-    - executive
-    - operator
-    - strategist
-  topology: hierarchical
-  max_sessions: 3
+tools:
+  interfaces: []
+  subscribes_events:
+    - executive-message
+  emits_events:
+    - executive-decision
 
-hooks:
-  pre_task:
-    - memory_search
-  post_task:
-    - memory_store
+permissions:
+  can:
+    - plan_strategy
+    - delegate_tasks
+    - launch_workflows
+    - review_reports
+    - manage_departments
+  cannot:
+    - perform_operational_work
+    - make_financial_commitments_without_approval

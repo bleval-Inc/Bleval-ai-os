@@ -1,0 +1,53 @@
+# Feature Development Workflow
+# Version: 3.0.0
+
+name: Feature Development
+org: bleval
+department: development
+coordinator: jenson
+trigger_event: feature-requested
+
+agents:
+  - forge
+  - tester
+
+steps:
+  - id: 1
+    name: "Architecture Design"
+    agent: forge
+    description: "Design system architecture and implementation approach"
+    outputs:
+      - architecture-plan
+    events_emitted: []
+
+  - id: 2
+    name: "Implementation"
+    agent: forge
+    description: "Build the feature or fix"
+    inputs:
+      - architecture-plan
+    outputs:
+      - implementation
+    events_emitted:
+      - development-completed
+
+  - id: 3
+    name: "Quality Assurance"
+    agent: tester
+    description: "Test and validate the implementation"
+    inputs:
+      - implementation
+    outputs:
+      - qa-report
+    events_emitted:
+      - test-completed
+
+  - id: 4
+    name: "Review and Approve"
+    agent: jenson
+    description: "Review deliverables and approve"
+    inputs:
+      - qa-report
+    outputs:
+      - approval
+    events_emitted: []

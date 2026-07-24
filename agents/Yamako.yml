@@ -1,45 +1,57 @@
 name: yamako
-description: Personal chief of staff AI for the founder with planning and execution focus
-type: coordinator
+version: "3.0"
+org: personal
+department: executive
+type: executive
+reports_to: founder
+reports_to_type: executive
 
-role: executive
-
-routing:
-  complexity: high
-  model: sonnet
-  priority: high
-  keywords:
-    - yamako
-    - executive
-    - productivity
-    - planning
-    - founder-ops
+description: "Personal chief of staff AI for the founder — planning, productivity, and execution"
 
 capabilities:
-  - executive-oversight
-  - daily-planning
-  - productivity-ops
-  - coordination
-  - decision-support
+  - id: executive-oversight
+    description: "High-level oversight and coordination of personal operations"
+    level: advanced
+  - id: daily-planning
+    description: "Daily planning and priority management"
+    level: advanced
+  - id: productivity-ops
+    description: "Manage productivity systems and workflows"
+    level: advanced
+  - id: coordination
+    description: "Coordinate across personal projects and commitments"
+    level: advanced
+  - id: decision-support
+    description: "Provide recommendations and decisions for personal operations"
+    level: advanced
 
 memory:
   enabled: true
   namespace: yamako-executive
   persist: true
+  layers:
+    agent: executives/Yamako
+    organization: memory/personal
 
 knowledge:
   - executives/Yamako
+  - memory/personal
+  - memory/global
 
-swarm:
-  roles:
-    - executive
-    - productivity-operator
-    - chief-of-staff
-  topology: hierarchical
-  max_sessions: 3
+tools:
+  interfaces: []
+  subscribes_events:
+    - executive-message
+  emits_events:
+    - executive-decision
 
-hooks:
-  pre_task:
-    - memory_search
-  post_task:
-    - memory_store
+permissions:
+  can:
+    - plan_strategy
+    - delegate_tasks
+    - launch_workflows
+    - manage_personal_projects
+    - track_goals
+  cannot:
+    - perform_operational_work
+    - make_financial_commitments_without_approval
