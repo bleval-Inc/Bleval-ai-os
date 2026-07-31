@@ -1,26 +1,442 @@
 @import "tailwindcss";
 
+/* ── AXIOM OS Design System ──────────────────────────────────────────
+ * Apple-quality. Clean. Confident. No cyberpunk, no glow, no clutter.
+ * Glassmorphism + neumorphism blend. Typography-first.
+ * ──────────────────────────────────────────────────────────────────── */
+
+/* ═══════════════════════════════════════════════════════════════════
+   AXIOM Color System
+   ═══════════════════════════════════════════════════════════════════ */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Core backgrounds — warm, elegant */
+  --axiom-bg-base: #fafaf9;
+  --axiom-bg-surface: #ffffff;
+  --axiom-bg-elevated: #f5f5f4;
+  --axiom-bg-glass: rgba(255, 255, 255, 0.7);
+
+  /* Core text */
+  --axiom-text-primary: #1c1917;
+  --axiom-text-secondary: #57534e;
+  --axiom-text-tertiary: #a8a29e;
+
+  /* Accent — calm indigo */
+  --axiom-accent: #6366f1;
+  --axiom-accent-hover: #4f46e5;
+  --axiom-accent-subtle: rgba(99, 102, 241, 0.08);
+  --axiom-accent-muted: rgba(99, 102, 241, 0.15);
+
+  /* Semantic */
+  --axiom-success: #22c55e;
+  --axiom-warning: #f59e0b;
+  --axiom-error: #ef4444;
+  --axiom-info: #3b82f6;
+
+  /* Borders */
+  --axiom-border: rgba(28, 25, 23, 0.08);
+  --axiom-border-glass: rgba(255, 255, 255, 0.2);
+
+  /* Shadows */
+  --axiom-shadow-sm: 0 1px 2px rgba(28, 25, 23, 0.05);
+  --axiom-shadow-md: 0 4px 6px -1px rgba(28, 25, 23, 0.06),
+    0 2px 4px -2px rgba(28, 25, 23, 0.05);
+  --axiom-shadow-lg: 0 10px 15px -3px rgba(28, 25, 23, 0.06),
+    0 4px 6px -4px rgba(28, 25, 23, 0.05);
+  --axiom-shadow-xl: 0 20px 25px -5px rgba(28, 25, 23, 0.08),
+    0 8px 10px -6px rgba(28, 25, 23, 0.05);
+
+  /* Radius */
+  --axiom-radius-sm: 6px;
+  --axiom-radius-md: 10px;
+  --axiom-radius-lg: 16px;
+  --axiom-radius-xl: 24px;
+  --axiom-radius-full: 9999px;
+
+  /* Font */
+  --axiom-font-sans: "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, sans-serif;
+  --axiom-font-mono: "Geist Mono", "SF Mono", Monaco, "Cascadia Code",
+    monospace;
+
+  /* Transitions */
+  --axiom-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --axiom-ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+  --axiom-duration-fast: 150ms;
+  --axiom-duration-normal: 250ms;
+  --axiom-duration-slow: 400ms;
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   Dark Mode
+   ═══════════════════════════════════════════════════════════════════ */
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-background: var(--axiom-bg-base);
+  --color-foreground: var(--axiom-text-primary);
+  --font-sans: var(--axiom-font-sans);
+  --font-mono: var(--axiom-font-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+.dark,
+.dark :root {
+  --axiom-bg-base: #0c0a09;
+  --axiom-bg-surface: #1c1917;
+  --axiom-bg-elevated: #292524;
+  --axiom-bg-glass: rgba(28, 25, 23, 0.7);
+
+  --axiom-text-primary: #fafaf9;
+  --axiom-text-secondary: #a8a29e;
+  --axiom-text-tertiary: #57534e;
+
+  --axiom-accent: #818cf8;
+  --axiom-accent-hover: #6366f1;
+  --axiom-accent-subtle: rgba(129, 140, 248, 0.08);
+  --axiom-accent-muted: rgba(129, 140, 248, 0.15);
+
+  --axiom-border: rgba(250, 250, 249, 0.08);
+  --axiom-border-glass: rgba(250, 250, 249, 0.1);
+
+  --axiom-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --axiom-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+  --axiom-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+  --axiom-shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.4);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   Base Styles
+   ═══════════════════════════════════════════════════════════════════ */
+
+* {
+  box-sizing: border-box;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--axiom-bg-base);
+  color: var(--axiom-text-primary);
+  font-family: var(--axiom-font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow: hidden;
+  user-select: none;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   Selection
+   ═══════════════════════════════════════════════════════════════════ */
+
+::selection {
+  background: var(--axiom-accent-muted);
+  color: var(--axiom-text-primary);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   Scrollbar
+   ═══════════════════════════════════════════════════════════════════ */
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--axiom-text-tertiary);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--axiom-text-secondary);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   Focus Ring
+   ═══════════════════════════════════════════════════════════════════ */
+
+*:focus-visible {
+  outline: 2px solid var(--axiom-accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   Utility Classes
+   ═══════════════════════════════════════════════════════════════════ */
+
+.glass-panel {
+  background: var(--axiom-bg-glass);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--axiom-border);
+  border-radius: var(--axiom-radius-lg);
+}
+
+.glass-panel-light {
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--axiom-border-glass);
+  border-radius: var(--axiom-radius-lg);
+}
+
+.glass-card {
+  background: var(--axiom-bg-surface);
+  border: 1px solid var(--axiom-border);
+  border-radius: var(--axiom-radius-md);
+  box-shadow: var(--axiom-shadow-sm);
+  transition: box-shadow var(--axiom-duration-normal) var(--axiom-ease-smooth);
+}
+
+.glass-card:hover {
+  box-shadow: var(--axiom-shadow-md);
+}
+
+.neumorph {
+  background: var(--axiom-bg-elevated);
+  border-radius: var(--axiom-radius-md);
+  box-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.05),
+    inset -2px -2px 5px rgba(255, 255, 255, 0.1);
+}
+
+.text-gradient {
+  background: linear-gradient(135deg, var(--axiom-text-primary), var(--axiom-accent));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   Animation Keyframes
+   ═══════════════════════════════════════════════════════════════════ */
+
+@keyframes boot-load {
+  0% {
+    width: 0%;
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  100% {
+    width: 100%;
+    opacity: 1;
+  }
+}
+
+@keyframes boot-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes boot-fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes pulse-subtle {
+  0%,
+  100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slide-down {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes waveform {
+  0% {
+    height: 4px;
+  }
+  50% {
+    height: 24px;
+  }
+  100% {
+    height: 4px;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes breathe {
+  0%,
+  100% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.02);
+  }
+}
+
+@keyframes dot-pulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.5);
+    opacity: 0.3;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   Animation Utility Classes
+   ═══════════════════════════════════════════════════════════════════ */
+
+.animate-boot-load {
+  animation: boot-load 1.2s var(--axiom-ease-smooth) forwards;
+}
+
+.animate-boot-fade-in {
+  animation: boot-fade-in 0.8s var(--axiom-ease-smooth) forwards;
+}
+
+.animate-boot-fade-out {
+  animation: boot-fade-out 0.5s var(--axiom-ease-smooth) forwards;
+}
+
+.animate-slide-up {
+  animation: slide-up 0.5s var(--axiom-ease-smooth) forwards;
+}
+
+.animate-slide-down {
+  animation: slide-down 0.3s var(--axiom-ease-smooth) forwards;
+}
+
+.animate-slide-in-right {
+  animation: slide-in-right 0.3s var(--axiom-ease-smooth) forwards;
+}
+
+.animate-scale-in {
+  animation: scale-in 0.2s var(--axiom-ease-smooth) forwards;
+}
+
+.animate-waveform {
+  animation: waveform 0.8s var(--axiom-ease-smooth) infinite;
+}
+
+.animate-pulse-subtle {
+  animation: pulse-subtle 2s ease-in-out infinite;
+}
+
+.animate-float {
+  animation: float 3s var(--axiom-ease-smooth) infinite;
+}
+
+.animate-breathe {
+  animation: breathe 3s var(--axiom-ease-smooth) infinite;
+}
+
+.animate-dot-pulse {
+  animation: dot-pulse 1.5s ease-in-out infinite;
+}
+
+.animate-delay-100 {
+  animation-delay: 100ms;
+}
+.animate-delay-200 {
+  animation-delay: 200ms;
+}
+.animate-delay-300 {
+  animation-delay: 300ms;
+}
+.animate-delay-400 {
+  animation-delay: 400ms;
+}
+.animate-delay-500 {
+  animation-delay: 500ms;
+}
+.animate-delay-600 {
+  animation-delay: 600ms;
+}
+.animate-delay-700 {
+  animation-delay: 700ms;
+}
+.animate-delay-800 {
+  animation-delay: 800ms;
+}
+.animate-delay-900 {
+  animation-delay: 900ms;
+}
+.animate-delay-1000 {
+  animation-delay: 1000ms;
 }

@@ -43,6 +43,15 @@ class WorkflowLaunchResponse(BaseModel):
     status: str
 
 
+class ChatRequest(BaseModel):
+    message: str
+    agent_id: str = "founder"
+    org_id: str = ""
+    dept_id: str = ""
+    conversation_history: List[Dict[str, str]] = []
+    preferred_provider: Optional[str] = None
+
+
 class ApprovalResponse(BaseModel):
     approval_id: str
     approved: bool
@@ -431,6 +440,61 @@ async def respond_to_approval(approval_id: str, request: ApprovalResponse):
         raise HTTPException(status_code=400, detail=str(e))
 
 
+# ── Intelligence / Chat Routes ─────────────────────────────────────────
+
+@router.post("/chat")
+async def chat(request: ChatRequest):
+    """Send a message to AXIOM's intelligence engine.
+
+    Routes through the SmartRouter for optimal model selection.
+    """
+    rt = _get_runtime()
+    if not rt.intelligence:
+        raise HTTPException(status_code=503, detail="Intelligence Engine not available")
+
+    try:
+        # Build context from conversation history
+        context = {}
+        if request.conversation_history:
+            context["conversation_history"] = request.conversation_history[-10:]  # Last 10 messages
+
+        response = await rt.intelligence.generate(
+            agent_id=request.agent_id,
+            task_description=request.message,
+            org_id=request.org_id,
+            dept_id=request.dept_id,
+            additional_context=context or None,
+            preferred_provider=request.preferred_provider,
+        )
+        return {"response": response, "agent_id": request.agent_id}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/intelligence/providers")
+async def list_intelligence_providers():
+    """List all configured AI providers and their routing assignments."""
+    rt = _get_runtime()
+    if not rt.intelligence:
+        raise HTTPException(status_code=503, detail="Intelligence Engine not available")
+
+    providers = rt.intelligence.list_providers()
+    has_real = rt.intelligence.has_real_provider
+
+    # Get route example for each provider
+    route_info = rt.intelligence.get_route_for_task(
+        "Analyse current executive board status and provide recommendations",
+        agent_id="jenson",
+    ) if has_real else {}
+
+    return {
+        "has_real_provider": has_real,
+        "total_providers": len(providers),
+        "providers": providers,
+        "sample_route": route_info,
+    }
+
+
 # ── Learning Engine Routes ────────────────────────────────────────────────
 
 
@@ -666,3 +730,198 @@ async def get_playbook_evolutions():
             for e in evolutions
         ]
     return []
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# System Telemetry & Greeting Routes (JARVIS integration)
+# ═══════════════════════════════════════════════════════════════════════════
+
+
+@router.get("/system/telemetry")
+async def get_system_telemetry():
+    """Get full system telemetry snapshot — CPU, RAM, disk, network, temp.
+
+    Returns a complete TelemetrySnapshot for the AI's system awareness.
+    """
+    rt = _get_runtime()
+    if not hasattr(rt, "system_monitor") or not rt.system_monitor:
+        from axiom.runtime.system_monitor import SystemMonitor
+
+        mon = SystemMonitor()
+        await mon.initialise()
+    else:
+        mon = rt.system_monitor
+    try:
+        snap = await mon.snapshot()
+        return snap.to_dict()
+    except Exception as e:
+        import traceback, sys
+        traceback.print_exc(file=sys.stdout)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/system/health")
+async def get_system_health():
+    """Get quick system health check."""
+    rt = _get_runtime()
+    if not hasattr(rt, "system_monitor") or not rt.system_monitor:
+        from axiom.runtime.system_monitor import SystemMonitor
+
+        mon = SystemMonitor()
+        await mon.initialise()
+    else:
+        mon = rt.system_monitor
+    return await mon.health_check()
+
+
+@router.get("/system/info")
+async def get_system_info():
+    """Get basic OS information."""
+    import platform as pf
+    import time as _time
+
+    try:
+        import psutil
+        boot_time = psutil.boot_time()
+    except Exception:
+        boot_time = _time.time()
+    return {
+        "hostname": pf.node(),
+        "platform": pf.platform(),
+        "release": pf.release(),
+        "version": pf.version(),
+        "architecture": pf.machine(),
+        "processor": pf.processor(),
+        "boot_time": boot_time,
+        "uptime_seconds": _time.time() - boot_time,
+    }
+
+
+@router.get("/system/greeting")
+async def get_greeting(first_boot: bool = False, user_name: Optional[str] = None):
+    """Generate a dynamic, context-aware boot greeting.
+
+    Returns a GreetingResult with text, mood, time_of_day, and health context
+    — ready for TTS rendering and UI display.
+    """
+    rt = _get_runtime()
+    if hasattr(rt, "greeting_engine") and rt.greeting_engine:
+        engine = rt.greeting_engine
+    else:
+        from axiom.runtime.greeting_engine import GreetingEngine
+
+        engine = GreetingEngine(logger=getattr(rt, "logger", None))
+
+    telemetry = None
+    if hasattr(rt, "system_monitor") and rt.system_monitor:
+        try:
+            telemetry = await rt.system_monitor.snapshot()
+        except Exception:
+            pass
+
+    result = await engine.generate_greeting(
+        telemetry=telemetry,
+        is_first_boot=first_boot,
+        user_name=user_name,
+    )
+    return {
+        "text": result.text,
+        "mood": result.mood,
+        "time_of_day": result.time_of_day,
+        "health_label": result.health_label,
+        "variant_id": result.variant_id,
+        "is_seasonal": result.is_seasonal,
+        "is_returning": result.is_returning,
+    }
+
+
+@router.get("/system/greeting/wake")
+async def get_wake_greeting():
+    """Generate a short wake greeting (for waking from idle)."""
+    rt = _get_runtime()
+    if hasattr(rt, "greeting_engine") and rt.greeting_engine:
+        engine = rt.greeting_engine
+    else:
+        from axiom.runtime.greeting_engine import GreetingEngine
+
+        engine = GreetingEngine(logger=getattr(rt, "logger", None))
+
+    telemetry = None
+    if hasattr(rt, "system_monitor") and rt.system_monitor:
+        try:
+            telemetry = await rt.system_monitor.snapshot()
+        except Exception:
+            pass
+
+    result = await engine.generate_wake_greeting(telemetry=telemetry)
+    return {
+        "text": result.text,
+        "mood": result.mood,
+        "time_of_day": result.time_of_day,
+        "health_label": result.health_label,
+        "variant_id": result.variant_id,
+        "is_seasonal": result.is_seasonal,
+        "is_returning": result.is_returning,
+    }
+
+
+@router.get("/system/status-report")
+async def get_status_report():
+    """Generate a one-line TTS-ready system status report."""
+    rt = _get_runtime()
+    if hasattr(rt, "greeting_engine") and rt.greeting_engine:
+        engine = rt.greeting_engine
+    else:
+        from axiom.runtime.greeting_engine import GreetingEngine
+
+        engine = GreetingEngine(logger=getattr(rt, "logger", None))
+
+    telemetry = None
+    if hasattr(rt, "system_monitor") and rt.system_monitor:
+        try:
+            telemetry = await rt.system_monitor.snapshot()
+        except Exception:
+            pass
+
+    text = await engine.generate_status_report(telemetry)
+    return {"text": text}
+
+
+@router.get("/system/tools")
+async def list_system_tools():
+    """List all available system tools for AI function-calling."""
+    rt = _get_runtime()
+    if hasattr(rt, "system_tools") and rt.system_tools:
+        return rt.system_tools.list_tools()
+    return []
+
+
+@router.post("/system/execute-tool")
+async def execute_system_tool(request: dict):
+    """Execute a system tool by name with the given arguments.
+
+    Request body:
+        {"tool": "get_telemetry", "args": {}}
+    """
+    rt = _get_runtime()
+    if not hasattr(rt, "system_tools") or not rt.system_tools:
+        raise HTTPException(status_code=503, detail="System Tools not available")
+
+    tool_name = request.get("tool", "")
+    tool_args = request.get("args", {})
+
+    if not tool_name:
+        raise HTTPException(status_code=400, detail="Missing 'tool' field")
+
+    result = await rt.system_tools.execute_tool(tool_name, tool_args)
+    return result.to_dict()
+
+
+@router.post("/tts")
+async def text_to_speech(text: str):
+    """Text-to-speech proxy.
+
+    Returns the text for browser-based TTS (SpeechSynthesis) or
+    could be extended to call ElevenLabs/Deepgram streaming API.
+    """
+    return {"text": text, "format": "ssml", "speaker": "axiom"}

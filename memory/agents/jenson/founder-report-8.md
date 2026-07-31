@@ -2,13 +2,12 @@
 Executive: jenson
 Organization: bleval
 Cycle: daily_report
-<<<<<<< HEAD
-Timestamp: 2026-07-24T15:02:24.546515+00:00
+Timestamp: 2026-07-29T19:26:50.807359+00:00
 
 --- Observations ---
 org_state: {'org_id': 'bleval', 'departments': [{'id': 'sales', 'agents': 3}, {'id': 'marketing', 'agents': 3}, {'id': 'development', 'agents': 2}, {'id': 'operations', 'agents': 2}, {'id': 'finance', 'agents': 2}], 'detail_loaded': True}
-memory_topics: ['architecture.md', 'glossary.md', 'communication_style', 'company', 'fonder', 'ideal_customers', 'offers', 'principles', 'vision', 'founder-report-39', 'founder-report-40', 'founder-report-43', 'founder-report-44', 'founder-report-47', 'founder-report-48', 'founder-report-51', 'founder-report-52', 'founder-report-7']
-active_workflows: 9
+memory_topics: ['architecture.md', 'glossary.md', 'communication_style', 'company', 'fonder', 'ideal_customers', 'offers', 'principles', 'vision', 'founder-report-11', 'founder-report-12', 'founder-report-15', 'founder-report-16', 'founder-report-19', 'founder-report-20', 'founder-report-23', 'founder-report-24', 'founder-report-3', 'founder-report-39', 'founder-report-4', 'founder-report-40', 'founder-report-43', 'founder-report-44', 'founder-report-47', 'founder-report-48', 'founder-report-51', 'founder-report-52', 'founder-report-7', 'founder-report-8']
+active_workflows: 3
 completed_work_this_cycle: 5
 
 --- Priorities ---
@@ -19,11 +18,11 @@ completed_work_this_cycle: 5
 --- Workflows ---
 Launched: 3
 Completed this cycle: 5
-  - operations/daily-report: unknown
+  - sales/prospect-research: unknown
+  - sales/prospect-research: unknown
+  - marketing/market-research: unknown
+  - sales/prospect-research: unknown
   - development/code-review: unknown
-  - development/code-review: unknown
-  - development/code-review: unknown
-  - operations/daily-report: unknown
 
 === REPORT TO FOUNDER ===
 Summary: jenson completed daily_report cycle.

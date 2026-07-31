@@ -30,6 +30,11 @@ from axiom.runtime.monitor import HealthMonitor
 from axiom.runtime.recovery import RecoveryManager
 from axiom.runtime.scheduler import Scheduler
 
+# JARVIS modules — system telemetry, adaptive greetings, function-calling tools
+from axiom.runtime.system_monitor import SystemMonitor
+from axiom.runtime.greeting_engine import GreetingEngine
+from axiom.runtime.system_tools import SystemTools
+
 
 class AxiomRuntime:
     """Central runtime orchestrator for Axiom OS.
@@ -60,6 +65,11 @@ class AxiomRuntime:
         self.approval: Optional[ApprovalManager] = None
         self.executive_board: Optional[ExecutiveBoard] = None
         self.logger: Optional[RuntimeLogger] = None
+
+        # JARVIS modules (system telemetry, greetings, function-calling)
+        self.system_monitor: Optional[SystemMonitor] = None
+        self.greeting_engine: Optional[GreetingEngine] = None
+        self.system_tools: Optional[SystemTools] = None
 
     # ── Bootstrap ────────────────────────────────────────────────────────
 
@@ -116,6 +126,17 @@ class AxiomRuntime:
         # Learning Engine — continuous learning (observes all executions)
         self.learning = LearningEngine(runtime=self)
 
+        # JARVIS modules — system telemetry, adaptive greetings, function-calling tools
+        self.system_monitor = SystemMonitor(logger=self.logger)
+        self.greeting_engine = GreetingEngine(
+            monitor=self.system_monitor,
+            logger=self.logger,
+        )
+        self.system_tools = SystemTools(
+            runtime=self,
+            logger=self.logger,
+        )
+
         self._initialised = True
 
         if self.logger:
@@ -151,6 +172,14 @@ class AxiomRuntime:
         if self.monitor:
             await self.monitor.start()
 
+        # Initialise system monitor (JARVIS telemetry — async sensor detection)
+        if self.system_monitor:
+            await self.system_monitor.initialise()
+
+        # Wire system tools into the intelligence engine for function-calling
+        if self.system_tools and self.intelligence:
+            await self._wire_system_tools()
+
         # Load any persisted workflow state from disk
         if self.workflow:
             persisted = self.workflow.load_all_persisted()
@@ -177,6 +206,9 @@ class AxiomRuntime:
             self.logger.info("lifecycle", "Axiom OS runtime shutting down")
 
         # Stop in reverse order
+        if self.system_monitor:
+            await self.system_monitor.shutdown()
+
         if self.executive_board:
             await self.executive_board.stop_all()
 
@@ -441,6 +473,30 @@ class AxiomRuntime:
             self.logger.info(
                 "lifecycle",
                 "Learning Engine wired to observe workflow, agent, and executive events",
+            )
+
+    async def _wire_system_tools(self) -> None:
+        """Wire system tools into the intelligence engine's context builder.
+
+        This enables the AI to access OS-level function-calling tools
+        (get_telemetry, launch_application, execute_shell, etc.) during
+        reasoning cycles — forming the JARVIS-like agentic bridge.
+        """
+        if not self.system_tools or not self.intelligence:
+            return
+
+        # Add tool schemas to the context builder for prompt assembly
+        if hasattr(self.intelligence, "_context_builder"):
+            cb = self.intelligence._context_builder
+            tool_schemas = self.system_tools.get_tool_schemas()
+            if hasattr(cb, "set_tool_schemas"):
+                cb.set_tool_schemas(tool_schemas)
+
+        if self.logger:
+            tools_count = len(self.system_tools.list_tools())
+            self.logger.info(
+                "lifecycle",
+                f"System tools wired: {tools_count} tools available for AI function-calling",
             )
 
     # ── Status ───────────────────────────────────────────────────────────

@@ -10,42 +10,14 @@ Every reasoning cycle includes:
 """
 
 import json
-from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional
 
 from axiom.config import settings
+from axiom.engine.base import ModelProvider, MockProvider
 from axiom.engine.memory import MemoryEngine
 from axiom.engine.tool import ToolEngine
+from axiom.engine.providers.nvidia import create_nvidia_providers, NVIDIAProvider
 from axiom.registry.agent import AgentRegistryLoader
-
-
-# =========================================================================
-# Provider Abstraction
-# =========================================================================
-
-
-class ModelProvider(ABC):
-    """Abstract base class for AI model providers."""
-
-    @abstractmethod
-    async def generate(
-        self,
-        prompt: str,
-        system_prompt: Optional[str] = None,
-        max_tokens: int = 4096,
-        temperature: float = 0.7,
-    ) -> str:
-        """Send a prompt to the model and return the response."""
-
-    @property
-    @abstractmethod
-    def name(self) -> str:
-        """Human-readable provider name."""
-
-    @property
-    @abstractmethod
-    def available(self) -> bool:
-        """Whether this provider is configured and usable."""
 
 
 # =========================================================================
@@ -238,47 +210,6 @@ class OpenAIFastProvider(OpenAIProvider):
             return response.choices[0].message.content or ""
         except Exception as exc:
             return f"[OpenAIFastProvider Error] {exc}"
-
-
-# =========================================================================
-# Mock Provider (fallback / testing)
-# =========================================================================
-
-
-class MockProvider(ModelProvider):
-    """Mock provider that returns canned responses for testing.
-
-    Used when no API keys are configured and no real provider is available.
-    """
-
-    @property
-    def name(self) -> str:
-        return "mock"
-
-    @property
-    def available(self) -> bool:
-        return True  # Always available
-
-    async def generate(
-        self,
-        prompt: str,
-        system_prompt: Optional[str] = None,
-        max_tokens: int = 4096,
-        temperature: float = 0.7,
-    ) -> str:
-        # Return a structured mock response that mimics what a real model
-        # would return, so the system can operate in mock mode for testing
-        prompt_len = len(prompt)
-        return json.dumps({
-            "provider": "mock",
-            "status": "mock_response",
-            "analysis": (
-                f"[MockProvider] Received {prompt_len} chars. "
-                f"Prompt preview: {prompt[:200]}..."
-            ),
-            "recommendation": "No action needed (mock mode)",
-            "rationale": "Mock provider is active. Set ANTHROPIC_API_KEY or OPENAI_API_KEY for real reasoning.",
-        })
 
 
 # =========================================================================
@@ -538,22 +469,33 @@ class ContextBuilder:
 
 
 # =========================================================================
-# Intelligence Engine
+# Smart Intelligence Engine
 # =========================================================================
 
 
 class IntelligenceEngine:
-    """Model routing, context assembly, and prompt orchestration.
+    """Smart model routing, context assembly, and prompt orchestration.
 
-    This is the central reasoning engine for Axiom OS.  Every reasoning
-    cycle flows through:
+    This is the central reasoning engine for Axiom OS.  It uses a
+    task-aware SmartRouter to select the optimal model for every request.
+
+    Every reasoning cycle flows through:
 
         1. Context assembly (memory + tools + identity)
-        2. Provider selection (routed by complexity)
-        3. Generation (real LLM or mock)
-        4. Response parsing
+        2. Task classification (category + complexity)
+        3. Smart provider selection (best model for the task)
+        4. Generation (real LLM, or fallback through chain)
+        5. Response parsing
 
     Architecture Law 9: Intelligence is provider independent.
+
+    Available models (routed by task type):
+      - Z.ai GLM-5.2    → Strategic reasoning, executive decisions
+      - Mistral Mamba    → Long-context, coding, planning
+      - Stepfun MoE      → Enterprise, agentic, multimodal
+      - NVIDIA General   → Everyday, text generation
+      - Anthropic Claude → Fallback reasoning
+      - OpenAI GPT       → Fallback general
     """
 
     def __init__(
@@ -564,24 +506,53 @@ class IntelligenceEngine:
         self._memory = memory or MemoryEngine()
         self._tool = tool or ToolEngine()
         self._agent_loader = AgentRegistryLoader()
-        self._router = ProviderRouter()
         self._context_builder = ContextBuilder(
             memory=self._memory,
             tool=self._tool,
             agent_loader=self._agent_loader,
         )
 
+        # ── Smart Router with Multi-Model Support ──────────────────
+        self._smart_router = self._build_smart_router()
+
+    def _build_smart_router(self) -> Any:
+        """Build the smart router with all available providers.
+
+        Registers NVIDIA models (up to 4), Anthropic, OpenAI, and fallback.
+        """
+        # Lazy import to avoid circular dependency at module level
+        from axiom.engine.smart_router import SmartRouter
+
+        router = SmartRouter()
+
+        # 1. Register NVIDIA providers (up to 4 models)
+        nvidia_providers = create_nvidia_providers()
+        for nvp in nvidia_providers:
+            router.register_nvidia_provider(nvp)
+
+        # 2. Register Anthropic provider (if configured)
+        anthro = AnthropicProvider()
+        if anthro.available:
+            router.register_provider("anthropic", anthro)
+
+        # 3. Register OpenAI provider (fallback)
+        openai = OpenAIProvider()
+        if openai.available:
+            router.register_provider("openai", openai)
+
+        return router
+
     # ── Properties ────────────────────────────────────────────────────────
 
     @property
     def has_real_provider(self) -> bool:
         """Whether at least one real (non-mock) provider is available."""
-        return self._router.has_real_provider
+        return self._smart_router.has_real_provider
 
     @property
-    def router(self) -> ProviderRouter:
-        """Expose the provider router for inspection."""
-        return self._router
+    def router(self) -> Any:
+        """Expose the smart router for inspection."""
+        return self._smart_router
 
     # ── Context Assembly ──────────────────────────────────────────────────
 
@@ -619,17 +590,16 @@ class IntelligenceEngine:
         temperature: float = 0.7,
         preferred_provider: Optional[str] = None,
     ) -> str:
-        """Generate a response for an agent with full context assembly.
+        """Generate a response for an agent with smart model routing.
 
-        This is the primary reasoning entry point.  It:
-        1. Determines complexity based on agent role
-        2. Assembles full context (memory + tools + identity)
-        3. Routes to the best provider
-        4. Generates and returns the response
+        The SmartRouter automatically:
+        1. Classifies the task (strategic / coding / creative / etc.)
+        2. Selects the optimal model for that task type
+        3. Falls through the chain if the primary provider returns an error
+
+        Uses a retry loop: if a provider returns an error string, the
+        next provider in the chain is tried up to 3 times.
         """
-        # Determine complexity
-        complexity = _complexity_for_agent(agent_id)
-
         # Build the system prompt
         system_prompt = self.build_system_prompt(agent_id, org_id)
 
@@ -642,18 +612,51 @@ class IntelligenceEngine:
             additional_context=additional_context,
         )
 
-        # Select provider
-        provider = self._router.select_provider(
-            complexity=complexity,
-            preferred_provider=preferred_provider,
-        )
+        # Try providers with fallback on error
+        max_tries = 4
+        tried = set()
 
-        # Generate
-        return await provider.generate(
-            prompt=prompt,
-            system_prompt=system_prompt,
-            max_tokens=max_tokens,
-            temperature=temperature,
+        for attempt in range(max_tries):
+            # Smart route: task-aware model selection (skips previously failed)
+            provider = self._smart_router.select_provider(
+                task_description=task_description,
+                agent_id=agent_id,
+                preferred_provider=(preferred_provider if attempt == 0 else None),
+            )
+
+            provider_name = provider.name if hasattr(provider, "name") else type(provider).__name__
+
+            # Skip already-tried providers (prevent infinite loops)
+            if provider_name in tried:
+                # All available providers exhausted
+                break
+            tried.add(provider_name)
+
+            try:
+                result = await provider.generate(
+                    prompt=prompt,
+                    system_prompt=system_prompt,
+                    max_tokens=max_tokens,
+                    temperature=temperature,
+                )
+
+                # Check if the result is an error string from the provider
+                if result.startswith(f"[{provider_name} Error]"):
+                    continue  # Try next provider
+
+                return result
+
+            except Exception as exc:
+                # Provider raised an exception — try next
+                if attempt < max_tries - 1:
+                    continue
+                return f"[{provider_name} Error] {exc}"
+
+        # All providers exhausted — fallback
+        return (
+            "[All providers unavailable] "
+            "The intelligence engine could not reach any configured model. "
+            "Please check your API keys and network connection."
         )
 
     async def generate_raw(
@@ -664,9 +667,9 @@ class IntelligenceEngine:
         temperature: float = 0.7,
         preferred_provider: Optional[str] = None,
     ) -> str:
-        """Generate a response from a raw prompt without context assembly."""
-        provider = self._router.select_provider(
-            complexity=COMPLEXITY_NORMAL,
+        """Generate a response from a raw prompt with smart routing."""
+        provider = self._smart_router.select_provider(
+            task_description=prompt[:500],
             preferred_provider=preferred_provider,
         )
         return await provider.generate(
@@ -686,7 +689,7 @@ class IntelligenceEngine:
         """Generate a response for an executive agent with strategic routing.
 
         Executives always get:
-        - Strategic complexity routing (most powerful model)
+        - Strategic complexity routing (GLM-5.2 → Mistral → Claude)
         - Full memory context
         - Tool context
         - Executive-level system prompt
@@ -699,23 +702,37 @@ class IntelligenceEngine:
             additional_context=additional_context,
         )
 
-        provider = self._router.select_provider(complexity=COMPLEXITY_STRATEGIC)
+        # Smart route: executives get strategic-optimised models
+        provider = self._smart_router.select_provider(
+            task_description=task_description,
+            agent_id=exec_id,
+        )
+
         return await provider.generate(
             prompt=prompt,
             system_prompt=system_prompt,
             max_tokens=8192,
         )
 
+    # ── Smart Routing Transparency ────────────────────────────────────────
+
+    def get_route_for_task(self, task_description: str, agent_id: str = "") -> Dict[str, Any]:
+        """Analyse a task and show which model would handle it.
+
+        Useful for debugging and transparency with the Founder.
+        """
+        return self._smart_router.get_route_for_task(task_description, agent_id)
+
     # ── Provider Management ──────────────────────────────────────────────
 
     def get_provider(self) -> ModelProvider:
         """Return the default active provider (backward-compatible)."""
-        return self._router.select_provider()
+        return self._smart_router.select_provider()
 
     def set_provider(self, provider: ModelProvider) -> None:
         """Override the model provider (for testing)."""
-        self._router._providers["custom"] = provider
+        self._smart_router._providers["custom"] = provider
 
     def list_providers(self) -> List[Dict[str, Any]]:
-        """Return info about all registered providers."""
-        return self._router.list_available()
+        """Return info about all registered providers, including NVIDIA models."""
+        return self._smart_router.get_available_providers()
