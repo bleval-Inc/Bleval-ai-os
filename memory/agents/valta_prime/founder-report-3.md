@@ -2,7 +2,7 @@
 Executive: valta_prime
 Organization: hov
 Cycle: afternoon_review
-Timestamp: 2026-07-30T15:33:52.833780+00:00
+Timestamp: 2026-08-01T10:57:57.531220+00:00
 
 --- Observations ---
 org_state: {'org_id': 'hov', 'departments': [{'id': 'brand', 'agents': 0}, {'id': 'creative', 'agents': 0}, {'id': 'research', 'agents': 0}, {'id': 'content', 'agents': 0}, {'id': 'growth', 'agents': 0}, {'id': 'operations', 'agents': 0}], 'detail_loaded': True}
@@ -18,11 +18,11 @@ completed_work_this_cycle: 5
 --- Workflows ---
 Launched: 1
 Completed this cycle: 5
-  - development/code-review: unknown
+  - development/feature-development: unknown
   - sales/prospect-research: unknown
-  - sales/prospect-research: unknown
-  - development/code-review: unknown
   - marketing/content-production: unknown
+  - marketing/content-production: unknown
+  - development/feature-development: unknown
 
 === REPORT TO FOUNDER ===
 Summary: valta_prime completed afternoon_review cycle.
