@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useAxiomStore } from "../../lib/store/axiom-store";
 import { system, executives as execApi } from "../../lib/api";
 import { healthDotColor, formatTimestamp } from "../../lib/utils";
+import NotificationCenter from "../workspace/NotificationCenter";
 
 export default function StatusBar() {
   const {
@@ -22,6 +23,8 @@ export default function StatusBar() {
     isAwake,
     notifications,
     toggleCommandPalette,
+    toggleNotificationPanel,
+    notificationPanelOpen,
   } = useAxiomStore();
 
   const pollingRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
@@ -49,6 +52,7 @@ export default function StatusBar() {
 
   const healthOverall = health?.overall ?? "healthy";
   const healthDot = healthDotColor(healthOverall);
+  const unreadCount = notifications.filter((n) => !n.read && (!n.snoozedUntil || n.snoozedUntil <= Date.now())).length;
 
   const navItems = [
     { id: "workspace" as const, label: "Founder", shortcut: "⌘1" },
@@ -59,49 +63,34 @@ export default function StatusBar() {
     { id: "creator" as const, label: "Creator", shortcut: "⌘6" },
     { id: "trading" as const, label: "Trading", shortcut: "⌘7" },
     { id: "console" as const, label: "Console", shortcut: "⌘8" },
+    { id: "communications" as const, label: "Inbox", shortcut: "⌘9" },
+    { id: "intelligence" as const, label: "Intel", shortcut: "⌘0" },
+    { id: "content-hub" as const, label: "Content", shortcut: "⌥1" },
+    { id: "integrations" as const, label: "Integrations", shortcut: "⌥2" },
   ];
 
-  // Keyboard shortcuts for navigation — ⌘1 through ⌘8 for workspaces, ⌘K for command palette
+  // Keyboard shortcuts for navigation — ⌘1-⌘9, ⌘0, ⌥1, ⌥2 for workspaces, ⌘K for command palette
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.metaKey && !e.shiftKey) {
         switch (e.key) {
-          case "1":
-            e.preventDefault();
-            setActiveView("workspace");
-            break;
-          case "2":
-            e.preventDefault();
-            setActiveView("executives");
-            break;
-          case "3":
-            e.preventDefault();
-            setActiveView("operations");
-            break;
-          case "4":
-            e.preventDefault();
-            setActiveView("knowledge");
-            break;
-          case "5":
-            e.preventDefault();
-            setActiveView("projects");
-            break;
-          case "6":
-            e.preventDefault();
-            setActiveView("creator");
-            break;
-          case "7":
-            e.preventDefault();
-            setActiveView("trading");
-            break;
-          case "8":
-            e.preventDefault();
-            setActiveView("console");
-            break;
-          case "k":
-            e.preventDefault();
-            toggleCommandPalette();
-            break;
+          case "1": e.preventDefault(); setActiveView("workspace"); break;
+          case "2": e.preventDefault(); setActiveView("executives"); break;
+          case "3": e.preventDefault(); setActiveView("operations"); break;
+          case "4": e.preventDefault(); setActiveView("knowledge"); break;
+          case "5": e.preventDefault(); setActiveView("projects"); break;
+          case "6": e.preventDefault(); setActiveView("creator"); break;
+          case "7": e.preventDefault(); setActiveView("trading"); break;
+          case "8": e.preventDefault(); setActiveView("console"); break;
+          case "9": e.preventDefault(); setActiveView("communications"); break;
+          case "0": e.preventDefault(); setActiveView("intelligence"); break;
+          case "k": e.preventDefault(); toggleCommandPalette(); break;
+        }
+      }
+      if (e.metaKey && e.shiftKey) {
+        switch (e.key) {
+          case "1": e.preventDefault(); setActiveView("content-hub"); break;
+          case "2": e.preventDefault(); setActiveView("integrations"); break;
         }
       }
     };
@@ -249,7 +238,12 @@ export default function StatusBar() {
 
           {/* Notifications bell */}
           <button
-            className="relative p-1 text-[var(--axiom-text-tertiary)] hover:text-[var(--axiom-text-secondary)] transition-colors"
+            onClick={toggleNotificationPanel}
+            className={`relative p-1 rounded-md transition-colors ${
+              notificationPanelOpen
+                ? "text-[var(--axiom-accent)] bg-[var(--axiom-accent-subtle)]"
+                : "text-[var(--axiom-text-tertiary)] hover:text-[var(--axiom-text-secondary)]"
+            }`}
             title="Notifications"
           >
             <svg
@@ -265,12 +259,18 @@ export default function StatusBar() {
               <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
               <path d="M13.73 21a2 2 0 0 1-3.46 0" />
             </svg>
-            {notifications.length > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-red-400 rounded-full text-[7px] font-bold text-white flex items-center justify-center">
-                {notifications.length > 9 ? "9+" : notifications.length}
-              </span>
+            {unreadCount > 0 && (
+              <motion.span
+                key={unreadCount}
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-red-400 rounded-full text-[7px] font-bold text-white flex items-center justify-center"
+              >
+                {unreadCount > 9 ? "9+" : unreadCount}
+              </motion.span>
             )}
           </button>
+          <NotificationCenter />
 
           {/* Runtime info */}
           <span className="text-[10px] text-[var(--axiom-text-tertiary)] font-mono tabular-nums hidden md:block">

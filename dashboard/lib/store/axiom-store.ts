@@ -3,14 +3,19 @@ import type { RuntimeStatus, ExecutiveBoardStatus, HealthSummary } from "../api-
 
 // ── Workspace identifiers ────────────────────────────────────────────
 export type WorkspaceId =
-  | "workspace"   // 1: Founder
-  | "executives"  // 2: Executive Board
-  | "operations"  // 3: Operations Center
-  | "knowledge"   // 4: Knowledge
-  | "projects"    // 5: Projects
-  | "creator"     // 6: Creator Studio
-  | "trading"     // 7: Trading Terminal
-  | "console";    // 8: Founder Console
+  | "workspace"        // 1: Founder
+  | "executives"       // 2: Executive Board
+  | "operations"       // 3: Operations Center
+  | "knowledge"        // 4: Knowledge
+  | "projects"         // 5: Projects
+  | "creator"          // 6: Creator Studio
+  | "trading"          // 7: Trading Terminal
+  | "console"          // 8: Founder Console
+  | "communications"   // 9: Communications Hub (Phase 8C)
+  | "intelligence"     // 10: Intelligence Center (Phase 8C)
+  | "content-hub"      // 11: Content Hub (Phase 8C)
+  | "integrations"     // 12: Integrations (Phase 8C)
+  | "collaboration";   // 13: Collaboration Workspace (Phase 8C)
 
 export interface WorkspaceState {
   expandedSections: Record<string, boolean>;
@@ -57,7 +62,8 @@ interface AxiomState {
   voiceWakeTimeout: number | null;
 
   // Notifications
-  notifications: Notification[];
+  notifications: EnhancedNotification[];
+  notificationPanelOpen: boolean;
 
   // Actions
   setRuntime: (r: RuntimeStatus) => void;
@@ -80,6 +86,13 @@ interface AxiomState {
   setVoiceWakeTimeout: (id: number | null) => void;
   addNotification: (n: Notification) => void;
   dismissNotification: (id: string) => void;
+  setNotificationPanelOpen: (open: boolean) => void;
+  toggleNotificationPanel: () => void;
+  snoozeNotification: (id: string, until: number) => void;
+  acknowledgeNotification: (id: string) => void;
+  clearNotification: (id: string) => void;
+  clearAllNotifications: () => void;
+  addSystemNotification: (n: Omit<EnhancedNotification, "id" | "timestamp" | "read" | "acknowledged" | "snoozedUntil">) => void;
 }
 
 export interface Notification {
@@ -91,9 +104,28 @@ export interface Notification {
   read: boolean;
 }
 
+export type NotificationCategory = "executive" | "workflow" | "runtime" | "security" | "learning" | "integration";
+export type NotificationPriority = "urgent" | "high" | "normal" | "low";
+
+export interface EnhancedNotification {
+  id: string;
+  type: "info" | "warning" | "error" | "success";
+  category: NotificationCategory;
+  priority: NotificationPriority;
+  title: string;
+  message: string;
+  timestamp: number;
+  read: boolean;
+  acknowledged: boolean;
+  snoozedUntil: number | null;
+  sourceWorkspace?: WorkspaceId;
+}
+
 const ALL_WORKSPACES: WorkspaceId[] = [
   "workspace", "executives", "operations", "knowledge",
   "projects", "creator", "trading", "console",
+  "communications", "intelligence", "content-hub", "integrations",
+  "collaboration",
 ];
 
 function initWorkspaceStates(): Record<WorkspaceId, WorkspaceState> {
@@ -123,6 +155,7 @@ export const useAxiomStore = create<AxiomState>((set) => ({
   pendingVoiceCommand: null,
   voiceWakeTimeout: null,
   notifications: [],
+  notificationPanelOpen: false,
 
   setRuntime: (r) => set({ runtime: r }),
   setHealth: (h) => set({ health: h }),
@@ -150,9 +183,47 @@ export const useAxiomStore = create<AxiomState>((set) => ({
   setPendingVoiceCommand: (cmd) => set({ pendingVoiceCommand: cmd }),
   setVoiceWakeTimeout: (id) => set({ voiceWakeTimeout: id }),
   addNotification: (n) =>
-    set((s) => ({ notifications: [n, ...s.notifications] })),
+    set((s) => ({
+      notifications: [{
+        ...n,
+        category: (n as EnhancedNotification).category || "runtime",
+        priority: (n as EnhancedNotification).priority || "normal",
+        acknowledged: (n as EnhancedNotification).acknowledged ?? false,
+        snoozedUntil: (n as EnhancedNotification).snoozedUntil ?? null,
+      }, ...s.notifications],
+    })),
   dismissNotification: (id) =>
     set((s) => ({
       notifications: s.notifications.filter((n) => n.id !== id),
+    })),
+  setNotificationPanelOpen: (open) => set({ notificationPanelOpen: open }),
+  toggleNotificationPanel: () => set((s) => ({ notificationPanelOpen: !s.notificationPanelOpen })),
+  snoozeNotification: (id, until) =>
+    set((s) => ({
+      notifications: s.notifications.map((n) =>
+        n.id === id ? { ...n, snoozedUntil: until } : n,
+      ),
+    })),
+  acknowledgeNotification: (id) =>
+    set((s) => ({
+      notifications: s.notifications.map((n) =>
+        n.id === id ? { ...n, acknowledged: true, read: true } : n,
+      ),
+    })),
+  clearNotification: (id) =>
+    set((s) => ({
+      notifications: s.notifications.filter((n) => n.id !== id),
+    })),
+  clearAllNotifications: () => set({ notifications: [] }),
+  addSystemNotification: (n) =>
+    set((s) => ({
+      notifications: [{
+        ...n,
+        id: `notif-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        timestamp: Date.now(),
+        read: false,
+        acknowledged: false,
+        snoozedUntil: null,
+      }, ...s.notifications],
     })),
 }));

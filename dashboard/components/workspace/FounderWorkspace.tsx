@@ -8,6 +8,7 @@ import WorkspaceSidebar from "./navigation/WorkspaceSidebar";
 import Conversation from "./Conversation";
 import MemorySidebar from "./MemorySidebar";
 import CommandPalette from "./CommandPalette";
+import CommandCenter from "./workspaces/CommandCenter";
 import ExecutiveBoard from "./workspaces/ExecutiveBoard";
 import OperationsCenter from "./workspaces/OperationsCenter";
 import KnowledgeWorkspace from "./workspaces/KnowledgeWorkspace";
@@ -15,6 +16,11 @@ import ProjectsWorkspace from "./workspaces/ProjectsWorkspace";
 import CreatorStudio from "./workspaces/CreatorStudio";
 import TradingTerminal from "./workspaces/TradingTerminal";
 import FounderConsole from "./workspaces/FounderConsole";
+import CommunicationsHub from "./workspaces/CommunicationsHub";
+import IntelligenceCenter from "./workspaces/IntelligenceCenter";
+import ContentHub from "./workspaces/ContentHub";
+import IntegrationsDashboard from "./workspaces/IntegrationsDashboard";
+import CollaborationWorkspace from "./workspaces/CollaborationWorkspace";
 
 /* ── Page transition variants ──────────────────────────────────────── */
 
@@ -29,6 +35,7 @@ const pageVariants = {
 function FounderWorkspace() {
   const { sidePanel, setSidePanel, runtime, setRuntime } = useAxiomStore();
   const [canvasOpen, setCanvasOpen] = useState(false);
+  const [showCommandCenter, setShowCommandCenter] = useState(true);
   const [canvasItems] = useState<
     { id: string; title: string; type: string; preview: string }[]
   >([]);
@@ -59,6 +66,30 @@ function FounderWorkspace() {
             <span className="text-[10px] text-[var(--axiom-text-tertiary)] font-mono">
               {runtime?.version ? `v${runtime.version}` : ""}
             </span>
+
+            {/* Command Center / Chat toggle */}
+            <button
+              onClick={() => setShowCommandCenter((p) => !p)}
+              className={`p-1.5 rounded-md transition-colors ${
+                showCommandCenter
+                  ? "bg-[var(--axiom-accent-subtle)] text-[var(--axiom-accent)]"
+                  : "text-[var(--axiom-text-tertiary)] hover:text-[var(--axiom-text-secondary)] hover:bg-[var(--axiom-bg-elevated)]"
+              }`}
+              title={showCommandCenter ? "Switch to Chat" : "Switch to Command Center"}
+            >
+              {showCommandCenter ? (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                </svg>
+              ) : (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="3" width="7" height="7" />
+                  <rect x="14" y="3" width="7" height="7" />
+                  <rect x="3" y="14" width="7" height="7" />
+                  <rect x="14" y="14" width="7" height="7" />
+                </svg>
+              )}
+            </button>
           </div>
 
           <div className="flex items-center gap-1">
@@ -99,7 +130,31 @@ function FounderWorkspace() {
 
         {/* Content area */}
         <div className="flex-1 flex overflow-hidden">
-          <Conversation />
+          <AnimatePresence mode="wait">
+            {showCommandCenter ? (
+              <motion.div
+                key="command-center"
+                variants={pageVariants}
+                initial="initial"
+                animate="animate"
+                exit="exit"
+                className="flex-1 flex overflow-hidden"
+              >
+                <CommandCenter />
+              </motion.div>
+            ) : (
+              <motion.div
+                key="conversation"
+                variants={pageVariants}
+                initial="initial"
+                animate="animate"
+                exit="exit"
+                className="flex-1 flex overflow-hidden"
+              >
+                <Conversation />
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* Canvas (right side panel) */}
           <AnimatePresence>
@@ -175,6 +230,11 @@ const WORKSPACE_MAP: Record<WorkspaceId, React.FC> = {
   creator: CreatorStudio,
   trading: TradingTerminal,
   console: FounderConsole,
+  communications: CommunicationsHub,
+  intelligence: IntelligenceCenter,
+  "content-hub": ContentHub,
+  integrations: IntegrationsDashboard,
+  collaboration: CollaborationWorkspace,
 };
 
 export default function WorkspaceShell() {

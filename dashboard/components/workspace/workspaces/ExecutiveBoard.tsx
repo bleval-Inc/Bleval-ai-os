@@ -37,6 +37,11 @@ function fmt(iso?: string) {
 
 /* ── Executive Card ──────────────────────────────────────────────────── */
 
+const cardVariants = {
+  hidden: { opacity: 0, y: 16 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.25, ease: "easeOut" as const } },
+};
+
 function ExecCard({ id, data, onToggle, toggling }: {
   id: string; data: ExecutiveBoardStatus[string]; onToggle: () => void; toggling: boolean;
 }) {
@@ -47,8 +52,8 @@ function ExecCard({ id, data, onToggle, toggling }: {
   const schedKeys = Object.keys(data.schedules);
 
   return (
-    <motion.div layout initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.25, ease: "easeOut" as const }}
+    <motion.div layout variants={cardVariants}
+      whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}
       className="glass-panel p-5 flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -207,12 +212,17 @@ export default function ExecutiveBoard() {
         </button>
       </div>
       <div className="flex-1 overflow-y-auto p-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 max-w-5xl mx-auto">
+        <motion.div
+          initial="hidden"
+          animate="visible"
+          variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.06 } } }}
+          className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 max-w-5xl mx-auto"
+        >
           {entries.map(([id, data]) => (
             <ExecCard key={id} id={id} data={data}
               onToggle={() => handleToggle(id)} toggling={!!toggling[id]} />
           ))}
-        </div>
+        </motion.div>
       </div>
     </div>
   );

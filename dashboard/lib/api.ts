@@ -245,4 +245,105 @@ export const learning = {
     fetchApi<PlaybookEvolution[]>("/learning/playbook-evolutions"),
 };
 
+// ═══════════════════════════════════════════════════════════════════════
+// Phase 8C — Communications Hub
+// ═══════════════════════════════════════════════════════════════════════
+
+import type {
+  Conversation,
+  Message,
+  CollaborationSession,
+  CollaborationDecision,
+} from "./phase8c-types";
+
+export const communications = {
+  listConversations: (source?: string) =>
+    fetchApi<Conversation[]>(
+      `/communications/conversations${source ? `?source=${source}` : ""}`,
+    ),
+  getConversation: (id: string) =>
+    fetchApi<Conversation>(`/communications/conversations/${id}`),
+  getMessages: (conversationId: string) =>
+    fetchApi<Message[]>(`/communications/conversations/${conversationId}/messages`),
+  sendMessage: (conversationId: string, content: string) =>
+    fetchApi<Message>(`/communications/conversations/${conversationId}/messages`, {
+      method: "POST",
+      body: JSON.stringify({ content }),
+    }),
+};
+
+// ═══════════════════════════════════════════════════════════════════════
+// Phase 8C — Intelligence Layer
+// ═══════════════════════════════════════════════════════════════════════
+
+import type { IntelligenceMetrics } from "./phase8c-types";
+
+export const intelligence = {
+  getMetrics: () => fetchApi<IntelligenceMetrics>("/intelligence/metrics"),
+  getActiveReasoning: () =>
+    fetchApi<IntelligenceMetrics["active_reasoning"]>("/intelligence/reasoning/active"),
+  getDecisionChains: (limit = 20) =>
+    fetchApi<IntelligenceMetrics["decision_chains"]>(
+      `/intelligence/decisions?limit=${limit}`,
+    ),
+  getProviderUsage: () =>
+    fetchApi<IntelligenceMetrics["provider_usage"]>("/intelligence/providers/usage"),
+};
+
+// ═══════════════════════════════════════════════════════════════════════
+// Phase 8C — Content Hub
+// ═══════════════════════════════════════════════════════════════════════
+
+import type { ContentAsset, AssetVersion } from "./phase8c-types";
+
+export const content = {
+  listAssets: (type?: string, project?: string, executive?: string) =>
+    fetchApi<ContentAsset[]>(
+      `/content/assets${buildQuery({ type, project_id: project, executive_id: executive })}`,
+    ),
+  getAsset: (id: string) => fetchApi<ContentAsset>(`/content/assets/${id}`),
+  getAssetVersions: (id: string) =>
+    fetchApi<AssetVersion[]>(`/content/assets/${id}/versions`),
+  search: (query: string) =>
+    fetchApi<ContentAsset[]>(`/content/search?q=${encodeURIComponent(query)}`),
+};
+
+// ═══════════════════════════════════════════════════════════════════════
+// Phase 8C — Integrations
+// ═══════════════════════════════════════════════════════════════════════
+
+import type { IntegrationService } from "./phase8c-types";
+
+export const integrations = {
+  list: () => fetchApi<IntegrationService[]>("/integrations"),
+  get: (id: string) => fetchApi<IntegrationService>(`/integrations/${id}`),
+  reconnect: (id: string) =>
+    fetchApi<IntegrationService>(`/integrations/${id}/reconnect`, { method: "POST" }),
+  getLogs: (id: string) =>
+    fetchApi<string[]>(`/integrations/${id}/logs`),
+};
+
+// ═══════════════════════════════════════════════════════════════════════
+// Phase 8C — Collaboration
+// ═══════════════════════════════════════════════════════════════════════
+
+export const collaboration = {
+  listSessions: () => fetchApi<CollaborationSession[]>("/collaboration/sessions"),
+  getSession: (id: string) =>
+    fetchApi<CollaborationSession>(`/collaboration/sessions/${id}`),
+  sendDecision: (sessionId: string, decision: Omit<CollaborationDecision, "id" | "timestamp">) =>
+    fetchApi<CollaborationDecision>(`/collaboration/sessions/${sessionId}/decisions`, {
+      method: "POST",
+      body: JSON.stringify(decision),
+    }),
+};
+
+// ── Helper ────────────────────────────────────────────────────────────
+
+function buildQuery(params: Record<string, string | undefined>): string {
+  const entries = Object.entries(params).filter(([_, v]) => v !== undefined);
+  if (entries.length === 0) return "";
+  return "?" + entries.map(([k, v]) => `${k}=${encodeURIComponent(v!)}`).join("&");
+}
+
 export { ApiError };
