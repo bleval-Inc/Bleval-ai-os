@@ -291,3 +291,130 @@ export interface PlaybookEvolution {
   applied_at: string;
   approved_by: string | null;
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Phase A — AXIOM Core Types
+// ═══════════════════════════════════════════════════════════════════════════
+
+export interface AxiomStatus {
+  state: string;
+  boot_id: string;
+  is_online: boolean;
+  awareness: SystemAwareness;
+}
+
+export interface SystemAwareness {
+  timestamp: number;
+  state: string;
+  health_score: number;
+  uptime_seconds: number;
+  overall_health: string;
+  executives: ExecutiveAwareness[];
+  engines: EngineAwareness[];
+  workflows: WorkflowAwareness;
+  intelligence_available: boolean;
+  pending_approvals: number;
+  running_since: number;
+  boot_id: string;
+}
+
+export interface ExecutiveAwareness {
+  id: string;
+  org: string;
+  state: string;
+  cycle_count: number;
+  last_cycle: string | null;
+  health: string;
+}
+
+export interface EngineAwareness {
+  name: string;
+  state: string;
+  label: string;
+}
+
+export interface WorkflowAwareness {
+  defined: number;
+  active: number;
+  pending: number;
+  failed: number;
+  awaiting_approval: number;
+}
+
+export interface AxiomChatResponse {
+  response: string;
+  agent_id: string;
+  category?: string;
+  awareness?: SystemAwareness;
+  intent?: string;
+}
+
+export interface AxiomRouteResponse {
+  category: string;
+  complexity: string;
+  intent: string;
+  confidence: number;
+  handler: string;
+  target: string;
+  requires_approval: boolean;
+  response: string;
+  awareness?: SystemAwareness;
+}
+
+export interface ResearchWorkspaceSummary {
+  id: string;
+  title: string;
+  query: string;
+  created_at: string;
+  status: string;
+  sources_count: number;
+  findings_count: number;
+  conversation_length: number;
+}
+
+export interface ResearchWorkspace extends ResearchWorkspaceSummary {
+  conversation: ConversationEntry[];
+  sources: ResearchSource[];
+  findings: ResearchFinding[];
+  conclusions: ResearchConclusion[];
+  documents_count: number;
+  images_count: number;
+  videos_count: number;
+  audio_count: number;
+  notes_count: number;
+  references_count: number;
+  decisions_count: number;
+  actions_count: number;
+  generated_assets_count: number;
+}
+
+export interface ConversationEntry {
+  role: string;
+  content: string;
+  type?: string;
+  timestamp: string;
+}
+
+export interface ResearchSource {
+  type: string;
+  url?: string;
+  title?: string;
+  added_at: string;
+  [key: string]: unknown;
+}
+
+export interface ResearchFinding {
+  title?: string;
+  content: string;
+  confidence?: number;
+  source?: string;
+  added_at: string;
+  [key: string]: unknown;
+}
+
+export interface ResearchConclusion {
+  summary: string;
+  details?: string;
+  added_at: string;
+  [key: string]: unknown;
+}

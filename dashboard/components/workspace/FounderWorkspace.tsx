@@ -21,6 +21,8 @@ import IntelligenceCenter from "./workspaces/IntelligenceCenter";
 import ContentHub from "./workspaces/ContentHub";
 import IntegrationsDashboard from "./workspaces/IntegrationsDashboard";
 import CollaborationWorkspace from "./workspaces/CollaborationWorkspace";
+import AXIOMWorkspace from "./workspaces/AXIOMWorkspace";
+import ResearchWorkspaceView from "./workspaces/ResearchWorkspaceView";
 
 /* ── Page transition variants ──────────────────────────────────────── */
 
@@ -235,6 +237,8 @@ const WORKSPACE_MAP: Record<WorkspaceId, React.FC> = {
   "content-hub": ContentHub,
   integrations: IntegrationsDashboard,
   collaboration: CollaborationWorkspace,
+  "axiom-workspace": AXIOMWorkspace,
+  research: ResearchWorkspaceView,
 };
 
 export default function WorkspaceShell() {

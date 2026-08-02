@@ -338,6 +338,78 @@ export const collaboration = {
     }),
 };
 
+// ═══════════════════════════════════════════════════════════════════════
+// Phase A — AXIOM Core
+// ═══════════════════════════════════════════════════════════════════════
+
+import type {
+  AxiomStatus,
+  SystemAwareness,
+  AxiomChatResponse,
+  AxiomRouteResponse,
+  ResearchWorkspace,
+  ResearchWorkspaceSummary,
+} from "./api-types";
+
+export const axiom = {
+  status: () => fetchApi<AxiomStatus>("/axiom/status"),
+  chat: (message: string, conversation_id?: string) =>
+    fetchApi<AxiomChatResponse>("/axiom/chat", {
+      method: "POST",
+      body: JSON.stringify({ message, conversation_id }),
+    }),
+  route: (message: string) =>
+    fetchApi<AxiomRouteResponse>("/axiom/route", {
+      method: "POST",
+      body: JSON.stringify({ message }),
+    }),
+  awareness: () => fetchApi<SystemAwareness>("/axiom/awareness"),
+  communicate: (exec_id: string, message: string) =>
+    fetchApi<{ response: string }>(`/axiom/communicate/${exec_id}`, {
+      method: "POST",
+      body: JSON.stringify({ message }),
+    }),
+  execute: (action: string, params?: Record<string, unknown>) =>
+    fetchApi<{ result: string }>("/axiom/execute", {
+      method: "POST",
+      body: JSON.stringify({ action, params }),
+    }),
+  retrieve: (query: string, content_types?: string[]) =>
+    fetchApi<{ results: unknown[] }>("/axiom/retrieve", {
+      method: "POST",
+      body: JSON.stringify({ query, content_types }),
+    }),
+  research: {
+    list: () => fetchApi<ResearchWorkspaceSummary[]>("/axiom/research"),
+    create: (title: string, query: string) =>
+      fetchApi<ResearchWorkspaceSummary>("/axiom/research", {
+        method: "POST",
+        body: JSON.stringify({ title, query }),
+      }),
+    get: (id: string) =>
+      fetchApi<ResearchWorkspace>(`/axiom/research/${id}`),
+    addConversation: (id: string, role: string, content: string) =>
+      fetchApi<ResearchWorkspace>(`/axiom/research/${id}/conversation`, {
+        method: "POST",
+        body: JSON.stringify({ role, content }),
+      }),
+    addFinding: (
+      id: string,
+      content: string,
+      title?: string,
+      confidence?: number,
+    ) =>
+      fetchApi<ResearchWorkspace>(`/axiom/research/${id}/findings`, {
+        method: "POST",
+        body: JSON.stringify({ content, title, confidence }),
+      }),
+    archive: (id: string) =>
+      fetchApi<{ success: boolean }>(`/axiom/research/${id}/archive`, {
+        method: "POST",
+      }),
+  },
+};
+
 // ── Helper ────────────────────────────────────────────────────────────
 
 function buildQuery(params: Record<string, string | undefined>): string {

@@ -632,7 +632,7 @@ class ExecutiveRuntimeLoop:
             try:
                 self._runtime.memory.write_agent_memory(
                     agent_id=self.exec_id,
-                    key=f"founder-report-{self._cycle_count}",
+                    key="founder-report",
                     content=report,
                 )
             except Exception:

@@ -15,6 +15,8 @@ import asyncio
 from typing import Any, Dict, List, Optional
 
 from axiom.config import settings
+from axiom.core.axiom_core import AXIOMCore
+from axiom.core.research_workspace import ResearchWorkspaceManager
 from axiom.engine.event import EventEngine
 from axiom.engine.executive import ExecutiveEngine
 from axiom.engine.intelligence import IntelligenceEngine
@@ -70,6 +72,10 @@ class AxiomRuntime:
         self.system_monitor: Optional[SystemMonitor] = None
         self.greeting_engine: Optional[GreetingEngine] = None
         self.system_tools: Optional[SystemTools] = None
+
+        # AXIOM Core — top-level intelligence layer
+        self.axiom: Optional[AXIOMCore] = None
+        self.research: Optional[ResearchWorkspaceManager] = None
 
     # ── Bootstrap ────────────────────────────────────────────────────────
 
@@ -137,6 +143,26 @@ class AxiomRuntime:
             logger=self.logger,
         )
 
+        # AXIOM Core — top-level intelligence layer (above all executives)
+        self.axiom = AXIOMCore(runtime=self, logger=self.logger)
+        self.axiom.wire_components(
+            intelligence=self.intelligence,
+            event=self.event,
+            executive=self.executive,
+            executive_board=self.executive_board,
+            workflow=self.workflow,
+            memory=self.memory,
+            tool=self.tool,
+            learning=self.learning,
+            greeting=self.greeting_engine,
+            system_monitor=self.system_monitor,
+            system_tools=self.system_tools,
+            approval=self.approval,
+        )
+
+        # Research Workspace Manager
+        self.research = ResearchWorkspaceManager(logger=self.logger)
+
         self._initialised = True
 
         if self.logger:
@@ -193,6 +219,17 @@ class AxiomRuntime:
         if self.executive_board:
             await self.executive_board.start_all()
 
+        # Execute AXIOM Core boot sequence (greeting, system awareness init)
+        if self.axiom:
+            boot_result = await self.axiom.boot()
+            if self.logger:
+                self.logger.info(
+                    "lifecycle",
+                    f"AXIOM boot: {boot_result.system_state.value} "
+                    f"({len(boot_result.stages_completed)}/{len(boot_result.stage_timings)} stages in "
+                    f"{boot_result.duration_ms:.0f}ms)",
+                )
+
         self._running = True
 
         if self.logger:
@@ -208,6 +245,10 @@ class AxiomRuntime:
         # Stop in reverse order
         if self.system_monitor:
             await self.system_monitor.shutdown()
+
+        # AXIOM Core shutdown
+        if self.axiom:
+            await self.axiom.shutdown()
 
         if self.executive_board:
             await self.executive_board.stop_all()
@@ -530,6 +571,8 @@ class AxiomRuntime:
                 "executive_board": self.executive_board is not None,
                 "logger": self.logger is not None,
                 "learning": self.learning is not None,
+                "axiom_core": self.axiom is not None,
+                "research": self.research is not None,
             },
         }
 
@@ -541,10 +584,19 @@ class AxiomRuntime:
         agents = self.executive.list_executives() if self.executive else []
         orgs = self.executive.list_organizations() if self.executive else []
 
+        axiom_state = self.axiom.state.value if self.axiom else "unavailable"
+        res_count = len(self.research.list_all()) if self.research else 0
+
         return {
             **status,
             "health": monitor_summary,
             "workflows_defined": len(workflows),
             "executives": len(agents),
             "org_count": len(orgs),
+            "axiom": {
+                "state": axiom_state,
+                "boot_id": self.axiom.boot_id if self.axiom else "",
+                "is_online": self.axiom.is_online if self.axiom else False,
+            },
+            "research_workspaces": res_count,
         }

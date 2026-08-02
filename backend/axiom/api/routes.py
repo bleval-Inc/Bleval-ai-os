@@ -50,6 +50,41 @@ class ChatRequest(BaseModel):
     dept_id: str = ""
     conversation_history: List[Dict[str, str]] = []
     preferred_provider: Optional[str] = None
+    conversation_id: Optional[str] = None
+
+
+class AxiomRouteRequest(BaseModel):
+    message: str
+
+
+class AxiomCommunicateRequest(BaseModel):
+    message: str
+
+
+class AxiomExecuteRequest(BaseModel):
+    action: str
+    params: Dict[str, Any] = {}
+
+
+class AxiomRetrieveRequest(BaseModel):
+    query: str
+    content_types: Optional[List[str]] = None
+
+
+class AxiomResearchCreateRequest(BaseModel):
+    title: str
+    query: str
+
+
+class AxiomResearchConversationRequest(BaseModel):
+    role: str
+    content: str
+
+
+class AxiomResearchFindingRequest(BaseModel):
+    content: str
+    title: Optional[str] = None
+    confidence: Optional[float] = None
 
 
 class ApprovalResponse(BaseModel):
@@ -925,3 +960,225 @@ async def text_to_speech(text: str):
     could be extended to call ElevenLabs/Deepgram streaming API.
     """
     return {"text": text, "format": "ssml", "speaker": "axiom"}
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# AXIOM Core Routes — Founder interface, system concierge, intelligence layer
+# ═══════════════════════════════════════════════════════════════════════════════
+
+
+@router.get("/axiom/status")
+async def get_axiom_status():
+    """Get AXIOM Core status — state, boot info, system awareness."""
+    rt = _get_runtime()
+    if not hasattr(rt, "axiom") or rt.axiom is None:
+        return {"state": "unavailable", "error": "AXIOM Core not available"}
+
+    awareness = await rt.axiom.get_system_awareness()
+    return {
+        "state": rt.axiom.state.value,
+        "boot_id": rt.axiom.boot_id,
+        "is_online": rt.axiom.is_online,
+        "awareness": awareness.to_dict(),
+    }
+
+
+@router.post("/axiom/chat")
+async def axiom_chat(request: ChatRequest):
+    """Chat with AXIOM — the Founder's conversational interface.
+
+    AXIOM has full system awareness and can:
+    - Route requests to executives
+    - Monitor system health
+    - Perform research
+    - Retrieve content
+    - Manage workspaces
+    """
+    rt = _get_runtime()
+    if not hasattr(rt, "axiom") or rt.axiom is None:
+        raise HTTPException(status_code=503, detail="AXIOM Core not available")
+
+    try:
+        result = await rt.axiom.chat(
+            message=request.message,
+            conversation_history=request.conversation_history,
+        )
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/axiom/route")
+async def axiom_route(request: AxiomRouteRequest):
+    """Route a Founder request through AXIOM's classification and routing layer.
+
+    Returns the routing decision along with the response.
+    Useful for debugging routing or for the frontend to understand intent.
+    """
+    rt = _get_runtime()
+    if not hasattr(rt, "axiom") or rt.axiom is None:
+        raise HTTPException(status_code=503, detail="AXIOM Core not available")
+
+    try:
+        result = await rt.axiom.handle_request(request.message)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/axiom/awareness")
+async def get_axiom_awareness():
+    """Get full system awareness snapshot — live operational model.
+
+    Returns the state of all executives, engines, workflows, and
+    system health metrics in a single structured response.
+    """
+    rt = _get_runtime()
+    if not hasattr(rt, "axiom") or rt.axiom is None:
+        raise HTTPException(status_code=503, detail="AXIOM Core not available")
+
+    awareness = await rt.axiom.get_system_awareness()
+    return awareness.to_dict()
+
+
+# ── Research Workspace Routes ─────────────────────────────────────────────
+
+
+@router.post("/axiom/research")
+async def create_research_workspace(request: AxiomResearchCreateRequest):
+    """Create a new research workspace for deep-dive investigation."""
+    rt = _get_runtime()
+    if not hasattr(rt, "axiom") or rt.axiom is None:
+        raise HTTPException(status_code=503, detail="AXIOM Core not available")
+
+    try:
+        workspace = await rt.axiom.create_research_workspace(
+            title=request.title,
+            query=request.query,
+        )
+        return workspace
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/axiom/research")
+async def list_research_workspaces(status: Optional[str] = None):
+    """List all research workspaces, optionally filtered by status."""
+    rt = _get_runtime()
+    if not hasattr(rt, "axiom") or rt.axiom is None:
+        return []
+
+    if status == "active":
+        return rt.axiom.list_research_workspaces()
+    return rt.axiom.list_research_workspaces()
+
+
+@router.get("/axiom/research/{workspace_id}")
+async def get_research_workspace(workspace_id: str):
+    """Get a research workspace with full details."""
+    rt = _get_runtime()
+    if not hasattr(rt, "axiom") or rt.axiom is None:
+        raise HTTPException(status_code=503, detail="AXIOM Core not available")
+
+    workspace = rt.axiom.get_research_workspace(workspace_id)
+    if workspace is None:
+        raise HTTPException(status_code=404, detail=f"Workspace {workspace_id} not found")
+    return workspace
+
+
+@router.post("/axiom/research/{workspace_id}/conversation")
+async def add_research_conversation(workspace_id: str, request: AxiomResearchConversationRequest):
+    """Add a conversation entry to a research workspace."""
+    rt = _get_runtime()
+    if not hasattr(rt, "axiom") or rt.axiom is None:
+        raise HTTPException(status_code=503, detail="AXIOM Core not available")
+
+    workspace = rt.axiom.update_research_workspace(
+        workspace_id,
+        {"conversation": [{"role": request.role, "content": request.content}]},
+    )
+    if workspace is None:
+        raise HTTPException(status_code=404, detail=f"Workspace {workspace_id} not found")
+    return workspace
+
+
+@router.post("/axiom/research/{workspace_id}/findings")
+async def add_research_finding(workspace_id: str, request: AxiomResearchFindingRequest):
+    """Add a finding to a research workspace."""
+    rt = _get_runtime()
+    if not hasattr(rt, "axiom") or rt.axiom is None:
+        raise HTTPException(status_code=503, detail="AXIOM Core not available")
+
+    finding = {"content": request.content, "title": request.title, "confidence": request.confidence}
+    workspace = await rt.axiom.add_research_finding(workspace_id, finding)
+    if workspace is None:
+        raise HTTPException(status_code=404, detail=f"Workspace {workspace_id} not found")
+    return workspace
+
+
+@router.post("/axiom/research/{workspace_id}/archive")
+async def archive_research_workspace(workspace_id: str):
+    """Archive a research workspace."""
+    rt = _get_runtime()
+    if not hasattr(rt, "axiom") or rt.axiom is None:
+        raise HTTPException(status_code=503, detail="AXIOM Core not available")
+
+    success = rt.axiom.archive_research_workspace(workspace_id)
+    if not success:
+        raise HTTPException(status_code=404, detail=f"Workspace {workspace_id} not found")
+    return {"workspace_id": workspace_id, "status": "archived"}
+
+
+# ── AXIOM Executive Communication ────────────────────────────────────────
+
+
+@router.post("/axiom/communicate/{exec_id}")
+async def communicate_with_executive(exec_id: str, request: AxiomCommunicateRequest):
+    """Route a Founder message to an executive through AXIOM."""
+    rt = _get_runtime()
+    if not hasattr(rt, "axiom") or rt.axiom is None:
+        raise HTTPException(status_code=503, detail="AXIOM Core not available")
+
+    try:
+        result = await rt.axiom.route_to_executive(exec_id, request.message)
+        return result
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ── AXIOM System Actions ─────────────────────────────────────────────────
+
+
+@router.post("/axiom/execute")
+async def axiom_execute(request: AxiomExecuteRequest):
+    """Execute a system action through AXIOM's tools bridge.
+
+    Only non-approval actions execute directly.
+    Actions requiring Founder approval (trades, payments, etc.)
+    go through the approval manager.
+    """
+    rt = _get_runtime()
+    if not hasattr(rt, "axiom") or rt.axiom is None:
+        raise HTTPException(status_code=503, detail="AXIOM Core not available")
+
+    result = await rt.axiom.execute_system_action(request.action, request.params)
+    return result
+
+
+# ── AXIOM Content Retrieval ──────────────────────────────────────────────
+
+
+@router.post("/axiom/retrieve")
+async def axiom_retrieve(request: AxiomRetrieveRequest):
+    """Multi-modal content retrieval through AXIOM.
+
+    Searches across text, images, videos, audio, and documents.
+    """
+    rt = _get_runtime()
+    if not hasattr(rt, "axiom") or rt.axiom is None:
+        raise HTTPException(status_code=503, detail="AXIOM Core not available")
+
+    results = await rt.axiom.retrieve_content(request.query, request.content_types)
+    return results

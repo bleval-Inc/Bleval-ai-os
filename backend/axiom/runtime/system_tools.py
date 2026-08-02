@@ -292,6 +292,18 @@ class SystemTools:
             timeout_seconds=30.0,
         )
 
+        self._tools["status_summary"] = ToolDef(
+            name="status_summary",
+            description="Get a brief text summary of the current AXIOM system status — executives, workflows, health.",
+            input_schema={
+                "type": "object",
+                "properties": {},
+            },
+            execute=self._exec_status_summary,
+            category="axiom",
+            timeout_seconds=5.0,
+        )
+
     # ── Public API ───────────────────────────────────────────────────────
 
     def get_tool(self, name: str) -> Optional[ToolDef]:
@@ -498,3 +510,25 @@ class SystemTools:
             except ValueError as exc:
                 return ToolResult(success=False, output=str(exc), error=str(exc))
         return ToolResult(success=False, output=f"Unknown action: {action}", error="invalid_action")
+
+    async def _exec_status_summary(self, args: Dict[str, Any]) -> ToolResult:
+        """Return a brief text summary of system state."""
+        if not self._runtime:
+            return ToolResult(success=True, output="System is online. (runtime object unavailable for details)")
+
+        try:
+            rt = self._runtime
+            summary = rt.get_summary() if hasattr(rt, "get_summary") else {}
+            axiom_info = summary.get("axiom", {})
+            health = summary.get("health", {})
+
+            lines = [
+                f"State: {axiom_info.get('state', 'unknown')}",
+                f"Uptime: {health.get('healthy', 0)}/{health.get('total', 0)} components healthy",
+                f"Executives: {summary.get('executives', 0)}",
+                f"Workflows: {summary.get('workflows_defined', 0)} defined",
+                f"Research workspaces: {summary.get('research_workspaces', 0)}",
+            ]
+            return ToolResult(success=True, output=" | ".join(lines), data=summary)
+        except Exception as exc:
+            return ToolResult(success=True, output=f"System running (summary unavailable: {exc})")

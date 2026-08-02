@@ -3,19 +3,21 @@ import type { RuntimeStatus, ExecutiveBoardStatus, HealthSummary } from "../api-
 
 // ── Workspace identifiers ────────────────────────────────────────────
 export type WorkspaceId =
-  | "workspace"        // 1: Founder
-  | "executives"       // 2: Executive Board
-  | "operations"       // 3: Operations Center
-  | "knowledge"        // 4: Knowledge
-  | "projects"         // 5: Projects
-  | "creator"          // 6: Creator Studio
-  | "trading"          // 7: Trading Terminal
-  | "console"          // 8: Founder Console
-  | "communications"   // 9: Communications Hub (Phase 8C)
-  | "intelligence"     // 10: Intelligence Center (Phase 8C)
-  | "content-hub"      // 11: Content Hub (Phase 8C)
-  | "integrations"     // 12: Integrations (Phase 8C)
-  | "collaboration";   // 13: Collaboration Workspace (Phase 8C)
+  | "workspace"         // 1: Founder (AXIOM Workstation)
+  | "executives"        // 2: Executive Board
+  | "operations"        // 3: Operations Center
+  | "knowledge"         // 4: Knowledge
+  | "projects"          // 5: Projects
+  | "creator"           // 6: Creator Studio
+  | "trading"           // 7: Trading Terminal
+  | "console"           // 8: Founder Console
+  | "communications"    // 9: Communications Hub (Phase 8C)
+  | "intelligence"      // 10: Intelligence Center (Phase 8C)
+  | "content-hub"       // 11: Content Hub (Phase 8C)
+  | "integrations"      // 12: Integrations (Phase 8C)
+  | "collaboration"     // 13: Collaboration Workspace (Phase 8C)
+  | "axiom-workspace"   // 14: AXIOM Workstation
+  | "research";         // 15: Research Workspace
 
 export interface WorkspaceState {
   expandedSections: Record<string, boolean>;
