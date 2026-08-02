@@ -1,0 +1,562 @@
+# =============================================================================
+# Jenson Workstation Configuration
+# CEO / Chief Executive Officer — Bleval AI OS
+# =============================================================================
+# Jenson is the Chief Executive and has the broadest set of tools and
+# permissions across the system. This workstation enables full-spectrum
+# oversight: development, operations, marketing, sales, finance, and strategy.
+# =============================================================================
+
+workstation:
+  name: "jenson-workstation"
+  display_name: "Jenson Command Center"
+  role: "CEO / Chief Executive"
+  version: "1.0.0"
+  environment: "production"
+
+  # ---------------------------------------------------------------------------
+  # DESCRIPTION
+  # ---------------------------------------------------------------------------
+  description: >
+    Jenson's primary workstation provides unified command and control over the
+    entire Bleval AI OS ecosystem. It integrates development tooling,
+    operations dashboards, marketing and sales engines, finance systems, and
+    strategic research capabilities. Jenson can launch cross-functional
+    workflows, delegate to any agent in the system, and monitor all KPIs.
+
+  # ---------------------------------------------------------------------------
+  # TOOLS — Capabilities with granular permissions
+  # ---------------------------------------------------------------------------
+  tools:
+    # ── Core Development ──────────────────────────────────────────────────
+    vs_code:
+      display_name: "VS Code"
+      description: "Full-featured code editor with extensions and debugger"
+      access_level: write
+      capabilities:
+        - "Open and edit any source file"
+        - "Launch debug sessions"
+        - "Manage extensions"
+        - "Integrated terminal"
+      restrictions:
+        - "Cannot modify system-level configuration outside project scope"
+      permissions:
+        read: true
+        write: true
+        execute: true
+        admin: false
+
+    claude_code_cli:
+      display_name: "Claude Code CLI"
+      description: "AI-assisted coding via command-line interface"
+      access_level: execute
+      capabilities:
+        - "Full Claude Code agent orchestration"
+        - "Slash commands (/init, /review, /code-review, /explain)"
+        - "File editing and code generation"
+        - "Agent spawning (forge, tester, etc.)"
+        - "Memory store and search"
+        - "Swarm operations"
+      restrictions:
+        - "Cannot destroy production data without confirmation"
+        - "Requires explicit approval for destructive operations"
+      permissions:
+        read: true
+        write: true
+        execute: true
+        admin: false
+
+    github:
+      display_name: "GitHub"
+      description: "Source control, PR management, CI/CD oversight"
+      access_level: write
+      capabilities:
+        - "Create and merge pull requests"
+        - "Manage repositories"
+        - "Configure branch protections"
+        - "Review code changes"
+        - "Manage secrets and environments"
+        - "Trigger GitHub Actions workflows"
+        - "Manage releases and tags"
+      restrictions:
+        - "Cannot delete repositories"
+        - "Cannot remove branch protection rules"
+      permissions:
+        read: true
+        write: true
+        execute: true
+        admin: false
+
+    terminal:
+      display_name: "Terminal"
+      description: "Shell access for system-level operations"
+      access_level: execute
+      capabilities:
+        - "Unix shell commands"
+        - "Build and compilation commands"
+        - "Server and service management"
+        - "Database queries (read-only for production)"
+        - "Deployment scripts execution"
+      restrictions:
+        - "Production database writes require confirmation workflow"
+        - "Root / sudo commands logged and audited"
+      permissions:
+        read: true
+        write: true
+        execute: true
+        admin: false
+
+    repositories:
+      display_name: "Repositories"
+      description: "Codebase navigation and repository management"
+      access_level: write
+      capabilities:
+        - "Clone and checkout branches"
+        - "Review commit history"
+        - "Manage submodules"
+        - "Configure repo settings"
+      connected_repos:
+        - "Bleval-ai-os/core"
+        - "Bleval-ai-os/services"
+        - "Bleval-ai-os/deploy"
+        - "Bleval-ai-os/docs"
+        - "Bleval-ai-os/integrations"
+
+    # ── Development Agents ────────────────────────────────────────────────
+    forge_agent:
+      display_name: "Forge Agent"
+      description: "Primary development and engineering agent"
+      access_level: execute
+      capabilities:
+        - "Code generation and refactoring"
+        - "Architecture design"
+        - "Bug fixing"
+        - "Feature implementation"
+        - "Technical documentation"
+      permissions:
+        delegate: true
+        execute: true
+
+    tester_agent:
+      display_name: "Tester Agent"
+      description: "Automated testing and quality assurance agent"
+      access_level: execute
+      capabilities:
+        - "Unit test generation"
+        - "Integration test creation"
+        - "Test execution and reporting"
+        - "Coverage analysis"
+        - "Regression detection"
+      permissions:
+        delegate: true
+        execute: true
+
+    # ── Testing Workflows ─────────────────────────────────────────────────
+    testing_workflows:
+      display_name: "Testing & QA"
+      description: "End-to-end testing pipeline management"
+      access_level: execute
+      capabilities:
+        - "Run full test suites"
+        - "Performance benchmarking"
+        - "Load testing"
+        - "Security scanning (SAST/DAST)"
+        - "Lint and style checks"
+        - "CI pipeline validation"
+      restrictions:
+        - "Cannot deploy failing builds to production"
+      workflows:
+        - "full-suite: Run all tests across all modules"
+        - "regression-check: Targeted regression test pack"
+        - "security-scan: Full OWASP coverage scan"
+        - "perf-benchmark: System performance benchmarks"
+
+    # ── Deployment ────────────────────────────────────────────────────────
+    deployment_tooling:
+      display_name: "Deployment Tooling"
+      description: "Release management and infrastructure deployment"
+      access_level: execute
+      capabilities:
+        - "Environment provisioning"
+        - "Release orchestration"
+        - "Rollback management"
+        - "Infrastructure as code (Terraform, Pulumi)"
+        - "Docker image management"
+        - "Kubernetes cluster management"
+        - "Canary deployments"
+      environments:
+        - "development"
+        - "staging"
+        - "production"
+      restrictions:
+        - "Production deploys require approval from one other executive"
+        - "Canary deployments require 30-minute observation window"
+      permissions:
+        read: true
+        write: true
+        execute: true
+        admin: false
+
+    # ── Marketing Tools ───────────────────────────────────────────────────
+    marketing_analyst:
+      display_name: "Marketing Analyst"
+      description: "Marketing analytics and campaign performance"
+      access_level: read
+      capabilities:
+        - "Campaign performance dashboards"
+        - "Conversion funnel analysis"
+        - "ROI reporting"
+        - "Audience segmentation data"
+        - "Competitive analysis"
+      permissions:
+        read: true
+        write: false
+        execute: false
+
+    marketing_nova:
+      display_name: "Nova — Content Engine"
+      description: "AI content generation and optimization"
+      access_level: write
+      capabilities:
+        - "Content strategy planning"
+        - "Copy generation (blog, social, email)"
+        - "SEO optimization"
+        - "A/B content testing"
+        - "Brand voice consistency checks"
+      permissions:
+        read: true
+        write: true
+        execute: true
+
+    marketing_creator:
+      display_name: "Creator — Design Engine"
+      description: "Visual asset creation and brand management"
+      access_level: write
+      capabilities:
+        - "Asset generation (images, videos, graphics)"
+        - "Brand template management"
+        - "Social media content scheduling"
+        - "Presentation creation"
+        - "Brand guideline enforcement"
+      permissions:
+        read: true
+        write: true
+        execute: true
+
+    # ── Sales Tools ───────────────────────────────────────────────────────
+    sales_atlas:
+      display_name: "Atlas — CRM"
+      description: "Customer relationship management and pipeline"
+      access_level: write
+      capabilities:
+        - "Pipeline overview and forecasting"
+        - "Lead scoring and routing"
+        - "Contact management"
+        - "Deal tracking"
+        - "Activity logging"
+      permissions:
+        read: true
+        write: true
+        execute: false
+
+    sales_apollo:
+      display_name: "Apollo — Outreach Engine"
+      description: "Automated sales outreach and sequencing"
+      access_level: write
+      capabilities:
+        - "Email sequence management"
+        - "Personalization engine"
+        - "Follow-up automation"
+        - "Response tracking"
+        - "Meeting scheduling integration"
+      permissions:
+        read: true
+        write: true
+        execute: true
+
+    sales_closer:
+      display_name: "Closer — Deal Desk"
+      description: "Contract and deal management"
+      access_level: write
+      capabilities:
+        - "Contract generation and templates"
+        - "Proposal management"
+        - "Negotiation tracking"
+        - "Discount and approval workflows"
+        - "eSignature integration"
+      restrictions:
+        - "Contracts above $100K require CFO approval"
+      permissions:
+        read: true
+        write: true
+        execute: true
+
+    # ── Operations Tools ──────────────────────────────────────────────────
+    ops_ledger:
+      display_name: "Ledger — Operations"
+      description: "Operational tracking and resource management"
+      access_level: write
+      capabilities:
+        - "Project tracking"
+        - "Resource allocation dashboards"
+        - "Sprint management"
+        - "OKR tracking"
+        - "Team velocity metrics"
+      permissions:
+        read: true
+        write: true
+        execute: false
+
+    ops_pulse:
+      display_name: "Pulse — System Health"
+      description: "Infrastructure and service monitoring"
+      access_level: read
+      capabilities:
+        - "System uptime and SLA dashboards"
+        - "Incident management"
+        - "Alert routing"
+        - "Log aggregation and search"
+        - "Performance graphs and trends"
+      permissions:
+        read: true
+        write: false
+        execute: false
+
+    # ── Finance Tools ─────────────────────────────────────────────────────
+    finance_treasury:
+      display_name: "Treasury"
+      description: "Cash management and financial operations"
+      access_level: read
+      capabilities:
+        - "Cash position dashboard"
+        - "Revenue and expense overview"
+        - "Budget vs actual tracking"
+        - "Runway projections"
+        - "Invoice approval queue"
+      restrictions:
+        - "Cannot initiate transfers"
+        - "Cannot modify budget allocations"
+      permissions:
+        read: true
+        write: false
+        execute: false
+
+    finance_auditor:
+      display_name: "Auditor"
+      description: "Compliance and audit trail monitoring"
+      access_level: read
+      capabilities:
+        - "System-wide audit log viewer"
+        - "Compliance status dashboards"
+        - "Access review reports"
+        - "Policy violation alerts"
+        - "Regulatory reporting"
+      restrictions:
+        - "Cannot modify audit logs"
+        - "Cannot clear alerts"
+      permissions:
+        read: true
+        write: false
+        execute: false
+
+    # ── Research ──────────────────────────────────────────────────────────
+    research:
+      display_name: "Strategic Research"
+      description: "Market and technology research capability"
+      access_level: execute
+      capabilities:
+        - "Web research and synthesis"
+        - "Competitive landscape analysis"
+        - "Technology trend monitoring"
+        - "Industry report generation"
+        - "Patent and publication search"
+        - "Deep-dive investigation (multi-source verification)"
+      permissions:
+        read: true
+        write: true
+        execute: true
+
+  # ---------------------------------------------------------------------------
+  # AGENTS — Delegatable agents under Jenson's command
+  # ---------------------------------------------------------------------------
+  agents:
+    - name: "forge"
+      display_name: "Forge Agent"
+      role: "Lead Engineer"
+      capabilities:
+        - "Full-stack development"
+        - "Code review and refactoring"
+        - "Architecture design"
+        - "Technical debt management"
+      delegation_mode: "direct"
+
+    - name: "tester"
+      display_name: "Tester Agent"
+      role: "QA Engineer"
+      capabilities:
+        - "Automated test authoring"
+        - "Test suite execution"
+        - "Defect tracking"
+        - "Performance testing"
+      delegation_mode: "direct"
+
+    - name: "marketing-staff"
+      display_name: "Marketing Staff"
+      role: "Marketing Operations"
+      capabilities:
+        - "Campaign execution"
+        - "Content scheduling"
+        - "Analytics reporting"
+        - "Social media management"
+      delegation_mode: "supervised"
+
+    - name: "sales-staff"
+      display_name: "Sales Staff"
+      role: "Sales Operations"
+      capabilities:
+        - "Lead qualification"
+        - "Pipeline management"
+        - "Outreach sequence execution"
+        - "Reporting"
+      delegation_mode: "supervised"
+
+    - name: "operations-staff"
+      display_name: "Operations Staff"
+      role: "Operations Coordinator"
+      capabilities:
+        - "Project management"
+        - "Resource tracking"
+        - "Sprint coordination"
+        - "Status reporting"
+      delegation_mode: "supervised"
+
+  # ---------------------------------------------------------------------------
+  # WORKFLOWS — Launchable from this workstation
+  # ---------------------------------------------------------------------------
+  workflows:
+    - name: "new-release-cycle"
+      display_name: "New Release Cycle"
+      description: "Orchestrate a complete release from branch to deploy"
+      steps:
+        - "forge: Create release branch and version bump"
+        - "tester: Run full regression suite"
+        - "forge: Final bug fixes"
+        - "tester: Smoke test on staging"
+        - "deploy: Canary deploy to 10% of instances"
+        - "pulse: Monitor for 30 minutes"
+        - "deploy: Full production rollout"
+        - "release: Tag and publish release notes"
+      required_approvals: ["valta-prime"]
+
+    - name: "quarterly-review"
+      display_name: "Quarterly Business Review"
+      description: "Aggregate all KPIs for quarterly board presentation"
+      steps:
+        - "ledger: Compile operational metrics"
+        - "atlas: Compile sales metrics"
+        - "analyst: Compile marketing metrics"
+        - "treasury: Compile financial metrics"
+        - "research: Competitor landscape update"
+        - "combine: Generate unified QBR deck"
+      required_approvals: []
+
+    - name: "incident-response"
+      display_name: "Incident Response"
+      description: "Respond to a production incident"
+      steps:
+        - "pulse: Diagnose and assess severity"
+        - "forge: Implement hotfix"
+        - "tester: Validate hotfix"
+        - "deploy: Deploy hotfix"
+        - "auditor: Log incident report"
+      required_approvals: []
+
+    - name: "sprint-planning"
+      display_name: "Sprint Planning"
+      description: "Plan upcoming development sprint"
+      steps:
+        - "ledger: Review current sprint burndown"
+        - "forge: Estimate upcoming tickets"
+        - "tester: Identify test coverage gaps"
+        - "ledger: Finalize sprint scope"
+      required_approvals: []
+
+    - name: "executive-dashboard"
+      display_name: "Executive Dashboard Refresh"
+      description: "Refresh all executive KPIs and dashboards"
+      steps:
+        - "pulse: Gather system health metrics"
+        - "ledger: Gather operational metrics"
+        - "treasury: Gather financial metrics"
+        - "atlas: Gather sales pipeline metrics"
+        - "analyst: Gather marketing metrics"
+        - "combine: Refresh unified dashboard"
+      required_approvals: []
+
+  # ---------------------------------------------------------------------------
+  # INTEGRATIONS
+  # ---------------------------------------------------------------------------
+  integrations:
+    slack:
+      workspace: "bleval-ai"
+      channels:
+        - "#engineering"
+        - "#marketing"
+        - "#sales"
+        - "#operations"
+        - "#finance"
+        - "#executive"
+        - "#incidents"
+      notification_level: "all"
+
+    email:
+      providers:
+        - google_workspace
+      aliases:
+        - "jenson@bleval.ai"
+      auto_forward: true
+
+    calendar:
+      provider: "google"
+      calendars:
+        - "Engineering Sprints"
+        - "Marketing Calendar"
+        - "Sales Pipeline Reviews"
+        - "Finance Reviews"
+        - "Executive Strategy"
+
+    communication:
+      videoconferencing: "zoom"
+      meeting_scheduler: "calendly"
+
+  # ---------------------------------------------------------------------------
+  # ACCESS CONTROL
+  # ---------------------------------------------------------------------------
+  access_level: "executive"
+  clearance: "level-5"
+
+  permissions:
+    global:
+      read: true
+      write: true
+      execute: true
+      delegate: true
+      admin: false
+
+  restrictions:
+    - "Cannot delete repositories or production infrastructure"
+    - "Cannot modify audit logs"
+    - "Cannot bypass spending approval workflows"
+    - "Cannot terminate employment records unilaterally"
+    - "Cannot remove access controls from other executives"
+    - "Cannot modify own workstation configuration without audit trail"
+
+  # ---------------------------------------------------------------------------
+  # SESSION CONFIGURATION
+  # ---------------------------------------------------------------------------
+  session:
+    idle_timeout_minutes: 30
+    max_concurrent_sessions: 3
+    require_mfa: true
+    audit_logging: "comprehensive"
+    terminal_history_days: 90

@@ -1,0 +1,52 @@
+# Executive Dashboard Workflow
+# Version: 3.0.0
+
+name: Executive Dashboard
+org: bleval
+department: operations
+coordinator: jenson
+
+agents:
+  - ledger
+  - pulse
+  - analyst
+
+steps:
+  - id: 1
+    name: "Gather Operational Metrics"
+    agent: ledger
+    description: "Gather operational KPIs including project status, resource utilization, and velocity"
+    outputs:
+      - operational-metrics
+    events_emitted: []
+
+  - id: 2
+    name: "Gather System Health"
+    agent: pulse
+    description: "Gather system health metrics including uptime, incidents, and performance"
+    inputs:
+      - operational-metrics
+    outputs:
+      - system-health
+    events_emitted: []
+
+  - id: 3
+    name: "Gather Sales Pipeline"
+    agent: analyst
+    description: "Gather sales pipeline metrics including deals, conversion, and forecasts"
+    inputs:
+      - system-health
+    outputs:
+      - sales-pipeline
+    events_emitted: []
+
+  - id: 4
+    name: "Compile Unified Dashboard"
+    agent: ledger
+    description: "Compile all metrics into unified executive dashboard with insights"
+    inputs:
+      - sales-pipeline
+    outputs:
+      - unified-dashboard
+    events_emitted:
+      - dashboard-refreshed

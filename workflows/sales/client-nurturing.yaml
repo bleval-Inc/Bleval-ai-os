@@ -1,0 +1,51 @@
+# Client Nurturing Workflow
+# Version: 3.0.0
+
+name: Client Nurturing
+org: bleval
+department: sales
+coordinator: jenson
+
+agents:
+  - apollo
+  - closer
+
+steps:
+  - id: 1
+    name: "Design Nurture Sequence"
+    agent: apollo
+    description: "Design education sequence tailored to prospect profile and interests"
+    outputs:
+      - nurture-plan
+    events_emitted: []
+
+  - id: 2
+    name: "Execute Touchpoints"
+    agent: apollo
+    description: "Execute nurture touchpoints with personalized content and follow-ups"
+    inputs:
+      - nurture-plan
+    outputs:
+      - touchpoint-results
+    events_emitted: []
+
+  - id: 3
+    name: "Track Engagement"
+    agent: apollo
+    description: "Track prospect engagement, opens, clicks, and response patterns"
+    inputs:
+      - touchpoint-results
+    outputs:
+      - engagement-metrics
+    events_emitted: []
+
+  - id: 4
+    name: "Score Readiness"
+    agent: closer
+    description: "Score prospect readiness for sales conversation and hand off to closer"
+    inputs:
+      - engagement-metrics
+    outputs:
+      - readiness-score
+    events_emitted:
+      - prospect-ready

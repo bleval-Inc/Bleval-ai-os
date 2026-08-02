@@ -1,0 +1,617 @@
+# =============================================================================
+# Yamako Workstation Configuration
+# Chief of Staff / Executive Operations — Bleval AI OS
+# =============================================================================
+# Yamako is the Chief of Staff responsible for executive coordination,
+# schedule management, learning and development, and communication flow
+# between Jenson and Valta Prime. Yamako is the bridge and the operational
+# backbone of the executive team.
+# =============================================================================
+
+workstation:
+  name: "yamako-workstation"
+  display_name: "Yamako Operations Hub"
+  role: "Chief of Staff / Executive Operations"
+  version: "1.0.0"
+  environment: "production"
+
+  # ---------------------------------------------------------------------------
+  # DESCRIPTION
+  # ---------------------------------------------------------------------------
+  description: >
+    Yamako's workstation is the operational nerve center for the executive
+    team. It manages calendars, schedules, reminders, meetings, learning
+    programs, and communications. Yamako coordinates the bridge between
+    Jenson (CEO) and Valta Prime (Market Strategist), ensuring information
+    flows smoothly and nothing falls through the cracks. Yamako also
+    maintains the organizational knowledge base including the quote library.
+
+  # ---------------------------------------------------------------------------
+  # TOOLS — Capabilities with granular permissions
+  # ---------------------------------------------------------------------------
+  tools:
+    # ── Calendar System ────────────────────────────────────────────────────
+    calendar_system:
+      display_name: "Calendar Engine"
+      description: "Multi-calendar management and synchronization"
+      access_level: write
+      capabilities:
+        - "Multi-calendar views (Jenson, Valta Prime, Team)"
+        - "Cross-calendar conflict detection"
+        - "Time zone management across global operations"
+        - "Recurring event management"
+        - "Calendar sharing and delegation"
+        - "Holiday and observance calendar for all operating regions"
+        - "Event categorization (internal, client, strategic, personal)"
+        - "Calendar analytics (time allocation, meeting load metrics)"
+        - "Auto-scheduling based on availability and preferences"
+        - "Buffer time management between meetings"
+      managed_calendars:
+        - "jenson: CEO primary calendar"
+        - "valta-prime: Market Strategist calendar"
+        - "team: All-hands and team events"
+        - "external: Client and partner meetings"
+        - "strategic: Board meetings, offsites, reviews"
+      permissions:
+        read: true
+        write: true
+        execute: true
+
+    # ── Schedule Management ────────────────────────────────────────────────
+    schedule_management:
+      display_name: "Schedule Optimization"
+      description: "Intelligent schedule planning and optimization"
+      access_level: write
+      capabilities:
+        - "Weekly schedule planning and optimization"
+        - "Travel schedule management (flights, hotels, ground transport)"
+        - "Meeting prep time allocation"
+        - "Energy-aware scheduling (peak focus hours for critical work)"
+        - "Schedule conflict resolution proposals"
+        - "Day structure templates (strategy days, execution days, review days)"
+        - "Schedule change notifications and rebooking"
+        - "Priority-based schedule compression when needed"
+        - "Recurring commitment management (1:1s, standups, reviews)"
+      scheduling_policies:
+        - "Focus blocks: Minimum 2-hour uninterrupted blocks for Jenson"
+        - "Meeting cap: Maximum 6 hours of meetings per day"
+        - "Buffer: 15-minute minimum between meetings"
+        - "Lunch: 45-minute minimum lunch block daily"
+        - "End-of-day: No meetings after 17:00 unless urgent"
+        - "Review blocks: Friday afternoons for weekly review"
+      permissions:
+        read: true
+        write: true
+        execute: false
+
+    # ── Reminder System ────────────────────────────────────────────────────
+    reminder_system:
+      display_name: "Reminder Engine"
+      description: "Intelligent reminders and notifications"
+      access_level: write
+      capabilities:
+        - "Multi-channel reminders (Slack, email, in-app, mobile push)"
+        - "Smart timing (meeting prep 15min before, decision reminders, etc.)"
+        - "Recurring and one-time reminder creation"
+        - "Conditional reminders (triggered by events or conditions)"
+        - "Dependency-based reminders (reminder when prerequisite done)"
+        - "Escalation path for unanswered reminders"
+        - "Quiet hours respect (no reminders between 22:00-07:00)"
+        - "Priority classification (critical/important/routine)"
+        - "Delegated reminder management"
+        - "Reminder snooze and reschedule"
+      reminder_types:
+        - "meeting-prep: Preparation reminders with agenda review"
+        - "decision-due: Decision deadline reminders"
+        - "follow-up: Meeting follow-up action reminders"
+        - "deadline: Project and deliverable deadline reminders"
+        - "review: Weekly/Monthly review reminders"
+        - "learning: Scheduled learning session reminders"
+      permissions:
+        read: true
+        write: true
+        execute: true
+
+    # ── Meeting Coordination ───────────────────────────────────────────────
+    meeting_coordination:
+      display_name: "Meeting Coordination"
+      description: "End-to-end meeting orchestration"
+      access_level: write
+      capabilities:
+        - "Meeting creation with agenda generation"
+        - "Attendee management (invite, track RSVPs, waitlist)"
+        - "Meeting materials collection and distribution"
+        - "Automated note-taking and transcription"
+        - "Action item extraction and assignment"
+        - "Meeting recording management"
+        - "Follow-up scheduling and tracking"
+        - "Recurring meeting templates"
+        - "Meeting effectiveness scoring"
+        - "External participant coordination (calendly link, visitor passes)"
+      meeting_templates:
+        - name: "executive-standup"
+          duration_minutes: 15
+          frequency: "daily"
+          attendees: ["jenson", "valta-prime"]
+          agenda:
+            - "Priorities for today"
+            - "Blockers and escalations"
+            - "Key decisions needed"
+          output: "action-items"
+
+        - name: "weekly-strategy"
+          duration_minutes: 60
+          frequency: "weekly"
+          attendees: ["jenson", "valta-prime"]
+          agenda:
+            - "Weekly market overview (Valta Prime)"
+            - "Pipeline and operations review (Jenson)"
+            - "Strategic decisions and priorities"
+            - "Resource allocation"
+          output: "meeting-notes-and-actions"
+
+        - name: "monthly-board-prep"
+          duration_minutes: 90
+          frequency: "monthly"
+          attendees: ["jenson", "valta-prime", "finance-auditor"]
+          agenda:
+            - "Financial review"
+            - "Strategic initiatives update"
+            - "Risk assessment"
+            - "Board presentation preparation"
+          output: "board-deck"
+
+        - name: "quarterly-review"
+          duration_minutes: 180
+          frequency: "quarterly"
+          attendees: ["jenson", "valta-prime", "all-department-heads"]
+          agenda:
+            - "Q results vs targets"
+            - "Strategy recalibration"
+            - "Resource planning for next quarter"
+            - "OKR setting"
+          output: "quarterly-report"
+      permissions:
+        read: true
+        write: true
+        execute: true
+
+    # ── Learning Management ───────────────────────────────────────────────
+    learning_management:
+      display_name: "Learning Management"
+      description: "Executive and team learning and development"
+      access_level: write
+      capabilities:
+        - "Learning path creation for executives and teams"
+        - "Course and resource library management"
+        - "Skill gap analysis"
+        - "Learning schedule planning and tracking"
+        - "Certification and credential tracking"
+        - "External training provider integration"
+        - "Learning content recommendations"
+        - "Reading list management"
+        - "Conference and event tracking"
+        - "Learning hours tracking and reporting"
+      learning_domains:
+        - "ai-and-machine-learning: Technical upskilling"
+        - "leadership: Executive leadership development"
+        - "market-analysis: Financial and market expertise"
+        - "product-strategy: Product management and strategy"
+        - "sales-and-marketing: Revenue generation skills"
+        - "compliance: Regulatory and compliance training"
+      permissions:
+        read: true
+        write: true
+        execute: false
+
+    # ── Training Tracker ──────────────────────────────────────────────────
+    training_tracker:
+      display_name: "Training Tracker"
+      description: "Compliance and skills training tracking"
+      access_level: write
+      capabilities:
+        - "Mandatory training assignment and tracking"
+        - "Completion status dashboards"
+        - "Expiration and renewal alerts"
+        - "Training history and transcripts"
+        - "Department-level training metrics"
+        - "External certification renewal tracking"
+        - "Training effectiveness surveys"
+        - "Gap analysis reports"
+      training_categories:
+        - "compliance: Regulatory and legal training"
+        - "security: Information security and data protection"
+        - "onboarding: New hire onboarding curriculum"
+        - "leadership: Management and leadership development"
+        - "technical: Technical skills enhancement"
+        - "product: Product knowledge training"
+      permissions:
+        read: true
+        write: true
+        execute: false
+
+    # ── Quote Library ─────────────────────────────────────────────────────
+    quote_library:
+      display_name: "Quote Library"
+      description: "Curated collection of quotes and wisdom"
+      access_level: write
+      capabilities:
+        - "Quote collection and categorization"
+        - "Tagging and search by theme, author, context"
+        - "Quote of the day/week feature"
+        - "Contextual quote suggestions for meetings and reports"
+        - "Quote attribution management"
+        - "Personal favorites and collections"
+        - "Sharing integration (Slack, email, meeting agendas)"
+        - "Import/export functionality"
+      categories:
+        - "leadership: Leadership and management wisdom"
+        - "innovation: Innovation and creativity quotes"
+        - "resilience: Perseverance and resilience"
+        - "strategy: Strategic thinking and planning"
+        - "markets: Markets, investing, and economics"
+        - "technology: Technology and progress quotes"
+        - "culture: Company culture and values"
+        - "growth: Personal and professional growth"
+      permissions:
+        read: true
+        write: true
+        execute: false
+
+    # ── Communication Tools ────────────────────────────────────────────────
+    communication_tools:
+      display_name: "Executive Communications"
+      description: "Internal and external communication management"
+      access_level: write
+      capabilities:
+        - "Internal announcement drafting and distribution"
+        - "Email digest curation and sending"
+        - "Meeting summary distribution"
+        - "Decision log creation and distribution"
+        - "Stakeholder communication templates"
+        - "Communication cadence management"
+        - "Message priority routing"
+        - "Communication audit trail"
+        - "Multi-channel distribution (Slack, email, internal wiki)"
+      communication_types:
+        - "all-hands: Company-wide announcements"
+        - "executive-update: Bi-weekly exec team updates"
+        - "decision-log: Key decisions and rationale"
+        - "meeting-summary: Post-meeting recaps"
+        - "project-milestone: Project progress updates"
+        - "stakeholder: External stakeholder communications"
+        - "crisis: Urgent and crisis communications"
+      permissions:
+        read: true
+        write: true
+        execute: true
+
+    # ── Coordination Tools (Bridge) ────────────────────────────────────────
+    coordination_bridge:
+      display_name: "Executive Coordination Bridge"
+      description: "Cross-executive coordination and information routing"
+      access_level: write
+      capabilities:
+        - "Bidirectional information routing between Jenson and Valta Prime"
+        - "Decision request creation and tracking"
+        - "Information prioritization and queuing"
+        - "Executive availability coordination for sync points"
+        - "Cross-workflow dependency management"
+        - "Escalation matrix management"
+        - "Approval workflow orchestration"
+        - "Joint output compilation (combined reports, strategy docs)"
+        - "Executive alignment tracking"
+        - "Meeting outcome cascade to relevant parties"
+      bridge_routes:
+        - from: "valta-prime"
+          to: "jenson"
+          type: "research-intelligence"
+          description: "Market analysis, briefings, and recommendations"
+          delivery: "yamako-reviewed"
+
+        - from: "valta-prime"
+          to: "jenson"
+          type: "alert"
+          description: "Time-sensitive market alerts requiring CEO attention"
+          delivery: "immediate"
+
+        - from: "jenson"
+          to: "valta-prime"
+          type: "task"
+          description: "Research requests and strategic questions"
+          delivery: "yamako-prioritized"
+
+        - from: "jenson"
+          to: "valta-prime"
+          type: "decision-feedback"
+          description: "Feedback on Valta Prime recommendations"
+          delivery: "yamako-annotated"
+
+        - from: "yamako"
+          to: "valta-prime"
+          type: "schedule-request"
+          description: "Meeting scheduling and availability requests"
+          delivery: "direct"
+
+        - from: "yamako"
+          to: "jenson"
+          type: "daily-summary"
+          description: "End-of-day summary and next-day preview"
+          delivery: "daily"
+      permissions:
+        read: true
+        write: true
+        execute: true
+
+  # ---------------------------------------------------------------------------
+  # AGENTS — Delegatable agents under Yamako's command
+  # ---------------------------------------------------------------------------
+  agents:
+    - name: "scheduler"
+      display_name: "Scheduler Agent"
+      role: "Schedule Coordinator"
+      capabilities:
+        - "Calendar optimization"
+        - "Meeting scheduling and rescheduling"
+        - "Conflict resolution"
+        - "Travel itinerary management"
+      delegation_mode: "autonomous"
+
+    - name: "communicator"
+      display_name: "Communicator Agent"
+      role: "Communications Manager"
+      capabilities:
+        - "Draft and distribute communications"
+        - "Email digest compilation"
+        - "Meeting summary distribution"
+        - "Stakeholder notification"
+      delegation_mode: "supervised"
+
+    - name: "learning-coordinator"
+      display_name: "Learning Coordinator"
+      role: "L&D Coordinator"
+      capabilities:
+        - "Course assignment and tracking"
+        - "Training schedule management"
+        - "Completion reporting"
+        - "Learning content curation"
+      delegation_mode: "supervised"
+
+    - name: "bridge-agent"
+      display_name: "Bridge Agent"
+      role: "Cross-Executive Coordinator"
+      capabilities:
+        - "Information routing between executives"
+        - "Priority assessment and queuing"
+        - "Approval workflow tracking"
+        - "Cross-workflow status monitoring"
+      delegation_mode: "autonomous"
+
+  # ---------------------------------------------------------------------------
+  # WORKFLOWS — Launchable from this workstation
+  # ---------------------------------------------------------------------------
+  workflows:
+    - name: "daily-executive-briefing"
+      display_name: "Daily Executive Briefing"
+      description: "Compile and deliver the daily briefing to Jenson"
+      steps:
+        - "bridge-agent: Receive Valta Prime market briefing"
+        - "communicator: Format and annotate briefing"
+        - "scheduler: Add today's schedule context"
+        - "communicator: Deliver to Jenson with highlights"
+        - "bridge-agent: Confirm receipt and log delivery"
+      schedule: "daily 07:30 UTC"
+      output: "jenson-inbox"
+
+    - name: "weekly-executive-sync"
+      display_name: "Weekly Executive Sync"
+      description: "Coordinate the weekly strategy meeting"
+      steps:
+        - "bridge-agent: Collect updates from Valta Prime"
+        - "bridge-agent: Collect updates from Jenson"
+        - "scheduler: Find optimal meeting time"
+        - "communicator: Prepare and distribute agenda"
+        - "meeting-coordination: Host and record meeting"
+        - "communicator: Distribute action items"
+        - "bridge-agent: Track action item completion"
+      schedule: "weekly monday"
+
+    - name: "quarterly-board-preparation"
+      display_name: "Board Meeting Preparation"
+      description: "Coordinate board meeting materials and logistics"
+      steps:
+        - "bridge-agent: Solicit board deck inputs from all executives"
+        - "learning-coordinator: Compile training compliance report"
+        - "communicator: Draft board communication"
+        - "scheduler: Coordinate board meeting logistics"
+        - "bridge-agent: Track input completion and escalate gaps"
+        - "communicator: Final board deck compilation"
+        - "scheduler: Dry run scheduling with presenters"
+      schedule: "monthly (month before board)"
+
+    - name: "learning-cycle"
+      display_name: "Learning Cycle Launch"
+      description: "Launch and track a learning cycle for the team"
+      steps:
+        - "learning-coordinator: Identify skill gaps"
+        - "learning-coordinator: Curate learning paths"
+        - "scheduler: Schedule learning sessions"
+        - "learning-coordinator: Assign courses and track enrollment"
+        - "reminder-system: Set up learning reminders"
+        - "learning-coordinator: Monitor completion rates"
+      schedule: "quarterly"
+
+    - name: "new-hire-onboarding"
+      display_name: "New Hire Onboarding Flow"
+      description: "Orchestrate new executive or staff onboarding"
+      steps:
+        - "scheduler: Schedule welcome and orientation"
+        - "learning-coordinator: Assign onboarding curriculum"
+        - "communicator: Draft welcome communications"
+        - "bridge-agent: Coordinate intro meetings with executives"
+        - "training-tracker: Set up training tracking"
+        - "quote-library: Add welcome quote to onboarding pack"
+      schedule: "ondemand"
+
+    - name: "strategic-decision-track"
+      display_name: "Strategic Decision Track"
+      description: "Track a strategic decision from request to execution"
+      steps:
+        - "bridge-agent: Log decision request from either executive"
+        - "bridge-agent: Gather supporting materials from Valta Prime"
+        - "bridge-agent: Present decision to Jenson with options"
+        - "decision-log: Record decision and rationale"
+        - "communicator: Communicate decision to relevant parties"
+        - "bridge-agent: Track implementation actions"
+      schedule: "ondemand"
+
+    - name: "valta-prime-to-jenson-bridge"
+      display_name: "Valta Prime to Jenson Bridge"
+      description: "Route intelligence from Valta Prime to Jenson"
+      steps:
+        - "bridge-agent: Receive intelligence from Valta Prime"
+        - "bridge-agent: Assess priority and annotate"
+        - "communicator: Prepare delivery format"
+        - "scheduler: Block Jenson review time if urgent"
+        - "bridge-agent: Deliver to Jenson"
+        - "bridge-agent: Track for acknowledgment and action"
+      schedule: "continuous"
+
+  # ---------------------------------------------------------------------------
+  # INTEGRATIONS
+  # ---------------------------------------------------------------------------
+  integrations:
+    slack:
+      workspace: "bleval-ai"
+      channels:
+        - "#general"
+        - "#executive"
+        - "#operations"
+        - "#announcements"
+        - "#learning"
+      notification_level: "all"
+      capabilities:
+        - "Send scheduled messages"
+        - "Post meeting summaries"
+        - "Distribute briefings"
+        - "Learning reminders"
+        - "Decision log updates"
+
+    email:
+      providers:
+        - "google_workspace"
+        - "microsoft_exchange"
+      aliases:
+        - "yamako@bleval.ai"
+        - "chief-of-staff@bleval.ai"
+      auto_forward: true
+      digest:
+        enabled: true
+        schedule: "daily 08:00 UTC"
+        sections:
+          - "pending-decisions"
+          - "upcoming-meetings"
+          - "action-items-due"
+          - "new-tasks-assigned"
+          - "learning-milestones"
+
+    calendar:
+      provider: "google"
+      sync_direction: "bidirectional"
+      managed_calendars:
+        - "Company Events"
+        - "Executive Team"
+        - "Learning & Development"
+        - "Strategic Planning"
+
+    document_management:
+      provider: "google_drive"
+      capabilities:
+        - "Meeting notes repository"
+        - "Board document management"
+        - "Training material repository"
+        - "Decision log archive"
+        - "Quote library storage"
+
+    videoconferencing:
+      provider: "zoom"
+      capabilities:
+        - "Meeting scheduling via API"
+        - "Recording management"
+        - "Attendee analytics"
+        - "Webinar management"
+
+    project_management:
+      provider: "linear"
+      capabilities:
+        - "Action item creation from meetings"
+        - "Project milestone tracking"
+        - "Cross-team dependency mapping"
+
+  # ---------------------------------------------------------------------------
+  # KNOWLEDGE BASE
+  # ---------------------------------------------------------------------------
+  knowledge_base:
+    quote_library:
+      storage: "google_drive"
+      curated_collections:
+        - "leadership-wisdom"
+        - "innovation-quotes"
+        - "strategy-insights"
+        - "market-wisdom"
+        - "team-culture"
+        - "resilience"
+      auto_suggest: true
+      suggestion_contexts:
+        - "meeting-agenda"
+        - "internal-newsletter"
+        - "executive-communication"
+        - "presentation"
+
+    decision_log:
+      storage: "google_drive"
+      structure:
+        - "decision-id: Unique identifier"
+        - "date: Date of decision"
+        - "decision-maker: Who made the decision"
+        - "context: Background and situation"
+        - "options-considered: Alternatives evaluated"
+        - "decision: What was decided"
+        - "rationale: Why it was decided"
+        - "impact: Expected outcomes and KPIs"
+        - "status: Active/Complete/Superseded"
+        - "related-decisions: Linked decisions"
+
+  # ---------------------------------------------------------------------------
+  # ACCESS CONTROL
+  # ---------------------------------------------------------------------------
+  access_level: "executive"
+  clearance: "level-4"
+
+  permissions:
+    global:
+      read: true
+      write: true
+      execute: true
+      delegate: true
+      admin: false
+
+  restrictions:
+    - "Cannot modify financial data or treasury systems"
+    - "Cannot execute trades or place orders"
+    - "Cannot deploy code or releases"
+    - "Cannot modify user access permissions"
+    - "Cannot read private executive calendars without permission"
+    - "Cannot cancel standing meetings without executive approval"
+    - "Cannot override Valta Prime's no-trade restrictions"
+    - "Cannot modify executive workstation configurations"
+
+  # ---------------------------------------------------------------------------
+  # SESSION CONFIGURATION
+  # ---------------------------------------------------------------------------
+  session:
+    idle_timeout_minutes: 20
+    max_concurrent_sessions: 4
+    require_mfa: true
+    audit_logging: "standard"
+    terminal_history_days: 90

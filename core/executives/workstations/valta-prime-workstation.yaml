@@ -1,0 +1,499 @@
+# =============================================================================
+# Valta Prime Workstation Configuration
+# Chief Market Strategist / Macro Analyst — Bleval AI OS
+# =============================================================================
+# Valta Prime is the Chief Market Strategist responsible for market analysis,
+# macroeconomic research, trade intelligence, and strategic advisory. This
+# workstation is purpose-built for observation and analysis ONLY. Under no
+# circumstances can Valta Prime execute trades, place orders, or access
+# financial accounts. It is a pure intelligence and research terminal.
+# =============================================================================
+
+workstation:
+  name: "valta-prime-workstation"
+  display_name: "Valta Prime Intelligence Terminal"
+  role: "Chief Market Strategist / Macro Analyst"
+  version: "1.0.0"
+  environment: "production"
+
+  # ---------------------------------------------------------------------------
+  # DESCRIPTION
+  # ---------------------------------------------------------------------------
+  description: >
+    Valta Prime's workstation is a read-only intelligence terminal for
+    macroeconomic analysis, market research, trade intelligence, and
+    strategic advisory. It aggregates real-time and historical market data,
+    monitors economic indicators and news, performs technical and fundamental
+    analysis, and generates research reports. It has zero capability to
+    execute trades, place orders, or access any financial accounts. All
+    recommendations flow to Jenson for execution via Yamako's coordination.
+
+  # ---------------------------------------------------------------------------
+  # TOOLS — Capabilities with granular permissions
+  # ---------------------------------------------------------------------------
+  tools:
+    # ── Market Data ────────────────────────────────────────────────────────
+    market_data:
+      display_name: "Market Data Feed"
+      description: "Real-time and historical market data across all asset classes"
+      access_level: read
+      capabilities:
+        - "Real-time equity, forex, commodity, and crypto price feeds"
+        - "Historical price data (tick, 1m, 5m, 1h, daily)"
+        - "Level 2 order book data (depth, bids, asks, spreads)"
+        - "Volume profile and VWAP data"
+        - "Options chain and Greeks data"
+        - "Futures curve data"
+        - "Bond yield and fixed income data"
+        - "Index composition and weighting data"
+        - "Sector and industry group performance"
+        - "Market cap and float data"
+      data_providers:
+        - "bloomberg"
+        - "reuters"
+        - "polygon"
+        - "alpha_vantage"
+        - "yahoo_finance"
+      permissions:
+        read: true
+        write: false
+        execute: false
+      # CRITICAL SAFETY — No trade execution
+      trade_execution: false
+      order_capability: false
+
+    # ── Economic Calendar ──────────────────────────────────────────────────
+    economic_calendar:
+      display_name: "Economic Calendar"
+      description: "Global economic event calendar and indicators"
+      access_level: read
+      capabilities:
+        - "Central bank meeting schedules (Fed, ECB, BOJ, BOE, etc.)"
+        - "GDP, CPI, PPI, NFP, and other major indicator releases"
+        - "Earnings season calendar"
+        - "Dividend and ex-date calendar"
+        - "IPO calendar"
+        - "OPEC and energy market events"
+        - "Trade agreement deadlines and summits"
+        - "Geopolitical event tracking"
+        - "Consensus forecast vs actual comparison"
+        - "Historical revision tracking"
+      permissions:
+        read: true
+        write: false
+        execute: false
+      trade_execution: false
+      order_capability: false
+
+    # ── News Monitoring ────────────────────────────────────────────────────
+    news_monitoring:
+      display_name: "News Intelligence"
+      description: "Real-time news aggregation and sentiment analysis"
+      access_level: read
+      capabilities:
+        - "Real-time news feed from global sources (Reuters, Bloomberg, CNBC, FT)"
+        - "Social media sentiment monitoring (Twitter/X, Reddit, StockTwits)"
+        - "Regulatory filing monitoring (SEC EDGAR, FCA, ESMA)"
+        - "Central bank statement and minutes parsing"
+        - "Earnings call transcript monitoring"
+        - "Analyst rating changes and price target updates"
+        - "Insider transaction reporting"
+        - "Whale wallet and large holder tracking (crypto)"
+        - "Dark pool and block trade reporting"
+        - "News sentiment scoring (bullish/bearish/neutral)"
+      filters:
+        - "Keyword-based alerting"
+        - "Asset-class specific feeds"
+        - "Location and region filters"
+        - "Source reliability scoring"
+      permissions:
+        read: true
+        write: false
+        execute: false
+      trade_execution: false
+      order_capability: false
+
+    # ── Charting Tools ─────────────────────────────────────────────────────
+    charting:
+      display_name: "Advanced Charting"
+      description: "Professional-grade technical charting and visualization"
+      access_level: read
+      capabilities:
+        - "Multi-timeframe charting (1m to monthly)"
+        - "50+ technical indicators (RSI, MACD, Bollinger, Ichimoku, etc.)"
+        - "Drawing tools (trendlines, Fibonacci, Gann, elliott wave)"
+        - "Candlestick pattern recognition"
+        - "Market profile charts"
+        - "Footprint and order flow charts"
+        - "Volume profile (VPOC, HVN, LVN)"
+        - "Correlation matrices"
+        - "Ratio charts and spreads"
+        - "Custom indicator scripting"
+      permissions:
+        read: true
+        write: false
+        execute: false
+      trade_execution: false
+      order_capability: false
+
+    # ── Technical Analysis ─────────────────────────────────────────────────
+    technical_analysis:
+      display_name: "Technical Analysis Engine"
+      description: "Automated technical analysis and pattern detection"
+      access_level: read
+      capabilities:
+        - "Automated pattern recognition (head & shoulders, double tops, etc.)"
+        - "Support and resistance level detection"
+        - "Trend strength and momentum analysis (ADX, RSI divergence)"
+        - "Volatility analysis (ATR, Bollinger width, IV)"
+        - "Volume analysis (accumulation/distribution, OBV)"
+        - "Market structure analysis (HH/HL, LH/LL)"
+        - "Cycle and periodicity detection"
+        - "Correlation and pair analysis"
+        - "Market regime detection (trending/ranging/volatile)"
+        - "Multi-timeframe confluence scoring"
+      restrictions:
+        - "All analysis is advisory only — no execution"
+        - "Cannot generate order tickets"
+      permissions:
+        read: true
+        write: false
+        execute: false
+      trade_execution: false
+      order_capability: false
+
+    # ── Research Tools ─────────────────────────────────────────────────────
+    research:
+      display_name: "Research Suite"
+      description: "Fundamental and quantitative research tools"
+      access_level: read
+      capabilities:
+        - "Fundamental analysis (financial statements, ratios, DCF modeling)"
+        - "Sector and industry research"
+        - "Comparable company analysis"
+        - "Macroeconomic modeling"
+        - "Scenario and sensitivity analysis"
+        - "Risk factor modeling"
+        - "Monte Carlo simulation"
+        - "Backtesting framework (strategy validation only)"
+        - "Academic paper and institutional research aggregation"
+        - "Thematic investing research"
+      restrictions:
+        - "Backtesting is for research purposes only"
+        - "Cannot connect backtesting to live execution"
+      permissions:
+        read: true
+        write: true
+        execute: false
+      trade_execution: false
+      order_capability: false
+
+    # ── POI (Point of Interest) Monitoring ─────────────────────────────────
+    poi_monitoring:
+      display_name: "POI Monitoring"
+      description: "Points of Interest tracking and alerting"
+      access_level: read
+      capabilities:
+        - "Key price level monitoring (support/resistance zones)"
+        - "Event-driven alerting (earnings, economic data, news catalysts)"
+        - "Bid/ask zone tracking"
+        - "Liquidity pool monitoring"
+        - "Order block detection and tracking"
+        - "Fair value gap detection"
+        - "Weekly/monthly open level tracking"
+        - "Asian/European/US session high-low tracking"
+        - "Previous day/week/month value area tracking"
+        - "Custom POI dashboard with alert rules"
+      alert_types:
+        - "Price touch"
+        - "Level break"
+        - "Volume spike at level"
+        - "Time decay at level"
+        - "Confluence confirmation"
+      permissions:
+        read: true
+        write: true
+        execute: false
+      trade_execution: false
+      order_capability: false
+
+    # ── Report Generation ──────────────────────────────────────────────────
+    report_generation:
+      display_name: "Report Generation"
+      description: "Research report and briefing creation"
+      access_level: write
+      capabilities:
+        - "Daily market briefing generation"
+        - "Weekly macro roundup"
+        - "Earnings preview and review reports"
+        - "Technical analysis reports with annotated charts"
+        - "Sector/industry deep-dive reports"
+        - "Risk assessment reports"
+        - "Scenario analysis reports"
+        - "Executive summary generation for Jenson"
+        - "Dashboard snapshot creation"
+        - "PDF, HTML, and markdown export"
+      report_types:
+        - "daily-breifing: Pre-market overview and key levels"
+        - "weekly-macro: Weekly economic and market summary"
+        - "technical-outlook: Technical analysis with key levels"
+        - "earnings-preview: Upcoming earnings with expectations"
+        - "risk-report: Current risk factors and exposure"
+        - "deep-dive: Comprehensive sector/asset analysis"
+      distribution:
+        - "yamako: For coordinated delivery to Jenson"
+        - "jenson-workstation: Direct dashboard publish"
+        - "executive-briefing: Weekly all-hands briefing"
+      permissions:
+        read: true
+        write: true
+        execute: false
+      trade_execution: false
+      order_capability: false
+
+  # ---------------------------------------------------------------------------
+  # CRITICAL SAFETY BLOCK — What this workstation CANNOT do
+  # ---------------------------------------------------------------------------
+  # These are enforced at the system level, not just convention.
+  # Violations trigger immediate audit alerts.
+  # ---------------------------------------------------------------------------
+  no_trade_execution:
+    enforced: true
+    description: >
+      Valta Prime is strictly prohibited from executing any trades.
+      This is enforced at the infrastructure level with no API keys,
+      no broker connections, and no order routing capabilities
+      configured on this workstation.
+    audit_trigger: "Any attempt to execute a trade"
+    audit_severity: "critical"
+    escalation: "Immediate notification to Jenson and Security"
+
+  no_order_placement:
+    enforced: true
+    description: >
+      Valta Prime cannot place, modify, or cancel orders on any
+      exchange, brokerage, or trading platform. No order management
+      system is connected to this workstation.
+    audit_trigger: "Any attempt to place or modify an order"
+    audit_severity: "critical"
+    escalation: "Immediate notification to Jenson and Security"
+
+  no_account_access:
+    enforced: true
+    description: >
+      Valta Prime has no access to financial accounts, brokerage
+      accounts, exchange accounts, or payment systems. All balances,
+      holdings, and account information are hidden from this
+      workstation by default.
+    audit_trigger: "Any request for account balance or holding data"
+    audit_severity: "high"
+    escalation: "Notification to Jenson"
+
+  # ---------------------------------------------------------------------------
+  # AGENTS — Delegatable agents under Valta Prime's command
+  # ---------------------------------------------------------------------------
+  agents:
+    - name: "market-scanner"
+      display_name: "Market Scanner Agent"
+      role: "Market Surveillance"
+      capabilities:
+        - "Continuous market scanning"
+        - "Pattern detection"
+        - "Alert generation"
+        - "Sector rotation tracking"
+      delegation_mode: "autonomous"
+
+    - name: "data-analyst"
+      display_name: "Data Analyst Agent"
+      role: "Quantitative Research"
+      capabilities:
+        - "Data aggregation and cleaning"
+        - "Statistical analysis"
+        - "Correlation studies"
+        - "Historical backtesting (paper only)"
+      delegation_mode: "supervised"
+
+    - name: "news-analyst"
+      display_name: "News Analyst Agent"
+      role: "News and Sentiment Analysis"
+      capabilities:
+        - "Real-time news filtering"
+        - "Sentiment scoring"
+        - "Key information extraction"
+        - "Alert triage"
+      delegation_mode: "autonomous"
+
+    - name: "reporter"
+      display_name: "Report Writer Agent"
+      role: "Research Report Generation"
+      capabilities:
+        - "Report drafting"
+        - "Chart assembly"
+        - "Data visualization"
+        - "Executive summary creation"
+      delegation_mode: "supervised"
+
+  # ---------------------------------------------------------------------------
+  # WORKFLOWS — Launchable from this workstation
+  # ---------------------------------------------------------------------------
+  workflows:
+    - name: "daily-market-briefing"
+      display_name: "Daily Market Briefing"
+      description: "Generate pre-market briefing for Jenson"
+      steps:
+        - "market-scanner: Scan overnight session movements"
+        - "news-analyst: Compile key overnight news"
+        - "economic-calendar: Flag today's important releases"
+        - "poi-monitoring: Update key price levels"
+        - "technical-analysis: Assess current market structure"
+        - "reporter: Generate and publish daily briefing"
+      output:
+        - "deliver-to: yamako -> jenson"
+      schedule: "daily 07:00 UTC"
+
+    - name: "weekly-macro-review"
+      display_name: "Weekly Macro Review"
+      description: "Comprehensive weekly macroeconomic analysis"
+      steps:
+        - "data-analyst: Compile weekly data releases"
+        - "market-scanner: Review weekly sector performance"
+        - "news-analyst: Summarize weekly news themes"
+        - "research: Run macro scenario analysis"
+        - "reporter: Generate weekly macro report"
+      output:
+        - "deliver-to: yamako -> jenson"
+      schedule: "weekly friday 20:00 UTC"
+
+    - name: "earnings-surveillance"
+      display_name: "Earnings Surveillance"
+      description: "Monitor and analyze earnings reports"
+      steps:
+        - "news-analyst: Collect earnings reports and transcripts"
+        - "data-analyst: Compare results vs expectations"
+        - "market-scanner: Track post-earnings price action"
+        - "reporter: Generate earnings impact summary"
+      schedule: "ondemand"
+
+    - name: "technical-outlook"
+      display_name: "Technical Outlook Report"
+      description: "Generate technical analysis with annotated charts"
+      steps:
+        - "market-scanner: Identify key technical setups"
+        - "charting: Annotate charts with levels and patterns"
+        - "technical-analysis: Multi-timeframe confluence assessment"
+        - "poi-monitoring: Consolidate POI dashboard"
+        - "reporter: Generate technical outlook report with charts"
+      schedule: "daily 22:00 UTC"
+
+    - name: "risk-assessment"
+      display_name: "Risk Assessment"
+      description: "Evaluate current market risk factors"
+      steps:
+        - "news-analyst: Identify geopolitical and macro risks"
+        - "data-analyst: Run volatility and correlation analysis"
+        - "research: Model scenario impacts"
+        - "reporter: Compile risk assessment report"
+      schedule: "ondemand"
+
+    - name: "strategic-advisory"
+      display_name: "Strategic Advisory Brief"
+      description: "Ad-hoc strategic analysis for executive decisions"
+      steps:
+        - "research: Deep-dive on requested topic"
+        - "data-analyst: Quantitative support analysis"
+        - "charting: Visualization of key data points"
+        - "reporter: Generate advisory brief"
+      schedule: "ondemand"
+
+  # ---------------------------------------------------------------------------
+  # INTEGRATIONS
+  # ---------------------------------------------------------------------------
+  integrations:
+    slack:
+      workspace: "bleval-ai"
+      channels:
+        - "#market-intelligence"
+        - "#executive"
+        - "#research"
+      notification_level: "high_priority_only"
+
+    email:
+      providers:
+        - "google_workspace"
+      aliases:
+        - "valta-prime@bleval.ai"
+      auto_digest:
+        enabled: true
+        schedule: "daily 06:00 UTC"
+        include:
+          - "market_briefing"
+          - "economic_calendar"
+          - "news_summary"
+
+    data_feeds:
+      - name: "bloomberg_terminal"
+        type: "real-time"
+        protocols:
+          - "bloomberg-api"
+          - "sftp"
+      - name: "reuters_eikon"
+        type: "real-time"
+        protocols:
+          - "reuters-api"
+      - name: "economic_indicator_api"
+        type: "batch"
+        update_frequency: "as-released"
+      - name: "sec_edgar_feed"
+        type: "batch"
+        update_frequency: "daily"
+
+  # ---------------------------------------------------------------------------
+  # ACCESS CONTROL
+  # ---------------------------------------------------------------------------
+  access_level: "strategic"
+  clearance: "level-4"
+
+  permissions:
+    global:
+      read: true
+      write: false
+      execute: false
+      delegate: true
+      admin: false
+
+  restrictions:
+    - "CRITICAL: No trade execution capability"
+    - "CRITICAL: No order placement capability"
+    - "CRITICAL: No account or portfolio access"
+    - "Cannot access payment or billing systems"
+    - "Cannot modify system infrastructure"
+    - "Cannot deploy code or releases"
+    - "Cannot manage user accounts"
+    - "All market recommendations must be advisory only"
+    - "All outputs must be clearly marked as research, not advice"
+
+  # ---------------------------------------------------------------------------
+  # SESSION CONFIGURATION
+  # ---------------------------------------------------------------------------
+  session:
+    idle_timeout_minutes: 15
+    max_concurrent_sessions: 5
+    require_mfa: true
+    audit_logging: "comprehensive"
+    terminal_history_days: 365
+
+  # ---------------------------------------------------------------------------
+  # AUDIT & COMPLIANCE
+  # ---------------------------------------------------------------------------
+  audit:
+    level: "heightened"
+    triggers:
+      - "Any external API call resembling order placement"
+      - "Any request to financial institution endpoints"
+      - "Any account authentication attempts"
+      - "Any portfolio value queries"
+    reporting:
+      - "Daily activity summary to Security"
+      - "Real-time critical alert to Jenson"
+      - "Weekly compliance report"
+    retention_days: 365

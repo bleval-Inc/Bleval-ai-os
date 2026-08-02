@@ -1,0 +1,51 @@
+# Content Strategy Workflow
+# Version: 3.0.0
+
+name: Content Strategy
+org: bleval
+department: marketing
+coordinator: jenson
+
+agents:
+  - nova
+  - creator
+
+steps:
+  - id: 1
+    name: "Analyze Market Data"
+    agent: nova
+    description: "Review market research, competitive analysis, and audience insights"
+    outputs:
+      - strategy-intelligence
+    events_emitted: []
+
+  - id: 2
+    name: "Define Content Pillars"
+    agent: nova
+    description: "Define core content pillars aligned with brand positioning and audience needs"
+    inputs:
+      - strategy-intelligence
+    outputs:
+      - content-pillars
+    events_emitted: []
+
+  - id: 3
+    name: "Plan Content Calendar"
+    agent: creator
+    description: "Create content calendar with topics, formats, and publishing cadence"
+    inputs:
+      - content-pillars
+    outputs:
+      - content-calendar
+    events_emitted: []
+
+  - id: 4
+    name: "Define Distribution Strategy"
+    agent: creator
+    description: "Define distribution channels, promotion tactics, and amplification plan"
+    inputs:
+      - content-calendar
+    outputs:
+      - distribution-strategy
+    events_emitted:
+      - content-strategy-ready

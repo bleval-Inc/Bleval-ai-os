@@ -25,6 +25,8 @@ from axiom.engine.memory import MemoryEngine
 from axiom.engine.tool import ToolEngine
 from axiom.engine.workflow import WorkflowEngine
 from axiom.runtime.approval import ApprovalManager
+from axiom.runtime.board_room import BoardRoom
+from axiom.runtime.communication import CommunicationCoordinator
 from axiom.runtime.dispatcher import Dispatcher
 from axiom.runtime.executive_loop import ExecutiveBoard
 from axiom.runtime.logging import RuntimeLogger
@@ -67,6 +69,10 @@ class AxiomRuntime:
         self.approval: Optional[ApprovalManager] = None
         self.executive_board: Optional[ExecutiveBoard] = None
         self.logger: Optional[RuntimeLogger] = None
+
+        # Phase B — Autonomous Executive Layer
+        self.board_room: Optional[BoardRoom] = None
+        self.communication: Optional[CommunicationCoordinator] = None
 
         # JARVIS modules (system telemetry, greetings, function-calling)
         self.system_monitor: Optional[SystemMonitor] = None
@@ -128,6 +134,10 @@ class AxiomRuntime:
 
         # Executive Board — autonomous executive runtime loops
         self.executive_board = ExecutiveBoard(self)
+
+        # Phase B — Board Room & Communication Coordinator
+        self.board_room = BoardRoom(runtime=self)
+        self.communication = CommunicationCoordinator(runtime=self)
 
         # Learning Engine — continuous learning (observes all executions)
         self.learning = LearningEngine(runtime=self)
@@ -215,6 +225,16 @@ class AxiomRuntime:
                     f"Loaded {len(persisted)} persisted workflow instances",
                 )
 
+        # Start Board Room (autonomous meeting scheduling)
+        if self.board_room:
+            await self.board_room.start()
+
+        # Wire communication coordinator into executive board loops
+        if self.executive_board and self.communication:
+            self.executive_board.set_communication_coordinator(self.communication)
+            # Wire board room into executive board for meeting triggers
+            self.executive_board.set_board_room(self.board_room)
+
         # Start Executive Board (autonomous executive runtime loops)
         if self.executive_board:
             await self.executive_board.start_all()
@@ -252,6 +272,9 @@ class AxiomRuntime:
 
         if self.executive_board:
             await self.executive_board.stop_all()
+
+        if self.board_room:
+            await self.board_room.stop()
 
         if self.monitor:
             await self.monitor.stop()
@@ -569,6 +592,8 @@ class AxiomRuntime:
                 "recovery": self.recovery is not None,
                 "approval": self.approval is not None,
                 "executive_board": self.executive_board is not None,
+                "board_room": self.board_room is not None,
+                "communication": self.communication is not None,
                 "logger": self.logger is not None,
                 "learning": self.learning is not None,
                 "axiom_core": self.axiom is not None,
