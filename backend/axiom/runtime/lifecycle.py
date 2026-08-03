@@ -9,6 +9,14 @@ Integration wiring performed during bootstrap:
   - WorkflowEngine ← Dispatcher (for task dispatching on step start)
   - EventEngine → auto-launch workflows on trigger_event matches
   - Dispatcher → auto-advance workflow on task completion
+
+Phase C — Autonomous Workflow + Agent System (§1-§9):
+  - SpecialistAgentEngine — specialist agent registry, dispatch, sessions
+  - AutonomousWorkflowEngine — full lifecycle (PLAN→LEARN)
+  - BackgroundExecutor — persistent background execution (§6)
+  - WorkflowObserver — comprehensive observability (§7)
+  - MultiModelEngine — capability-aware model routing (§4)
+  - Failure handling with auto-recovery (§8)
 """
 
 import asyncio
@@ -38,6 +46,13 @@ from axiom.runtime.scheduler import Scheduler
 from axiom.runtime.system_monitor import SystemMonitor
 from axiom.runtime.greeting_engine import GreetingEngine
 from axiom.runtime.system_tools import SystemTools
+
+# PHASE C — Autonomous Workflow + Agent System
+from axiom.engine.specialist_agent import SpecialistAgentEngine
+from axiom.engine.autonomous_workflow import AutonomousWorkflowEngine
+from axiom.engine.multi_model import MultiModelEngine
+from axiom.runtime.background_executor import BackgroundExecutor
+from axiom.runtime.workflow_observer import WorkflowObserver
 
 
 class AxiomRuntime:
@@ -78,6 +93,13 @@ class AxiomRuntime:
         self.system_monitor: Optional[SystemMonitor] = None
         self.greeting_engine: Optional[GreetingEngine] = None
         self.system_tools: Optional[SystemTools] = None
+
+        # PHASE C — Autonomous Workflow + Agent System
+        self.specialist_engine: Optional[SpecialistAgentEngine] = None
+        self.autonomous_workflow: Optional[AutonomousWorkflowEngine] = None
+        self.multi_model: Optional[MultiModelEngine] = None
+        self.background_executor: Optional[BackgroundExecutor] = None
+        self.workflow_observer: Optional[WorkflowObserver] = None
 
         # AXIOM Core — top-level intelligence layer
         self.axiom: Optional[AXIOMCore] = None
@@ -153,6 +175,36 @@ class AxiomRuntime:
             logger=self.logger,
         )
 
+        # ── PHASE C: Autonomous Workflow + Agent System ─────────────────
+
+        # Specialist Agent Engine — specialist agent registry and runtime
+        self.specialist_engine = SpecialistAgentEngine(
+            intelligence=self.intelligence,
+            tool=self.tool,
+        )
+
+        # Autonomous Workflow Engine — full lifecycle execution (§5)
+        self.autonomous_workflow = AutonomousWorkflowEngine(
+            base_workflow=self.workflow,
+            intelligence=self.intelligence,
+            specialist_engine=self.specialist_engine,
+        )
+        # Set default approval policies
+        self.autonomous_workflow.set_default_policies()
+
+        # Multi-Model Engine — capability-aware model routing (§4)
+        self.multi_model = MultiModelEngine(
+            intelligence_engine=self.intelligence,
+        )
+
+        # Workflow Observer — comprehensive observability (§7)
+        self.workflow_observer = WorkflowObserver()
+
+        # Background Executor — persistent background execution (§6)
+        self.background_executor = BackgroundExecutor(runtime=self)
+
+        # ── End PHASE C ─────────────────────────────────────────────────
+
         # AXIOM Core — top-level intelligence layer (above all executives)
         self.axiom = AXIOMCore(runtime=self, logger=self.logger)
         self.axiom.wire_components(
@@ -225,6 +277,29 @@ class AxiomRuntime:
                     f"Loaded {len(persisted)} persisted workflow instances",
                 )
 
+        # ── PHASE C: Start Autonomous Components ────────────────────────
+
+        # Start Specialist Agent Engine (background task processors)
+        if self.specialist_engine:
+            await self.specialist_engine.start()
+
+        # Start Autonomous Workflow Monitor (background monitoring loop)
+        if self.autonomous_workflow:
+            await self.autonomous_workflow.start_monitor()
+
+        # Start Background Executor (persistent background execution §6)
+        if self.background_executor:
+            await self.background_executor.start()
+
+        if self.logger:
+            self.logger.info(
+                "lifecycle",
+                "PHASE C — Autonomous Workflow + Agent System started: "
+                "SpecialistEngine + AutonomousWorkflow + MultiModel + BackgroundExecutor + Observer"
+            )
+
+        # ── End PHASE C ─────────────────────────────────────────────────
+
         # Start Board Room (autonomous meeting scheduling)
         if self.board_room:
             await self.board_room.start()
@@ -263,6 +338,18 @@ class AxiomRuntime:
             self.logger.info("lifecycle", "Axiom OS runtime shutting down")
 
         # Stop in reverse order
+        # ── PHASE C: Shutdown Autonomous Components ────────────────────
+        if self.background_executor:
+            await self.background_executor.stop()
+
+        if self.autonomous_workflow:
+            await self.autonomous_workflow.stop_monitor()
+
+        if self.specialist_engine:
+            await self.specialist_engine.stop()
+
+        # ── End PHASE C ─────────────────────────────────────────────────
+
         if self.system_monitor:
             await self.system_monitor.shutdown()
 
@@ -598,6 +685,12 @@ class AxiomRuntime:
                 "learning": self.learning is not None,
                 "axiom_core": self.axiom is not None,
                 "research": self.research is not None,
+                # PHASE C Components
+                "specialist_engine": self.specialist_engine is not None,
+                "autonomous_workflow": self.autonomous_workflow is not None,
+                "multi_model": self.multi_model is not None,
+                "background_executor": self.background_executor is not None,
+                "workflow_observer": self.workflow_observer is not None,
             },
         }
 
@@ -612,6 +705,13 @@ class AxiomRuntime:
         axiom_state = self.axiom.state.value if self.axiom else "unavailable"
         res_count = len(self.research.list_all()) if self.research else 0
 
+        # PHASE C summaries
+        specialist_summary = self.specialist_engine.get_summary() if self.specialist_engine else {}
+        autonomous_summary = self.autonomous_workflow.get_summary() if self.autonomous_workflow else {}
+        multi_model_summary = self.multi_model.get_summary() if self.multi_model else {}
+        bg_executor_status = self.background_executor.get_status() if self.background_executor else {}
+        observer_stats = self.workflow_observer.get_aggregate_stats() if self.workflow_observer else {}
+
         return {
             **status,
             "health": monitor_summary,
@@ -624,4 +724,12 @@ class AxiomRuntime:
                 "is_online": self.axiom.is_online if self.axiom else False,
             },
             "research_workspaces": res_count,
+            # PHASE C Status
+            "phase_c": {
+                "specialist_engine": specialist_summary,
+                "autonomous_workflows": autonomous_summary,
+                "multi_model": multi_model_summary,
+                "background_executor": bg_executor_status,
+                "workflow_observer": observer_stats,
+            },
         }
