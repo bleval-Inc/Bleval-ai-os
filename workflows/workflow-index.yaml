@@ -163,6 +163,129 @@ workflows:
         agent: tester
         action: "Report findings and recommendations"
 
+  development/autonomous-cycle-trigger:
+    description: "Scheduled trigger for autonomous development cycle"
+    org: bleval
+    department: development
+    coordinator: jenson
+    agents: [jenson]
+    events: [development-autonomous-cycle]
+    trigger_event: system-scheduled
+    cron: "0 */6 * * *"
+    steps:
+      - name: trigger.cycle
+        agent: jenson
+        action: "Check for autonomous-ready issues and trigger development lifecycle"
+        output: development-autonomous-cycle event
+      - name: trigger.no_work
+        agent: jenson
+        action: "Log no work available"
+
+  development/autonomous-lifecycle:
+    description: "Full autonomous development lifecycle by Jenson using Phase H integrations"
+    org: bleval
+    department: development
+    coordinator: jenson
+    agents: [jenson, forge, tester, reviewer, qa]
+    events: [development-autonomous-cycle, work-discovered, backlog-prioritized, issue-analyzed, design-completed, branch-created, environment-ready, implementation-completed, changes-pushed, unit-tests-completed, integration-tests-completed, static-analysis-completed, qc-completed, pr-created, team-notified, reviews-received, founder-approval-received, pr-merged, issue-closed, delivery-complete, learning-recorded, patterns-updated]
+    trigger_event: development-autonomous-cycle
+    approval_policy:
+      authority: executive_approval
+      requires_qc: true
+      requires_review: true
+      founder_approval_for:
+        - merge_to_main
+        - production_deploy
+        - schema_changes
+    tools:
+      - github
+      - slack
+    steps:
+      - name: plan.discover_work
+        agent: jenson
+        action: "Scan GitHub for autonomous-ready issues and prioritize"
+        output: work-discovered event
+      - name: plan.prioritize
+        agent: jenson
+        action: "Analyze and prioritize work items by impact and dependencies"
+        output: backlog-prioritized event
+      - name: research.analyze_issue
+        agent: jenson
+        action: "Deep analyze highest priority issue and affected code"
+        output: issue-analyzed event
+      - name: research.design_solution
+        agent: forge
+        action: "Create technical design and implementation plan"
+        output: design-completed event
+      - name: prepare.create_branch
+        agent: jenson
+        action: "Create autonomous feature branch on GitHub"
+        output: branch-created event
+      - name: prepare.setup_environment
+        agent: forge
+        action: "Set up dev environment and run baseline tests"
+        output: environment-ready event
+      - name: execute.implement
+        agent: forge
+        action: "Implement solution per design with incremental commits"
+        output: implementation-completed event
+      - name: execute.push_changes
+        agent: forge
+        action: "Push changes to GitHub remote"
+        output: changes-pushed event
+      - name: test.run_unit_tests
+        agent: tester
+        action: "Run unit test suite and check coverage"
+        output: unit-tests-completed event
+      - name: test.run_integration_tests
+        agent: tester
+        action: "Run integration tests for Phase H providers"
+        output: integration-tests-completed event
+      - name: test.static_analysis
+        agent: reviewer
+        action: "Run static analysis (type check, lint, security)"
+        output: static-analysis-completed event
+      - name: qc.quality_gate
+        agent: qa
+        action: "Evaluate quality gate - all tests, coverage, analysis"
+        output: qc-completed event
+      - name: review.create_pr
+        agent: jenson
+        action: "Create detailed PR with test results and QC report"
+        output: pr-created event
+      - name: review.notify_team
+        agent: jenson
+        action: "Notify development team via Slack for review"
+        output: team-notified event
+      - name: approval.wait_reviews
+        agent: jenson
+        action: "Monitor PR for required approvals"
+        output: reviews-received event
+      - name: approval.founder_approval
+        agent: jenson
+        action: "Request Founder approval if required for merge/deploy"
+        output: founder-approval-received event
+      - name: delivery.merge_pr
+        agent: jenson
+        action: "Squash merge PR and delete branch"
+        output: pr-merged event
+      - name: delivery.update_issue
+        agent: jenson
+        action: "Close related issue with completion details"
+        output: issue-closed event
+      - name: delivery.notify_complete
+        agent: jenson
+        action: "Send completion notification via Slack"
+        output: delivery-complete event
+      - name: learn.record_outcome
+        agent: jenson
+        action: "Record comprehensive learning data for future improvements"
+        output: learning-recorded event
+      - name: learn.update_patterns
+        agent: jenson
+        action: "Update autonomous development patterns based on outcome"
+        output: patterns-updated event
+
   # ── Operations Workflows ────────────────────────────────
   operations/daily-report:
     description: "Generate daily operational status report"

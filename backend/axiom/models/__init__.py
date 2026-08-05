@@ -65,6 +65,16 @@ from axiom.models.runtime import (
     TaskStatus,
 )
 
+from axiom.models.qc import (
+    QCStatus,
+    QCScope,
+    QCCheckType,
+    QCSeverity,
+    QCFinding,
+    QCResult,
+    QCRequest,
+)
+
 __all__ = [
     # configs
     "OrganizationEntry",
@@ -123,4 +133,12 @@ __all__ = [
     "HealthStatus",
     "ComponentHealth",
     "ScheduledEvent",
+    # QC
+    "QCStatus",
+    "QCScope",
+    "QCCheckType",
+    "QCSeverity",
+    "QCFinding",
+    "QCResult",
+    "QCRequest",
 ]

@@ -2,10 +2,115 @@
 
 import { useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useAxiomStore } from "../../lib/store/axiom-store";
+import { useAxiomStore, type WorkstationId } from "../../lib/store/axiom-store";
 import { system, executives as execApi } from "../../lib/api";
 import { healthDotColor, formatTimestamp } from "../../lib/utils";
 import NotificationCenter from "../workspace/NotificationCenter";
+import type { FounderAvailability } from "../../lib/api-types";
+
+// ── Workstation nav ─────────────────────────────────────────────────────
+
+const workstationNavItems: { id: WorkstationId; label: string; shortcut: string }[] = [
+  { id: "axiom", label: "AXIOM", shortcut: "⌘1" },
+  { id: "bleval", label: "BLEVAL INC", shortcut: "⌘2" },
+  { id: "valta", label: "HOUSE OF VALTA", shortcut: "⌘3" },
+  { id: "personal", label: "PERSONAL", shortcut: "⌘4" },
+];
+
+const statusDotColor: Record<string, string> = {
+  healthy: "bg-emerald-400",
+  degraded: "bg-amber-400",
+  busy: "bg-blue-400",
+  idle: "bg-[var(--axiom-text-tertiary)]",
+};
+
+// Availability display config
+const AVAILABILITY_CONFIG: Record<FounderAvailability, { label: string; color: string; dot: string }> = {
+  available: { label: "Available", color: "text-emerald-400", dot: "bg-emerald-400" },
+  in_meeting: { label: "In Meeting", color: "text-amber-400", dot: "bg-amber-400" },
+  in_trade: { label: "Trading", color: "text-blue-400", dot: "bg-blue-400" },
+  sleeping: { label: "Sleeping", color: "text-violet-400", dot: "bg-violet-400" },
+  training: { label: "Training", color: "text-orange-400", dot: "bg-orange-400" },
+  studying: { label: "Studying", color: "text-cyan-400", dot: "bg-cyan-400" },
+  do_not_disturb: { label: "DND", color: "text-red-400", dot: "bg-red-400" },
+  unknown: { label: "Unknown", color: "text-gray-400", dot: "bg-gray-400" },
+};
+
+// ── WorkstationNavItem ─────────────────────────────────────────────────
+
+function WorkstationNavItem({ id, label, shortcut }: { id: WorkstationId; label: string; shortcut: string }) {
+  const activeWorkstation = useAxiomStore((s) => s.activeWorkstation);
+  const setActiveWorkstation = useAxiomStore((s) => s.setActiveWorkstation);
+  const workstationStatus = useAxiomStore((s) => s.workstationStatus[id]);
+  const isActive = activeWorkstation === id;
+
+  return (
+    <button
+      onClick={() => setActiveWorkstation(id)}
+      className={`flex items-center gap-2 px-3 py-1.5 text-[11px] font-medium rounded-md transition-all duration-150 ${
+        isActive
+          ? "text-[var(--axiom-accent)] bg-[var(--axiom-accent-subtle)]"
+          : "text-[var(--axiom-text-tertiary)] hover:text-[var(--axiom-text-secondary)] hover:bg-[var(--axiom-bg-elevated)]"
+      }`}
+    >
+      <span className={`w-1.5 h-1.5 rounded-full ${statusDotColor[workstationStatus] || "bg-[var(--axiom-text-tertiary)]"} ${
+        workstationStatus === "degraded" ? "animate-pulse" : ""
+      }`} />
+      <span>{label}</span>
+      <span className="ml-1 text-[9px] opacity-40">{shortcut}</span>
+    </button>
+  );
+}
+
+// ── AvailabilityDot ─────────────────────────────────────────────────────
+
+function AvailabilityDot() {
+  const availability = useAxiomStore((s) => s.founderAvailability);
+  const config = AVAILABILITY_CONFIG[availability] ?? AVAILABILITY_CONFIG.unknown;
+
+  return (
+    <div className="flex items-center gap-1.5" title={`Founder: ${config.label}`}>
+      <span className={`w-1.5 h-1.5 rounded-full ${config.dot}`} />
+      <span className={`text-[10px] hidden sm:inline ${config.color}`}>{config.label}</span>
+    </div>
+  );
+}
+
+// ── DNDToggle ──────────────────────────────────────────────────────────
+
+function DNDToggle() {
+  const founderManualOverride = useAxiomStore((s) => s.founderManualOverride);
+  const setFounderManualOverride = useAxiomStore((s) => s.setFounderManualOverride);
+  const isDnd = founderManualOverride === "do_not_disturb";
+
+  return (
+    <button
+      onClick={() => setFounderManualOverride(isDnd ? null : "do_not_disturb")}
+      className={`p-1 rounded-md transition-colors ${
+        isDnd
+          ? "text-red-400 bg-red-400/10"
+          : "text-[var(--axiom-text-tertiary)] hover:text-[var(--axiom-text-secondary)]"
+      }`}
+      title={isDnd ? "Do Not Disturb — click to clear" : "Set Do Not Disturb"}
+    >
+      <svg
+        width="12"
+        height="12"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <circle cx="12" cy="12" r="10" />
+        <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
+      </svg>
+    </button>
+  );
+}
+
+// ── StatusBar ───────────────────────────────────────────────────────────
 
 export default function StatusBar() {
   const {
@@ -15,16 +120,18 @@ export default function StatusBar() {
     setRuntime,
     setHealth,
     setExecutiveBoard,
-    setActiveView,
-    activeView,
+    setActiveWorkstation,
     voiceActive,
     setVoiceActive,
-    isListening,
     isAwake,
     notifications,
     toggleCommandPalette,
     toggleNotificationPanel,
     notificationPanelOpen,
+    emergencyActive,
+    emergencyLevel,
+    emergencySource,
+    clearEmergency,
   } = useAxiomStore();
 
   const pollingRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
@@ -54,103 +161,120 @@ export default function StatusBar() {
   const healthDot = healthDotColor(healthOverall);
   const unreadCount = notifications.filter((n) => !n.read && (!n.snoozedUntil || n.snoozedUntil <= Date.now())).length;
 
-  const navItems = [
-    { id: "workspace" as const, label: "Founder", shortcut: "⌘1" },
-    { id: "executives" as const, label: "Exec Board", shortcut: "⌘2" },
-    { id: "operations" as const, label: "Operations", shortcut: "⌘3" },
-    { id: "knowledge" as const, label: "Knowledge", shortcut: "⌘4" },
-    { id: "projects" as const, label: "Projects", shortcut: "⌘5" },
-    { id: "creator" as const, label: "Creator", shortcut: "⌘6" },
-    { id: "trading" as const, label: "Trading", shortcut: "⌘7" },
-    { id: "console" as const, label: "Console", shortcut: "⌘8" },
-    { id: "communications" as const, label: "Inbox", shortcut: "⌘9" },
-    { id: "intelligence" as const, label: "Intel", shortcut: "⌘0" },
-    { id: "content-hub" as const, label: "Content", shortcut: "⌥1" },
-    { id: "integrations" as const, label: "Integrations", shortcut: "⌥2" },
-  ];
-
-  // Keyboard shortcuts for navigation — ⌘1-⌘9, ⌘0, ⌥1, ⌥2 for workspaces, ⌘K for command palette
+  // Keyboard shortcuts: ⌘1-⌘4 for workstations, ⌘K for command palette
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.metaKey && !e.shiftKey) {
+      if (e.metaKey && !e.shiftKey && !e.altKey) {
         switch (e.key) {
-          case "1": e.preventDefault(); setActiveView("workspace"); break;
-          case "2": e.preventDefault(); setActiveView("executives"); break;
-          case "3": e.preventDefault(); setActiveView("operations"); break;
-          case "4": e.preventDefault(); setActiveView("knowledge"); break;
-          case "5": e.preventDefault(); setActiveView("projects"); break;
-          case "6": e.preventDefault(); setActiveView("creator"); break;
-          case "7": e.preventDefault(); setActiveView("trading"); break;
-          case "8": e.preventDefault(); setActiveView("console"); break;
-          case "9": e.preventDefault(); setActiveView("communications"); break;
-          case "0": e.preventDefault(); setActiveView("intelligence"); break;
+          case "1": e.preventDefault(); setActiveWorkstation("axiom"); break;
+          case "2": e.preventDefault(); setActiveWorkstation("bleval"); break;
+          case "3": e.preventDefault(); setActiveWorkstation("valta"); break;
+          case "4": e.preventDefault(); setActiveWorkstation("personal"); break;
           case "k": e.preventDefault(); toggleCommandPalette(); break;
-        }
-      }
-      if (e.metaKey && e.shiftKey) {
-        switch (e.key) {
-          case "1": e.preventDefault(); setActiveView("content-hub"); break;
-          case "2": e.preventDefault(); setActiveView("integrations"); break;
         }
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [setActiveView, toggleCommandPalette]);
+  }, [setActiveWorkstation, toggleCommandPalette]);
 
   return (
     <div className="fixed top-0 left-0 right-0 z-50">
-      {/* Main bar */}
-      <div className="h-10 glass-panel rounded-none border-x-0 border-t-0 flex items-center justify-between px-4">
-        {/* Left: AXIOM branding + nav */}
-        <div className="flex items-center gap-6">
-          {/* AXIOM logo */}
-          <button
-            onClick={() => setActiveView("workspace")}
-            className="flex items-center gap-2 group"
+      {/* Emergency banner */}
+      <AnimatePresence>
+        {emergencyActive && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 32 }}
+            exit={{ opacity: 0, height: 0 }}
+            className="h-8 bg-red-500/90 backdrop-blur-md flex items-center justify-between px-4"
           >
-            <div className="w-5 h-5 rounded-full bg-gradient-to-br from-indigo-400 to-indigo-600 flex items-center justify-center">
-              <span className="text-[8px] font-bold text-white tracking-tight">
-                A
+            <div className="flex items-center gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+              <span className="text-[10px] font-semibold text-white uppercase tracking-wider">
+                {emergencyLevel === "critical" ? "🚨 Emergency" : "⚠️ Alert"}
+              </span>
+              <span className="text-[10px] text-white/80 hidden sm:inline">
+                {emergencySource === "valta_prime" && "Valta Prime — POI requires attention"}
+                {emergencySource === "yamako" && "Yamako — Reminder"}
+                {emergencySource === "system" && "System — Component unhealthy"}
+                {!["valta_prime", "yamako", "system"].includes(emergencySource || "") && "Requires attention"}
               </span>
             </div>
-            <span className="text-[11px] font-medium text-[var(--axiom-text-secondary)] tracking-widest uppercase group-hover:text-[var(--axiom-text-primary)] transition-colors">
+            <button
+              onClick={clearEmergency}
+              className="px-2.5 py-0.5 text-[9px] font-medium text-white bg-white/20 rounded-md hover:bg-white/30 transition-colors"
+            >
+              Acknowledge
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Main bar */}
+      <div className="h-10 glass-panel rounded-none border-x-0 border-t-0 flex items-center justify-between px-2 sm:px-4">
+        {/* Left: AXIOM branding + workstations */}
+        <div className="flex items-center gap-2 sm:gap-6">
+          <button
+            onClick={() => setActiveWorkstation("axiom")}
+            className="flex items-center gap-2 group"
+          >
+            <div className="w-5 h-5 rounded-full bg-gradient-to-br from-indigo-400 to-indigo-600 flex items-center justify-center flex-shrink-0">
+              <span className="text-[8px] font-bold text-white tracking-tight">A</span>
+            </div>
+            <span className="text-[11px] font-medium text-[var(--axiom-text-secondary)] tracking-widest uppercase group-hover:text-[var(--axiom-text-primary)] transition-colors hidden sm:block">
               Axiom
             </span>
           </button>
 
-          {/* Navigation */}
-          <nav className="flex items-center gap-1">
-            {navItems.map((item) => (
-              <button
-                key={item.id}
-                onClick={() => setActiveView(item.id)}
-                className={`px-2.5 py-1 text-[11px] font-medium rounded-md transition-all duration-150 ${
-                  activeView === item.id
-                    ? "text-[var(--axiom-accent)] bg-[var(--axiom-accent-subtle)]"
-                    : "text-[var(--axiom-text-tertiary)] hover:text-[var(--axiom-text-secondary)] hover:bg-[var(--axiom-bg-elevated)]"
-                }`}
-              >
-                {item.label}
-                <span className="ml-1.5 text-[9px] opacity-40">{item.shortcut}</span>
-              </button>
+          {/* Workstation navigation */}
+          <nav className="flex items-center gap-1 md:gap-0">
+            {workstationNavItems.map((item) => (
+              <div key={item.id} className="hidden sm:block">
+                <WorkstationNavItem {...item} />
+              </div>
             ))}
+            {/* Mobile workstation dots */}
+            <div className="flex sm:hidden items-center gap-1.5">
+              {workstationNavItems.map((item) => {
+                const isActive = useAxiomStore.getState().activeWorkstation === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => setActiveWorkstation(item.id)}
+                    className={`w-1.5 h-1.5 rounded-full ${
+                      isActive
+                        ? "bg-indigo-400 ring-1 ring-indigo-400/50"
+                        : "bg-[var(--axiom-text-tertiary)] opacity-40 hover:opacity-70"
+                    }`}
+                    title={item.label}
+                  />
+                );
+              })}
+            </div>
           </nav>
         </div>
 
         {/* Right: status indicators */}
-        <div className="flex items-center gap-4">
-          {/* Health indicator — links to operations */}
+        <div className="flex items-center gap-2 sm:gap-4">
+          {/* Availability + DND */}
+          <AvailabilityDot />
+          <DNDToggle />
+
+          {/* Separator */}
+          <div className="w-px h-4 bg-[var(--axiom-border)] hidden sm:block" />
+
+          {/* Health indicator */}
           <button
-            onClick={() => setActiveView("operations")}
-            className="flex items-center gap-1.5 group"
+            onClick={() => setActiveWorkstation("bleval")}
+            className="flex items-center gap-1.5 group hidden sm:flex"
           >
             <span
               className={`w-1.5 h-1.5 rounded-full ${healthDot} ${
                 healthOverall === "healthy" ? "" : "animate-pulse"
               }`}
             />
-            <span className="text-[10px] text-[var(--axiom-text-tertiary)] group-hover:text-[var(--axiom-text-secondary)] transition-colors">
+            <span className="text-[10px] text-[var(--axiom-text-tertiary)] group-hover:text-[var(--axiom-text-secondary)] transition-colors hidden md:inline">
               {healthOverall === "healthy"
                 ? "All systems normal"
                 : `${health?.unhealthy ?? 0} issue${(health?.unhealthy ?? 0) > 1 ? "s" : ""}`}
@@ -160,7 +284,7 @@ export default function StatusBar() {
           {/* Executive indicators */}
           <AnimatePresence>
             {executiveBoard && (
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1.5 hidden sm:flex">
                 {Object.entries(executiveBoard).map(([id, exec]) => (
                   <motion.div
                     key={id}
@@ -189,7 +313,7 @@ export default function StatusBar() {
 
           {/* Voice toggle */}
           {isAwake && (
-            <span className="text-[9px] font-mono text-green-400 bg-green-400/10 px-1.5 py-0.5 rounded-sm tracking-wider">
+            <span className="text-[9px] font-mono text-green-400 bg-green-400/10 px-1.5 py-0.5 rounded-sm tracking-wider hidden sm:inline">
               ON
             </span>
           )}

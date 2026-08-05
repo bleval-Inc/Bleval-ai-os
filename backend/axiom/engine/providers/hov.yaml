@@ -1,0 +1,67 @@
+# House of Valta — Provider Configurations
+# Version: 1.0.0
+
+providers:
+  - id: slack
+    name: Slack
+    type: communication
+    description: "Slack team communication and notifications"
+    version: "1.0.0"
+    base_url: "https://slack.com/api"
+    auth:
+      type: "bearer_token"
+      token_env_var: "SLACK_BOT_TOKEN"
+    rate_limit:
+      requests_per_minute: 60
+      requests_per_hour: 1000
+      token_bucket_refill_rate: 1.0
+    retry:
+      max_attempts: 3
+      base_delay_seconds: 1.0
+    circuit_breaker:
+      failure_threshold: 5
+      timeout_seconds: 30.0
+    capabilities:
+      - send_message
+      - read_channel
+      - list_channels
+      - search_messages
+      - add_reaction
+    config:
+      default_channel: "general"
+      bot_user: true
+    health_check_endpoint: "/auth.test"
+    health_check_interval_seconds: 60
+    enabled: true
+    tags: ["communication", "slack", "messaging", "notifications"]
+
+  - id: calendly
+    name: Calendly
+    type: business
+    description: "Calendly scheduling integration"
+    version: "1.0.0"
+    base_url: "https://api.calendly.com"
+    auth:
+      type: "bearer_token"
+      token_env_var: "CALENDLY_API_KEY"
+    rate_limit:
+      requests_per_minute: 30
+      requests_per_hour: 500
+      token_bucket_refill_rate: 0.5
+    retry:
+      max_attempts: 3
+      base_delay_seconds: 1.0
+    circuit_breaker:
+      failure_threshold: 5
+      timeout_seconds: 30.0
+    capabilities:
+      - check_availability
+      - schedule_meeting
+      - manage_calendar
+      - list_event_types
+    config:
+      default_user_uri: ""
+    health_check_endpoint: "/users/me"
+    health_check_interval_seconds: 120
+    enabled: true
+    tags: ["business", "scheduling", "calendly", "calendar"]

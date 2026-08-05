@@ -203,6 +203,10 @@ class Recommendation(BaseModel):
     approved_by: str = ""
 
 
+# Alias for backward compatibility
+LearningRecommendation = Recommendation
+
+
 # =========================================================================
 # Playbook Evolution
 # =========================================================================

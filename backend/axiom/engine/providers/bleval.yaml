@@ -1,0 +1,173 @@
+# Bleval Inc — Provider Configurations
+# Version: 1.0.0
+
+providers:
+  - id: github
+    name: GitHub
+    type: development
+    description: "GitHub API integration for repositories, PRs, issues, actions"
+    version: "1.0.0"
+    base_url: "https://api.github.com"
+    auth:
+      type: "bearer_token"
+      token_env_var: "GITHUB_TOKEN"
+    rate_limit:
+      requests_per_minute: 60
+      requests_per_hour: 5000
+      token_bucket_refill_rate: 1.0
+    retry:
+      max_attempts: 3
+      base_delay_seconds: 1.0
+    circuit_breaker:
+      failure_threshold: 5
+      timeout_seconds: 30.0
+    capabilities:
+      - read_repository
+      - create_pr
+      - review_code
+      - manage_issues
+      - list_workflows
+      - trigger_workflow
+      - search_code
+    config:
+      default_org: "bleval"
+      default_repo: "axiom-os"
+    health_check_endpoint: "/user"
+    health_check_interval_seconds: 60
+    enabled: true
+    tags: ["development", "github", "version-control", "ci-cd"]
+
+  - id: slack
+    name: Slack
+    type: communication
+    description: "Slack team communication and notifications"
+    version: "1.0.0"
+    base_url: "https://slack.com/api"
+    auth:
+      type: "bearer_token"
+      token_env_var: "SLACK_BOT_TOKEN"
+    rate_limit:
+      requests_per_minute: 60
+      requests_per_hour: 1000
+      token_bucket_refill_rate: 1.0
+    retry:
+      max_attempts: 3
+      base_delay_seconds: 1.0
+    circuit_breaker:
+      failure_threshold: 5
+      timeout_seconds: 30.0
+    capabilities:
+      - send_message
+      - read_channel
+      - notify_agent
+      - list_channels
+      - create_channel
+      - search_messages
+      - upload_file
+    config:
+      default_channel: "general"
+      bot_user: true
+    health_check_endpoint: "/auth.test"
+    health_check_interval_seconds: 60
+    enabled: true
+    tags: ["communication", "slack", "messaging", "notifications"]
+
+  - id: crm
+    name: CRM (HubSpot)
+    type: business
+    description: "HubSpot CRM integration for contacts, leads, deals"
+    version: "1.0.0"
+    base_url: "https://api.hubapi.com"
+    auth:
+      type: "bearer_token"
+      token_env_var: "HUBSPOT_API_KEY"
+    rate_limit:
+      requests_per_minute: 100
+      requests_per_hour: 10000
+      token_bucket_refill_rate: 1.67
+    retry:
+      max_attempts: 3
+      base_delay_seconds: 1.0
+    circuit_breaker:
+      failure_threshold: 5
+      timeout_seconds: 30.0
+    capabilities:
+      - read_contacts
+      - update_leads
+      - track_opportunities
+      - create_contacts
+      - search_companies
+    config:
+      default_pipeline: "default"
+    health_check_endpoint: "/crm/v3/properties/contacts"
+    health_check_interval_seconds: 120
+    enabled: true
+    tags: ["business", "crm", "hubspot", "sales", "contacts"]
+
+  - id: email
+    name: Business Email
+    type: communication
+    description: "Business email via IMAP/SMTP/Gmail API"
+    version: "1.0.0"
+    auth:
+      type: "oauth2"
+      client_id_env_var: "BLEVAL_EMAIL_CLIENT_ID"
+      client_secret_env_var: "BLEVAL_EMAIL_CLIENT_SECRET"
+      token_url: "https://oauth2.googleapis.com/token"
+      scopes:
+        - "https://www.googleapis.com/auth/gmail.modify"
+        - "https://www.googleapis.com/auth/gmail.send"
+    rate_limit:
+      requests_per_minute: 60
+      requests_per_hour: 1000
+      token_bucket_refill_rate: 1.0
+    retry:
+      max_attempts: 3
+      base_delay_seconds: 1.0
+    circuit_breaker:
+      failure_threshold: 5
+      timeout_seconds: 30.0
+    capabilities:
+      - send_email
+      - create_sequence
+      - track_response
+      - read_email
+    config:
+      default_signature: "Bleval Inc"
+      imap_host: "imap.gmail.com"
+      smtp_host: "smtp.gmail.com"
+    health_check_endpoint: "/v1/users/me/profile"
+    health_check_interval_seconds: 120
+    enabled: true
+    tags: ["communication", "email", "outreach", "sales"]
+
+  - id: calendly
+    name: Calendly
+    type: business
+    description: "Calendly scheduling integration"
+    version: "1.0.0"
+    base_url: "https://api.calendly.com"
+    auth:
+      type: "bearer_token"
+      token_env_var: "CALENDLY_API_KEY"
+    rate_limit:
+      requests_per_minute: 30
+      requests_per_hour: 500
+      token_bucket_refill_rate: 0.5
+    retry:
+      max_attempts: 3
+      base_delay_seconds: 1.0
+    circuit_breaker:
+      failure_threshold: 5
+      timeout_seconds: 30.0
+    capabilities:
+      - check_availability
+      - schedule_meeting
+      - manage_calendar
+      - list_event_types
+    config:
+      default_user_uri: ""
+    health_check_endpoint: "/users/me"
+    health_check_interval_seconds: 120
+    enabled: true
+    tags: ["business", "scheduling", "calendly", "calendar"]

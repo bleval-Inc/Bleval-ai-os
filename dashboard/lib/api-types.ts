@@ -418,3 +418,194 @@ export interface ResearchConclusion {
   added_at: string;
   [key: string]: unknown;
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Phase D — Quality Control & Founder Authority Types
+// ═══════════════════════════════════════════════════════════════════════════
+
+export interface QCStatusSummary {
+  total_submissions: number;
+  pass_rate: number;
+  total_rework_cycles: number;
+  [key: string]: unknown;
+}
+
+export interface QCResultSummary {
+  qc_id: string;
+  artifact_name: string;
+  status: string;
+  passed: boolean;
+  summary: string;
+  critical_count: number;
+  high_count: number;
+  medium_count: number;
+  low_count: number;
+  retry_count: number;
+  scope: string;
+  created_at: string | null;
+  [key: string]: unknown;
+}
+
+export interface FounderFeedItem {
+  id: string;
+  type: string;
+  severity: string;
+  title: string;
+  summary: string;
+  context: Record<string, unknown>;
+  requires_decision: boolean;
+  decision_deadline: string | null;
+  created_at: string | null;
+  acknowledged: boolean;
+  resolved: boolean;
+  [key: string]: unknown;
+}
+
+export interface ApprovalPipeline {
+  pipeline_id: string;
+  plan_id: string;
+  status: string;
+  stage: string;
+  approval_status: string;
+  created_at: string | null;
+  [key: string]: unknown;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Phase F — Board Room & Communication Types
+// ═══════════════════════════════════════════════════════════════════════════
+
+export interface BoardMeeting {
+  meeting_id: string;
+  meeting_type: string;
+  title: string;
+  called_by: string;
+  attendees: string[];
+  status: string;
+  scheduled_at: string | null;
+  started_at: string | null;
+  completed_at: string | null;
+  agenda_count: number;
+  decisions_count: number;
+  action_items_count: number;
+  minutes: string;
+}
+
+export interface BoardAgendaItem {
+  agenda_id: string;
+  submitted_by: string;
+  title: string;
+  description: string;
+  priority: number;
+  status: string;
+}
+
+export interface BoardDecision {
+  decision_id: string;
+  title: string;
+  description: string;
+  proposed_by: string;
+  approved: boolean;
+  votes_for: number;
+  votes_against: number;
+}
+
+export interface BoardActionItem {
+  item_id: string;
+  meeting_id: string;
+  title: string;
+  assigned_to: string;
+  priority: string;
+  status: string;
+  deadline: string | null;
+  created_at: string;
+}
+
+export interface BoardMeetingDetail extends BoardMeeting {
+  agenda: BoardAgendaItem[];
+  decisions: BoardDecision[];
+  action_items: BoardActionItem[];
+  kpi_snapshots: Record<string, Record<string, number>>;
+  minutes: string;
+}
+
+export interface BoardActionItemsResponse {
+  open: BoardActionItem[];
+  overdue: BoardActionItem[];
+}
+
+export interface BoardDashboard {
+  total_meetings: number;
+  active_meeting: string | null;
+  pending_agenda_items: number;
+  open_action_items: number;
+  overdue_action_items: number;
+  latest_kpis: Record<string, Record<string, number>>;
+  last_daily: string | null;
+  last_weekly: string | null;
+  last_monthly: string | null;
+}
+
+export interface CommStatus {
+  active_speaker: string | null;
+  speaker_states: Record<string, string>;
+  founder_availability: string;
+  founder_addressing: string | null;
+  emergency_active: boolean;
+  emergency_executive: string | null;
+  queue_length: number;
+  pending_responses: number;
+  total_messages_sent: number;
+}
+
+export interface CommQueueEntry {
+  executive: string;
+  urgency: string;
+  subject: string;
+  queued_at: string;
+}
+
+export type SpeakerId = "axiom" | "jenson" | "valta_prime" | "yamako";
+
+export type FounderAvailability =
+  | "available"
+  | "in_meeting"
+  | "in_trade"
+  | "sleeping"
+  | "training"
+  | "studying"
+  | "do_not_disturb"
+  | "unknown";
+
+// ════════════════════════════════════════════════════════════════════════════
+// Voice Interaction Types
+// ═══════════════════════════════════════════════════════════════════════════
+
+export interface VoiceCommandRequest {
+  transcript: string;
+  executive: "axiom" | "jenson" | "valta_prime" | "yamako";
+  wake_word: string;
+  confidence: number;
+  timestamp: number;
+}
+
+export interface VoiceCommandResponse {
+  executive: string;
+  response: string;
+  action_taken: string | null;
+  workflow_triggered: string | null;
+  requires_approval: boolean;
+  approval_id: string | null;
+}
+
+export interface VoiceExecutive {
+  id: string;
+  name: string;
+  wake_words: string[];
+  voice_profile: string;
+  description: string;
+}
+
+export interface VoiceExecutivesResponse {
+  executives: VoiceExecutive[];
+}

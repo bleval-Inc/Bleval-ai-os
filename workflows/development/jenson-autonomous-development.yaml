@@ -1,0 +1,595 @@
+# Jenson Autonomous Development Lifecycle
+# Version: 1.0.0
+# A complete autonomous development workflow using Phase H integrations
+#
+# This workflow demonstrates full autonomous development capability:
+# - Monitors GitHub for issues/PRs
+# - Plans and analyzes work
+# - Implements code changes
+# - Runs tests and QC
+# - Creates PRs for review
+# - Learns from outcomes
+
+name: Jenson Autonomous Development Lifecycle
+org: bleval
+department: development
+coordinator: jenson
+trigger_event: development-autonomous-cycle
+
+# Agents involved in autonomous development
+agents:
+  - jenson
+  - forge
+  - tester
+  - reviewer
+  - qa
+
+# Approval policy - mostly autonomous but requires Founder approval for merges
+approval_policy:
+  authority: executive_approval
+  requires_qc: true
+  requires_review: true
+  founder_approval_for:
+    - merge_to_main
+    - production_deploy
+    - schema_changes
+
+# Phase H Integration Tools used
+tools:
+  - github
+  - slack
+
+# Autonomous lifecycle phases with detailed steps
+steps:
+  # Phase 1: PLAN - Discover and prioritize work
+  - id: "plan.discover_work"
+    name: "Discover Development Work"
+    agent: jenson
+    description: |
+      Scan GitHub for open issues, PRs needing review, and stale branches.
+      Prioritize based on labels, assignees, and project goals.
+    phase: plan
+    tool_invocations:
+      - provider: github
+        tool: github_search_issues
+        parameters:
+          query: "repo:bleval/axiom-os is:open is:issue label:autonomous-ready"
+          per_page: 20
+    outputs:
+      - work_items
+    events_emitted:
+      - work-discovered
+
+  - id: "plan.prioritize"
+    name: "Prioritize Work Items"
+    agent: jenson
+    description: |
+      Analyze discovered work items and prioritize based on:
+      - Business impact (labels: high-impact, bug, feature)
+      - Dependencies and blockers
+      - Available agent capacity
+      - Strategic alignment
+    phase: plan
+    inputs:
+      - work_items
+    outputs:
+      - prioritized_backlog
+    events_emitted:
+      - backlog-prioritized
+
+  # Phase 2: RESEARCH - Analyze and understand the work
+  - id: "research.analyze_issue"
+    name: "Analyze Selected Issue"
+    agent: jenson
+    description: |
+      Deep dive into the highest priority issue:
+      - Read issue details and linked resources
+      - Analyze related code files
+      - Check for existing PRs or branches
+      - Identify affected components
+    phase: research
+    inputs:
+      - prioritized_backlog
+    tool_invocations:
+      - provider: github
+        tool: github_get_issue
+        parameters:
+          owner: "bleval"
+          repo: "axiom-os"
+          issue_number: "{{prioritized_backlog[0].number}}"
+      - provider: github
+        tool: github_list_repo_files
+        parameters:
+          owner: "bleval"
+          repo: "axiom-os"
+          path: "backend/axiom"
+    outputs:
+      - issue_analysis
+      - affected_files
+    events_emitted:
+      - issue-analyzed
+
+  - id: "research.design_solution"
+    name: "Design Technical Solution"
+    agent: forge
+    description: |
+      Create a detailed technical design:
+      - Architecture approach
+      - File changes needed
+      - Test strategy
+      - Integration points with Phase H providers
+      - Risk assessment
+    phase: research
+    inputs:
+      - issue_analysis
+      - affected_files
+    outputs:
+      - technical_design
+      - implementation_plan
+    events_emitted:
+      - design-completed
+
+  # Phase 3: PREPARE - Set up environment and create branch
+  - id: "prepare.create_branch"
+    name: "Create Feature Branch"
+    agent: jenson
+    description: |
+      Create a new branch for the work:
+      - Branch naming convention: autonomous/<issue-type>/<issue-number>-<slug>
+      - Ensure branch protection rules
+      - Set up CI/CD context
+    phase: prepare
+    inputs:
+      - implementation_plan
+    tool_invocations:
+      - provider: github
+        tool: github_create_branch
+        parameters:
+          owner: "bleval"
+          repo: "axiom-os"
+          branch: "autonomous/feature/{{prioritized_backlog[0].number}}-{{issue_analysis.title | slugify}}"
+          from_branch: "main"
+    outputs:
+      - branch_name
+      - branch_sha
+    events_emitted:
+      - branch-created
+
+  - id: "prepare.setup_environment"
+    name: "Set Up Development Environment"
+    agent: forge
+    description: |
+      Prepare local development environment:
+      - Checkout branch
+      - Install dependencies
+      - Run baseline tests
+      - Verify provider connectivity (GitHub, Slack)
+    phase: prepare
+    inputs:
+      - branch_name
+    outputs:
+      - env_ready
+      - baseline_tests
+    events_emitted:
+      - environment-ready
+
+  # Phase 4: EXECUTE - Implement the solution
+  - id: "execute.implement"
+    name: "Implement Solution"
+    agent: forge
+    description: |
+      Execute the implementation plan:
+      - Write code changes per technical design
+      - Follow coding standards and patterns
+      - Add/modify tests
+      - Update documentation
+      - Commit incrementally with descriptive messages
+    phase: execute
+    inputs:
+      - implementation_plan
+      - technical_design
+      - branch_name
+    tool_invocations:
+      - provider: github
+        tool: github_create_commit
+        parameters:
+          owner: "bleval"
+          repo: "axiom-os"
+          branch: "{{branch_name}}"
+          message: "feat: implement {{issue_analysis.title}}\n\nAutonomous implementation by Jenson\nIssue: #{{prioritized_backlog[0].number}}"
+          files:
+            - path: "{{item.path}}"
+              content: "{{item.content}}"
+              for: item in implementation_plan.file_changes
+    outputs:
+      - implementation
+      - commits
+    events_emitted:
+      - implementation-completed
+
+  - id: "execute.push_changes"
+    name: "Push Changes to Remote"
+    agent: forge
+    description: |
+      Push committed changes to GitHub:
+      - Force push if needed (autonomous branch)
+      - Verify remote sync
+    phase: execute
+    inputs:
+      - branch_name
+      - commits
+    tool_invocations:
+      - provider: github
+        tool: github_push_branch
+        parameters:
+          owner: "bleval"
+          repo: "axiom-os"
+          branch: "{{branch_name}}"
+    outputs:
+      - pushed
+    events_emitted:
+      - changes-pushed
+
+  # Phase 5: TEST - Run tests and validation
+  - id: "test.run_unit_tests"
+    name: "Run Unit Tests"
+    agent: tester
+    description: |
+      Execute unit test suite:
+      - Run pytest for backend
+      - Run jest for frontend
+      - Check coverage thresholds
+      - Report failures
+    phase: test
+    inputs:
+      - branch_name
+    outputs:
+      - unit_test_results
+      - coverage_report
+    events_emitted:
+      - unit-tests-completed
+
+  - id: "test.run_integration_tests"
+    name: "Run Integration Tests"
+    agent: tester
+    description: |
+      Execute integration tests for Phase H providers:
+      - Test GitHub provider connectivity
+      - Test Slack provider connectivity
+      - Test provider tool execution
+      - Verify webhook handling
+    phase: test
+    inputs:
+      - branch_name
+    tool_invocations:
+      - provider: github
+        tool: github_get_workflow_runs
+        parameters:
+          owner: "bleval"
+          repo: "axiom-os"
+          branch: "{{branch_name}}"
+    outputs:
+      - integration_test_results
+    events_emitted:
+      - integration-tests-completed
+
+  - id: "test.static_analysis"
+    name: "Static Code Analysis"
+    agent: reviewer
+    description: |
+      Run static analysis:
+      - Type checking (mypy)
+      - Linting (ruff/eslint)
+      - Security scanning (bandit)
+      - Complexity analysis
+    phase: test
+    inputs:
+      - branch_name
+    outputs:
+      - static_analysis_results
+    events_emitted:
+      - static-analysis-completed
+
+  # Phase 6: QC - Quality Control
+  - id: "qc.quality_gate"
+    name: "Quality Gate Evaluation"
+    agent: qa
+    description: |
+      Comprehensive QC evaluation:
+      - All tests passing
+      - Coverage meets threshold (80%+)
+      - Static analysis clean
+      - No security issues
+      - Coding standards met
+    phase: qc
+    inputs:
+      - unit_test_results
+      - integration_test_results
+      - static_analysis_results
+    outputs:
+      - qc_report
+      - qc_passed
+    events_emitted:
+      - qc-completed
+
+  # Phase 7: REVIEW - Peer review
+  - id: "review.create_pr"
+    name: "Create Pull Request"
+    agent: jenson
+    description: |
+      Create a detailed PR for review:
+      - Comprehensive description
+      - Link to issue
+      - Test results summary
+      - QC report summary
+      - Request reviewers
+    phase: review
+    inputs:
+      - implementation
+      - qc_report
+      - branch_name
+    tool_invocations:
+      - provider: github
+        tool: github_create_pull_request
+        parameters:
+          owner: "bleval"
+          repo: "axiom-os"
+          title: "[Autonomous] {{issue_analysis.title}}"
+          head: "{{branch_name}}"
+          base: "main"
+          body: |
+            ## Autonomous Development PR
+
+            **Issue:** #{{prioritized_backlog[0].number}} - {{issue_analysis.title}}
+            **Branch:** {{branch_name}}
+            **Agent:** Jenson (Autonomous)
+
+            ### Changes
+            {{implementation.summary}}
+
+            ### Testing
+            - Unit Tests: {{unit_test_results.status}}
+            - Integration Tests: {{integration_test_results.status}}
+            - Static Analysis: {{static_analysis_results.status}}
+
+            ### Quality Control
+            {{qc_report.summary}}
+
+            ### Reviewers
+            @forge @tester @reviewer
+
+            ---
+            *This PR was created autonomously by the Jenson Autonomous Development Lifecycle*
+          draft: false
+    outputs:
+      - pr_number
+      - pr_url
+    events_emitted:
+      - pr-created
+
+  - id: "review.notify_team"
+    name: "Notify Team via Slack"
+    agent: jenson
+    description: |
+      Send notification to development channel:
+      - PR link
+      - Summary of changes
+      - Request review
+    phase: review
+    inputs:
+      - pr_number
+      - pr_url
+      - issue_analysis
+    tool_invocations:
+      - provider: slack
+        tool: slack_send_message
+        parameters:
+          channel_id: "development"
+          text: "🤖 Autonomous PR Created: [#{{pr_number}}]({{pr_url}}) - {{issue_analysis.title}}"
+          blocks:
+            - type: "section"
+              text:
+                type: "mrkdwn"
+                text: "*Autonomous Development PR Ready for Review*"
+            - type: "section"
+              fields:
+                - type: "mrkdwn"
+                  text: "*PR:* #{{pr_number}}"
+                - type: "mrkdwn"
+                  text: "*Issue:* #{{prioritized_backlog[0].number}}"
+                - type: "mrkdwn"
+                  text: "*Agent:* Jenson (Autonomous)"
+                - type: "mrkdwn"
+                  text: "*Status:* QC Passed ✅"
+            - type: "actions"
+              elements:
+                - type: "button"
+                  text:
+                    type: "plain_text"
+                    text: "Review PR"
+                  url: "{{pr_url}}"
+                  style: "primary"
+    outputs:
+      - notification_sent
+    events_emitted:
+      - team-notified
+
+  # Phase 8: APPROVAL - Get approvals
+  - id: "approval.wait_reviews"
+    name: "Wait for Code Reviews"
+    agent: jenson
+    description: |
+      Monitor PR for reviews:
+      - Wait for required approvals
+      - Address review comments
+      - Re-run tests on changes
+    phase: approval
+    inputs:
+      - pr_number
+    tool_invocations:
+      - provider: github
+        tool: github_get_pull_request_reviews
+        parameters:
+          owner: "bleval"
+          repo: "axiom-os"
+          pr_number: "{{pr_number}}"
+    outputs:
+      - reviews
+      - approved
+    events_emitted:
+      - reviews-received
+
+  - id: "approval.founder_approval"
+    name: "Founder Approval Check"
+    agent: jenson
+    description: |
+      Check if Founder approval is required (for merges to main, production deploys, schema changes):
+      - If required, request via Founder Gateway
+      - Wait for approval
+    phase: approval
+    inputs:
+      - reviews
+      - qc_report
+    outputs:
+      - founder_approved
+    events_emitted:
+      - founder-approval-received
+
+  # Phase 9: DELIVERY - Merge and deploy
+  - id: "delivery.merge_pr"
+    name: "Merge Pull Request"
+    agent: jenson
+    description: |
+      Merge the approved PR:
+      - Squash and merge
+      - Delete branch
+      - Update issue status
+    phase: delivery
+    inputs:
+      - pr_number
+      - approved
+      - founder_approved
+    tool_invocations:
+      - provider: github
+        tool: github_merge_pull_request
+        parameters:
+          owner: "bleval"
+          repo: "axiom-os"
+          pr_number: "{{pr_number}}"
+          merge_method: "squash"
+          delete_branch: true
+    outputs:
+      - merged
+      - merge_commit_sha
+    events_emitted:
+      - pr-merged
+
+  - id: "delivery.update_issue"
+    name: "Update Issue Status"
+    agent: jenson
+    description: |
+      Close the related issue:
+      - Add comment with PR link
+      - Close issue
+      - Add labels
+    phase: delivery
+    inputs:
+      - pr_number
+      - merged
+    tool_invocations:
+      - provider: github
+        tool: github_update_issue
+        parameters:
+          owner: "bleval"
+          repo: "axiom-os"
+          issue_number: "{{prioritized_backlog[0].number}}"
+          state: "closed"
+          labels:
+            - "autonomous-completed"
+            - "done"
+    outputs:
+      - issue_closed
+    events_emitted:
+      - issue-closed
+
+  - id: "delivery.notify_complete"
+    name: "Notify Completion"
+    agent: jenson
+    description: |
+      Send completion notification:
+      - Summary of work done
+      - Links to PR and issue
+      - Metrics
+    phase: delivery
+    inputs:
+      - pr_number
+      - pr_url
+      - merge_commit_sha
+    tool_invocations:
+      - provider: slack
+        tool: slack_send_message
+        parameters:
+          channel_id: "development"
+          text: "✅ Autonomous Development Complete: #{{pr_number}} merged"
+          blocks:
+            - type: "header"
+              text:
+                type: "plain_text"
+                text: "✅ Autonomous Development Cycle Complete"
+            - type: "section"
+              fields:
+                - type: "mrkdwn"
+                  text: "*PR Merged:* #{{pr_number}}"
+                - type: "mrkdwn"
+                  text: "*Commit:* {{merge_commit_sha[:8]}}"
+                - type: "mrkdwn"
+                  text: "*Issue:* #{{prioritized_backlog[0].number}}"
+                - type: "mrkdwn"
+                  text: "*Status:* Delivered ✅"
+            - type: "section"
+              text:
+                type: "mrkdwn"
+                text: "View changes: {{pr_url}}"
+    outputs:
+      - completion_notification
+    events_emitted:
+      - delivery-complete
+
+  # Phase 10: LEARN - Record learning
+  - id: "learn.record_outcome"
+    name: "Record Learning Outcome"
+    agent: jenson
+    description: |
+      Record comprehensive learning data:
+      - Workflow execution metrics
+      - Tool usage patterns
+      - Success/failure analysis
+      - Improvement opportunities
+    phase: learn
+    inputs:
+      - implementation
+      - qc_report
+      - unit_test_results
+      - integration_test_results
+      - reviews
+    outputs:
+      - learning_entry
+    events_emitted:
+      - learning-recorded
+
+  - id: "learn.update_patterns"
+    name: "Update Development Patterns"
+    agent: jenson
+    description: |
+      Update autonomous development patterns based on outcome:
+      - Successful patterns reinforced
+      - Failed approaches documented
+      - Tool configurations optimized
+      - Agent prompts refined
+    phase: learn
+    inputs:
+      - learning_entry
+    outputs:
+      - updated_patterns
+    events_emitted:
+      - patterns-updated

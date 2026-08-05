@@ -52,19 +52,7 @@ EXECUTIVE_DEFAULT_SCHEDULES = {
     },
 }
 
-# Executive → Organization mapping
-EXECUTIVE_ORGS: Dict[str, str] = {
-    "jenson": "bleval",
-    "valta_prime": "hov",
-    "yamako": "personal",
-}
-
-# Executive → Department mapping
-EXECUTIVE_DEPTS: Dict[str, List[str]] = {
-    "jenson": ["sales", "marketing", "development", "operations", "finance"],
-    "valta_prime": ["brand", "creative", "research", "content", "growth", "operations"],
-    "yamako": ["productivity", "knowledge"],
-}
+from axiom.models.executive_constants import EXECUTIVE_ORGS, EXECUTIVE_DEPTS
 
 
 # ── Cycle Phase Helpers ────────────────────────────────────────────────

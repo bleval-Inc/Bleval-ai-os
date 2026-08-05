@@ -54,6 +54,28 @@ from axiom.engine.multi_model import MultiModelEngine
 from axiom.runtime.background_executor import BackgroundExecutor
 from axiom.runtime.workflow_observer import WorkflowObserver
 
+# PHASE D — Quality Control + Founder Authority
+from axiom.runtime.founder_authority import FounderAuthority
+from axiom.runtime.qc_engine import QCManager
+from axiom.runtime.qc_handler import QCSpecialistHandler, QCTaskInspector
+from axiom.runtime.founder_gateway import FounderGateway
+
+# PHASE E — Executive Intelligence + QC Learning
+from axiom.engine.executive_intelligence import ExecutiveIntelligence, ExecutiveGreeter
+from axiom.engine.qc_learning_pipeline import QCtoLearningPipeline
+
+# PHASE H — Platform Integrations
+from axiom.engine.provider_registry import ProviderRegistry, get_provider_registry
+from axiom.integrations.github import GitHubProvider
+from axiom.integrations.market_data import MarketDataProvider
+from axiom.integrations.mt5 import MT5Provider
+from axiom.integrations.tradingview import TradingViewProvider
+from axiom.integrations.crm import CRMProvider
+from axiom.integrations.email import EmailProvider
+from axiom.integrations.calendar import CalendarProvider
+from axiom.integrations.slack import SlackProvider
+from axiom.integrations.whatsapp import WhatsAppProvider
+
 
 class AxiomRuntime:
     """Central runtime orchestrator for Axiom OS.
@@ -101,9 +123,23 @@ class AxiomRuntime:
         self.background_executor: Optional[BackgroundExecutor] = None
         self.workflow_observer: Optional[WorkflowObserver] = None
 
+        # PHASE D — Quality Control + Founder Authority
+        self.qc_manager: Optional[QCManager] = None
+        self.qc_inspector: Optional[QCTaskInspector] = None
+        self.founder_authority: Optional[FounderAuthority] = None
+        self.founder_gateway: Optional[FounderGateway] = None
+
         # AXIOM Core — top-level intelligence layer
         self.axiom: Optional[AXIOMCore] = None
         self.research: Optional[ResearchWorkspaceManager] = None
+
+        # PHASE E — Executive Intelligence + QC Learning
+        self.executive_intelligence: Optional[ExecutiveIntelligence] = None
+        self.executive_greeter: Optional[ExecutiveGreeter] = None
+        self.qc_learning_pipeline: Optional[QCtoLearningPipeline] = None
+
+        # PHASE H — Platform Integrations
+        self.provider_registry: Optional[ProviderRegistry] = None
 
     # ── Bootstrap ────────────────────────────────────────────────────────
 
@@ -130,6 +166,16 @@ class AxiomRuntime:
             memory=self.memory,
             tool=self.tool,
         )
+
+        # ── PHASE H: Provider Registry — Platform Integrations ─────────────
+
+        # Initialise Provider Registry
+        self.provider_registry = get_provider_registry()
+
+        # Register all integration providers
+        await self._register_integration_providers()
+
+        # ── End PHASE H ───────────────────────────────────────────────────
 
         # Event engine (must be created before WorkflowEngine so we can wire it)
         self.event = EventEngine()
@@ -204,6 +250,56 @@ class AxiomRuntime:
         self.background_executor = BackgroundExecutor(runtime=self)
 
         # ── End PHASE C ─────────────────────────────────────────────────
+
+        # ── PHASE D: Quality Control + Founder Authority ─────────────────
+
+        # QC Manager — dedicated Quality Control engine
+        self.qc_manager = QCManager(
+            intelligence=self.intelligence,
+        )
+
+        # QC Task Inspector — inspects agent/workflow outputs
+        self.qc_inspector = QCTaskInspector(
+            qc_manager=self.qc_manager,
+        )
+
+        # Founder Authority — enforces Founder's final authority over
+        # restricted actions: money, trades, contracts, deletion,
+        # irreversible actions, external client comms, high-risk prospect
+        # comms, public publishing, production deployment, major strategic
+        self.founder_authority = FounderAuthority()
+
+        # Founder Gateway — orchestrates the full approval pipeline:
+        #   Executive researches → plans → Founder approves → executes
+        #   → tests → QC → executive review → Founder final review → publish
+        self.founder_gateway = FounderGateway(
+            founder_authority=self.founder_authority,
+            qc_manager=self.qc_manager,
+            runtime=self,
+        )
+
+        # ── Wire QC Handler into Specialist Agent Engine ─────────────────
+        if self.specialist_engine:
+            qc_handler = QCSpecialistHandler(qc_manager=self.qc_manager)
+            from axiom.models.agent_specialist import SpecialistType
+            self.specialist_engine.register_handler(
+                SpecialistType.QC, qc_handler,
+            )
+
+        # ── End PHASE D ─────────────────────────────────────────────────
+
+        # PHASE E — Executive Intelligence + QC Learning
+        self.executive_intelligence = ExecutiveIntelligence(
+            learning_engine=self.learning,
+            runtime=self,
+        )
+
+        self.executive_greeter = ExecutiveGreeter(runtime=self)
+
+        self.qc_learning_pipeline = QCtoLearningPipeline(
+            learning_engine=self.learning,
+            runtime=self,
+        )
 
         # AXIOM Core — top-level intelligence layer (above all executives)
         self.axiom = AXIOMCore(runtime=self, logger=self.logger)
@@ -300,6 +396,33 @@ class AxiomRuntime:
 
         # ── End PHASE C ─────────────────────────────────────────────────
 
+        # ── PHASE D: Start Quality Control + Founder Authority ──────────
+
+        # QC Manager doesn't need background tasks — it runs on demand.
+        if self.qc_manager:
+            # Wire QC callbacks
+            if self.qc_learning_pipeline:
+                self.qc_manager.set_on_qc_passed(self._on_qc_passed_for_learning)
+                self.qc_manager.set_on_qc_failed(self._on_qc_failed_for_learning)
+
+            if self.logger:
+                self.logger.info(
+                    "lifecycle",
+                    "PHASE D — Quality Control + Founder Authority initialised: "
+                    "QCManager + FounderAuthority + FounderGateway + QCHandler"
+                )
+
+        # ── PHASE E: Wire Executive Intelligence + QC Learning ─────────
+
+        if self.logger:
+            self.logger.info(
+                "lifecycle",
+                "PHASE E — Executive Intelligence + QC Learning initialised: "
+                "ExecutiveIntelligence + ExecutiveGreeter + QCtoLearningPipeline"
+            )
+
+        # ── End PHASE E ─────────────────────────────────────────────────
+
         # Start Board Room (autonomous meeting scheduling)
         if self.board_room:
             await self.board_room.start()
@@ -338,6 +461,19 @@ class AxiomRuntime:
             self.logger.info("lifecycle", "Axiom OS runtime shutting down")
 
         # Stop in reverse order
+        # ── PHASE H: Shutdown Platform Integrations ────────────────────────────
+        if self.provider_registry:
+            await self.provider_registry.shutdown_all()
+            if self.logger:
+                self.logger.info("lifecycle", "PHASE H — Platform Integrations shutdown complete")
+
+        # ── End PHASE H ─────────────────────────────────────────────────
+
+        # ── PHASE D: Shutdown Quality Control + Founder Authority ──────
+        # No background tasks to stop — all on-demand execution.
+
+        # ── End PHASE D ─────────────────────────────────────────────────
+
         # ── PHASE C: Shutdown Autonomous Components ────────────────────
         if self.background_executor:
             await self.background_executor.stop()
@@ -650,6 +786,67 @@ class AxiomRuntime:
                 f"System tools wired: {tools_count} tools available for AI function-calling",
             )
 
+    # ── PHASE H: Provider Registration ──────────────────────────────────────
+
+    async def _register_integration_providers(self) -> None:
+        """Register all Phase H integration providers with the ProviderRegistry."""
+        if not self.provider_registry:
+            return
+
+        # Register provider implementations
+        provider_implementations = {
+            "github": GitHubProvider,
+            "market_data": MarketDataProvider,
+            "mt5": MT5Provider,
+            "tradingview": TradingViewProvider,
+            "crm": CRMProvider,
+            "email": EmailProvider,
+            "calendar": CalendarProvider,
+            "slack": SlackProvider,
+            "whatsapp": WhatsAppProvider,
+        }
+
+        for provider_id, provider_class in provider_implementations.items():
+            try:
+                self.provider_registry.register_implementation(provider_id, provider_class)
+                if self.logger:
+                    self.logger.info("lifecycle", f"Registered provider implementation: {provider_id}")
+            except Exception as e:
+                if self.logger:
+                    self.logger.error("lifecycle", f"Failed to register provider implementation {provider_id}: {e}")
+
+        # Initialize providers for each organization
+        await self._initialize_providers_for_organizations()
+
+        if self.logger:
+            providers = self.provider_registry.list_providers()
+            self.logger.info("lifecycle", f"PHASE H — Platform Integrations registered: {len(providers)} providers initialized")
+
+    async def _initialize_providers_for_organizations(self) -> None:
+        """Initialize providers for all known organizations."""
+        import os
+        from pathlib import Path
+
+        # Known organizations
+        orgs_path = Path("organizations")
+        if not orgs_path.exists():
+            orgs_path = Path("../organizations")
+        if not orgs_path.exists():
+            if self.logger:
+                self.logger.warning("lifecycle", "Organizations directory not found, skipping provider initialization")
+            return
+
+        org_ids = [d.name for d in orgs_path.iterdir() if d.is_dir()]
+
+        for org_id in org_ids:
+            try:
+                providers = await self.provider_registry.initialize_providers(org_id)
+                if self.logger:
+                    self.logger.info("lifecycle", f"Initialized {len(providers)} providers for org {org_id}")
+            except Exception as e:
+                if self.logger:
+                    self.logger.error("lifecycle", f"Failed to initialize providers for org {org_id}: {e}")
+
     # ── Status ───────────────────────────────────────────────────────────
 
     @property
@@ -691,6 +888,12 @@ class AxiomRuntime:
                 "multi_model": self.multi_model is not None,
                 "background_executor": self.background_executor is not None,
                 "workflow_observer": self.workflow_observer is not None,
+                # PHASE D Components
+                "qc_manager": self.qc_manager is not None,
+                "founder_authority": self.founder_authority is not None,
+                "founder_gateway": self.founder_gateway is not None,
+                # PHASE H Components
+                "provider_registry": self.provider_registry is not None,
             },
         }
 
@@ -712,6 +915,27 @@ class AxiomRuntime:
         bg_executor_status = self.background_executor.get_status() if self.background_executor else {}
         observer_stats = self.workflow_observer.get_aggregate_stats() if self.workflow_observer else {}
 
+        # PHASE D summaries
+        qc_summary = self.qc_manager.get_summary() if self.qc_manager else {}
+        authority_status = self.founder_authority.get_status() if self.founder_authority else {}
+        gateway_summary = self.founder_gateway.get_summary() if self.founder_gateway else {}
+
+        # PHASE E summaries
+        ei_status = {}
+        if self.executive_intelligence:
+            # Can add executive intelligence status here
+            pass
+        qc_lp_status = self.qc_learning_pipeline.get_status() if hasattr(self.qc_learning_pipeline, 'get_status') else {}
+
+        # PHASE H summaries
+        phase_h_status = {}
+        if self.provider_registry:
+            providers = self.provider_registry.list_providers()
+            phase_h_status = {
+                "providers_count": len(providers),
+                "providers": {pid: p.get_schema() for pid, p in providers.items()},
+            }
+
         return {
             **status,
             "health": monitor_summary,
@@ -732,4 +956,77 @@ class AxiomRuntime:
                 "background_executor": bg_executor_status,
                 "workflow_observer": observer_stats,
             },
+            # PHASE D Status
+            "phase_d": {
+                "qc_manager": qc_summary,
+                "founder_authority": authority_status,
+                "founder_gateway": gateway_summary,
+            },
+            # PHASE E Status
+            "phase_e": {
+                "executive_intelligence": ei_status,
+                "qc_learning_pipeline": qc_lp_status,
+            },
+            # PHASE H Status
+            "phase_h": phase_h_status,
         }
+
+    # ── QC Learning Pipeline Callbacks ──────────────────────────────────────
+
+    async def _on_qc_passed_for_learning(self, qc_id: str, result: Any) -> None:
+        """Callback when QC passes — feed into learning pipeline."""
+        if not self.qc_learning_pipeline:
+            return
+
+        await self.qc_learning_pipeline.process_qc_result(
+            qc_id=qc_id,
+            artifact_name=result.artifact_name,
+            artifact_type=result.artifact_type,
+            passed=True,
+            scope=result.scope.value if hasattr(result.scope, 'value') else str(result.scope),
+            findings=[],  # No findings on pass
+            retry_count=result.retry_count,
+            workflow_id=getattr(result, 'workflow_id', ''),
+            workflow_instance_id=getattr(result, 'workflow_instance_id', ''),
+        )
+
+        if self.logger:
+            self.logger.info(
+                "qc.learning",
+                f"QC passed signal sent to learning pipeline: {qc_id}"
+            )
+
+    async def _on_qc_failed_for_learning(self, qc_id: str, result: Any, rework: Any) -> None:
+        """Callback when QC fails — feed into learning pipeline."""
+        if not self.qc_learning_pipeline:
+            return
+
+        # Convert findings to dict format
+        findings = []
+        for f in getattr(result, 'findings', []):
+            findings.append({
+                "check_type": f.check_type.value if hasattr(f.check_type, 'value') else str(f.check_type),
+                "severity": f.severity.value if hasattr(f.severity, 'value') else str(f.severity),
+                "message": f.description,
+                "location": getattr(f, 'location', ''),
+                "detail": getattr(f, 'detail', ''),
+                "suggested_fix": getattr(f, 'suggested_fix', ''),
+            })
+
+        await self.qc_learning_pipeline.process_qc_result(
+            qc_id=qc_id,
+            artifact_name=result.artifact_name,
+            artifact_type=result.artifact_type,
+            passed=False,
+            scope=result.scope.value if hasattr(result.scope, 'value') else str(result.scope),
+            findings=findings,
+            retry_count=result.retry_count,
+            workflow_id=getattr(result, 'workflow_id', ''),
+            workflow_instance_id=getattr(result, 'workflow_instance_id', ''),
+        )
+
+        if self.logger:
+            self.logger.info(
+                "qc.learning",
+                f"QC failed signal sent to learning pipeline: {qc_id} ({len(findings)} findings)"
+            )

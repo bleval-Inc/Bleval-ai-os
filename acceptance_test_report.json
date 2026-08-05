@@ -1,0 +1,165 @@
+{
+  "timestamp": "2026-08-05T15:09:35.331882+00:00",
+  "summary": {
+    "total": 22,
+    "passed": 22,
+    "failed": 0,
+    "success_rate": 100.0
+  },
+  "results": [
+    {
+      "name": "System Boot (Phases A-H)",
+      "status": "PASS",
+      "details": "All 27 components initialized",
+      "duration_ms": 248.43865599905257,
+      "timestamp": "2026-08-05T15:09:30.251232+00:00"
+    },
+    {
+      "name": "AXIOM Communication",
+      "status": "PASS",
+      "details": "AXIOM communication functional",
+      "duration_ms": 161.5735470004438,
+      "timestamp": "2026-08-05T15:09:30.412856+00:00"
+    },
+    {
+      "name": "Deep Research",
+      "status": "PASS",
+      "details": "Deep research workspace created: research-da2164d10d2f",
+      "duration_ms": 29.287583001860185,
+      "timestamp": "2026-08-05T15:09:30.442186+00:00"
+    },
+    {
+      "name": "Self-Monitoring",
+      "status": "PASS",
+      "details": "Self-monitoring: healthy, telemetry active",
+      "duration_ms": 11.321065998345148,
+      "timestamp": "2026-08-05T15:09:30.453571+00:00"
+    },
+    {
+      "name": "Executive Monitoring",
+      "status": "PASS",
+      "details": "All 3 executives running: ['jenson', 'valta_prime', 'yamako']",
+      "duration_ms": 7.418950001010671,
+      "timestamp": "2026-08-05T15:09:30.461023+00:00"
+    },
+    {
+      "name": "Autonomous Executive Operation",
+      "status": "PASS",
+      "details": "All 3 executives have autonomous loops with 4 default schedules",
+      "duration_ms": 2924.6116549984436,
+      "timestamp": "2026-08-05T15:09:33.385659+00:00"
+    },
+    {
+      "name": "Workflow Delegation",
+      "status": "PASS",
+      "details": "Workflow lifecycle complete: 92daa8d7-4067-49a0-a035-419cae7dfc11",
+      "duration_ms": 283.08556499905535,
+      "timestamp": "2026-08-05T15:09:33.668838+00:00"
+    },
+    {
+      "name": "Agent Tool Usage",
+      "status": "PASS",
+      "details": "Agent-tool chain functional: 0 providers, QC system active",
+      "duration_ms": 21.532252001634333,
+      "timestamp": "2026-08-05T15:09:33.690468+00:00"
+    },
+    {
+      "name": "QC Rejection/Repair",
+      "status": "PASS",
+      "details": "QC system active: 18 check types, 3 max retries",
+      "duration_ms": 181.99593399913283,
+      "timestamp": "2026-08-05T15:09:33.872489+00:00"
+    },
+    {
+      "name": "Founder Approval Flow",
+      "status": "PASS",
+      "details": "Founder approval system: approvals, feed available",
+      "duration_ms": 5.9802659998240415,
+      "timestamp": "2026-08-05T15:09:33.878501+00:00"
+    },
+    {
+      "name": "Valta Prime Trade Restrictions",
+      "status": "PASS",
+      "details": "Valta Prime restrictions: POI monitoring, no trade execution",
+      "duration_ms": 6.137260999821592,
+      "timestamp": "2026-08-05T15:09:33.884661+00:00"
+    },
+    {
+      "name": "Jenson Development Workflows",
+      "status": "PASS",
+      "details": "Jenson development workflows: 21 steps in autonomous lifecycle",
+      "duration_ms": 121.59148499995354,
+      "timestamp": "2026-08-05T15:09:34.006273+00:00"
+    },
+    {
+      "name": "Yamako Personal Operations",
+      "status": "PASS",
+      "details": "Yamako personal ops: org configured, departments present",
+      "duration_ms": 118.66851400191081,
+      "timestamp": "2026-08-05T15:09:34.124967+00:00"
+    },
+    {
+      "name": "Independent Workstation Operation",
+      "status": "PASS",
+      "details": "3 independent organizations with isolated APIs: ['bleval', 'hov', 'personal']",
+      "duration_ms": 311.2573139987944,
+      "timestamp": "2026-08-05T15:09:34.436248+00:00"
+    },
+    {
+      "name": "Background Continuity",
+      "status": "PASS",
+      "details": "Background continuity: executor running, heartbeat=2026-08-05T15:09:18.202374+00:00",
+      "duration_ms": 96.4311550014827,
+      "timestamp": "2026-08-05T15:09:34.532709+00:00"
+    },
+    {
+      "name": "Voice Communication",
+      "status": "PASS",
+      "details": "Voice communication: 4 executives with wake words",
+      "duration_ms": 32.607413002551766,
+      "timestamp": "2026-08-05T15:09:34.565364+00:00"
+    },
+    {
+      "name": "Executive Speech Coordination",
+      "status": "PASS",
+      "details": "Speech coordination: communication coordinator active",
+      "duration_ms": 69.9558509986673,
+      "timestamp": "2026-08-05T15:09:34.635358+00:00"
+    },
+    {
+      "name": "Board Room Operation",
+      "status": "PASS",
+      "details": "Board room: 3 meeting types, scheduling works",
+      "duration_ms": 225.8369400005904,
+      "timestamp": "2026-08-05T15:09:34.861222+00:00"
+    },
+    {
+      "name": "Mobile Access",
+      "status": "PASS",
+      "details": "Mobile access: lightweight endpoints available",
+      "duration_ms": 197.79686699985177,
+      "timestamp": "2026-08-05T15:09:35.059044+00:00"
+    },
+    {
+      "name": "Memory & Learning",
+      "status": "PASS",
+      "details": "Learning active: patterns=0, recs=0",
+      "duration_ms": 6.915537000168115,
+      "timestamp": "2026-08-05T15:09:35.065988+00:00"
+    },
+    {
+      "name": "Safe Failure Recovery",
+      "status": "PASS",
+      "details": "Failure recovery: cancellation works, recovery systems active",
+      "duration_ms": 200.78604299851577,
+      "timestamp": "2026-08-05T15:09:35.266819+00:00"
+    },
+    {
+      "name": "Founder Final Authority",
+      "status": "PASS",
+      "details": "Founder final authority: 10 restricted actions enforced, audit trail active",
+      "duration_ms": 64.8842689988669,
+      "timestamp": "2026-08-05T15:09:35.331769+00:00"
+    }
+  ]
+}

@@ -1,5 +1,53 @@
 import { create } from "zustand";
-import type { RuntimeStatus, ExecutiveBoardStatus, HealthSummary } from "../api-types";
+import type {
+  RuntimeStatus,
+  ExecutiveBoardStatus,
+  HealthSummary,
+  FounderAvailability,
+  LearningStatus,
+  LearningPattern,
+  LearningRecommendation,
+  KnowledgeEntry,
+  WorkflowAnalytics,
+  LearningCycle,
+  PerformanceScore,
+} from "../api-types";
+
+export interface FounderModel {
+  decisionPatterns: Record<string, number>;
+  approvedFormats: string[];
+  workingHours: { start: number; end: number };
+  preferredOutputs: string[];
+  communicationStyle: string;
+  recurringPriorities: string[];
+  approvedStandards: string[];
+}
+
+export interface QCLearningSignal {
+  failureType: string;
+  workflowId: string;
+  count: number;
+  trend: "improving" | "declining" | "stable";
+  lastDetected: string;
+}
+
+export interface SelfHealerStatus {
+  totalRecoveryEvents: number;
+  successful: number;
+  verified: number;
+  successRate: number;
+  componentsWithHistory: string[];
+  circuitBreakers: Record<string, { attempts: number; open: boolean }>;
+}
+
+// ── Workstation identifiers (Phase E) ───────────────────────────────
+export type WorkstationId =
+  | "axiom"
+  | "bleval"
+  | "valta"
+  | "personal";
+
+export type WorkstationStatus = "healthy" | "degraded" | "busy" | "idle";
 
 // ── Workspace identifiers ────────────────────────────────────────────
 export type WorkspaceId =
@@ -45,6 +93,9 @@ interface AxiomState {
   commandPaletteOpen: boolean;
   sidePanel: "memory" | "files" | "none";
   activeView: WorkspaceId;
+  activeWorkstation: WorkstationId;
+  workstationStatus: Record<WorkstationId, WorkstationStatus>;
+  activeWorkstationView: WorkspaceId;
   sidebarCollapsed: boolean;
 
   // Per-workspace persistent state
@@ -62,10 +113,56 @@ interface AxiomState {
   isAwake: boolean;
   pendingVoiceCommand: string | null;
   voiceWakeTimeout: number | null;
+  listeningExecutive: string | null;  // "axiom" | "jenson" | "valta_prime" | "yamako" | null
 
   // Notifications
   notifications: EnhancedNotification[];
   notificationPanelOpen: boolean;
+
+  // Phase F — Board Room state
+  boardMeetings: import("../api-types").BoardMeeting[];
+  boardActiveMeeting: import("../api-types").BoardMeetingDetail | null;
+  boardKpis: Record<string, Record<string, number>>;
+  boardActionItems: import("../api-types").BoardActionItemsResponse | null;
+
+  // Phase F — Founder availability
+  founderAvailability: FounderAvailability;
+  founderManualOverride: string | null;
+  founderLastActive: number;
+
+  // Phase F — Emergency state
+  emergencyActive: boolean;
+  emergencySource: string | null;
+  emergencyLevel: string | null;
+
+  // Phase F — Speaker queue mirror
+  activeSpeaker: import("../api-types").SpeakerId | null;
+
+  // Phase G — Learning + Optimization state
+  learningStatus: LearningStatus | null;
+  learningPatterns: LearningPattern[];
+  learningRecommendations: LearningRecommendation[];
+  learningKnowledge: KnowledgeEntry[];
+  workflowAnalytics: WorkflowAnalytics[];
+  learningCycles: LearningCycle[];
+  performanceScores: PerformanceScore[];
+  founderModel: FounderModel;
+  qcLearningSignals: QCLearningSignal[];
+  selfHealerStatus: SelfHealerStatus | null;
+  selectedLearningTab: string;
+
+  // Phase G — Learning actions
+  setLearningStatus: (s: LearningStatus | null) => void;
+  setLearningPatterns: (p: LearningPattern[]) => void;
+  setLearningRecommendations: (r: LearningRecommendation[]) => void;
+  setLearningKnowledge: (k: KnowledgeEntry[]) => void;
+  setWorkflowAnalytics: (a: WorkflowAnalytics[]) => void;
+  setLearningCycles: (c: LearningCycle[]) => void;
+  setPerformanceScores: (s: PerformanceScore[]) => void;
+  setFounderModel: (m: Partial<FounderModel>) => void;
+  setQCLearningSignals: (s: QCLearningSignal[]) => void;
+  setSelfHealerStatus: (s: SelfHealerStatus | null) => void;
+  setSelectedLearningTab: (tab: string) => void;
 
   // Actions
   setRuntime: (r: RuntimeStatus) => void;
@@ -75,6 +172,9 @@ interface AxiomState {
   setCommandPalette: (open: boolean) => void;
   setSidePanel: (panel: "memory" | "files" | "none") => void;
   setActiveView: (view: WorkspaceId) => void;
+  setActiveWorkstation: (ws: WorkstationId) => void;
+  setWorkstationStatus: (ws: WorkstationId, status: WorkstationStatus) => void;
+  setActiveWorkstationView: (view: WorkspaceId) => void;
   setSidebarCollapsed: (collapsed: boolean) => void;
   setWorkspaceState: (workspace: WorkspaceId, state: Partial<WorkspaceState>) => void;
   setSelectedExecutive: (id: string | null) => void;
@@ -86,6 +186,28 @@ interface AxiomState {
   setIsAwake: (awake: boolean) => void;
   setPendingVoiceCommand: (cmd: string | null) => void;
   setVoiceWakeTimeout: (id: number | null) => void;
+  setListeningExecutive: (exec: string | null) => void;
+
+  // Phase F — Board Room actions
+  setBoardMeetings: (meetings: import("../api-types").BoardMeeting[]) => void;
+  setBoardActiveMeeting: (meeting: import("../api-types").BoardMeetingDetail | null) => void;
+  setBoardKpis: (kpis: Record<string, Record<string, number>>) => void;
+  setBoardActionItems: (items: import("../api-types").BoardActionItemsResponse | null) => void;
+
+  // Phase F — Founder availability actions
+  setFounderAvailability: (availability: FounderAvailability) => void;
+  setFounderManualOverride: (override: string | null) => void;
+  setFounderLastActive: (timestamp: number) => void;
+
+  // Phase F — Emergency actions
+  setEmergencyActive: (active: boolean) => void;
+  setEmergencySource: (source: string | null) => void;
+  setEmergencyLevel: (level: string | null) => void;
+  clearEmergency: () => void;
+
+  // Phase F — Speaker actions
+  setActiveSpeaker: (speaker: import("../api-types").SpeakerId | null) => void;
+
   addNotification: (n: Notification) => void;
   dismissNotification: (id: string) => void;
   setNotificationPanelOpen: (open: boolean) => void;
@@ -145,6 +267,9 @@ export const useAxiomStore = create<AxiomState>((set) => ({
   commandPaletteOpen: false,
   sidePanel: "none",
   activeView: "workspace",
+  activeWorkstation: "axiom",
+  workstationStatus: { axiom: "healthy", bleval: "healthy", valta: "healthy", personal: "healthy" },
+  activeWorkstationView: "workspace",
   sidebarCollapsed: false,
   workspaceStates: initWorkspaceStates(),
   selectedExecutive: null,
@@ -156,8 +281,49 @@ export const useAxiomStore = create<AxiomState>((set) => ({
   isAwake: false,
   pendingVoiceCommand: null,
   voiceWakeTimeout: null,
+  listeningExecutive: null,
   notifications: [],
   notificationPanelOpen: false,
+
+  // Phase F — Board Room initial state
+  boardMeetings: [],
+  boardActiveMeeting: null,
+  boardKpis: {},
+  boardActionItems: null,
+
+  // Phase F — Founder availability initial state
+  founderAvailability: "unknown" as FounderAvailability,
+  founderManualOverride: null,
+  founderLastActive: Date.now(),
+
+  // Phase F — Emergency initial state
+  emergencyActive: false,
+  emergencySource: null,
+  emergencyLevel: null,
+
+  // Phase F — Speaker initial state
+  activeSpeaker: null,
+
+  // Phase G — Learning initial state
+  learningStatus: null,
+  learningPatterns: [],
+  learningRecommendations: [],
+  learningKnowledge: [],
+  workflowAnalytics: [],
+  learningCycles: [],
+  performanceScores: [],
+  founderModel: {
+    decisionPatterns: {},
+    approvedFormats: [],
+    workingHours: { start: 5, end: 21 },
+    preferredOutputs: [],
+    communicationStyle: "professional",
+    recurringPriorities: [],
+    approvedStandards: [],
+  },
+  qcLearningSignals: [],
+  selfHealerStatus: null,
+  selectedLearningTab: "overview",
 
   setRuntime: (r) => set({ runtime: r }),
   setHealth: (h) => set({ health: h }),
@@ -167,6 +333,9 @@ export const useAxiomStore = create<AxiomState>((set) => ({
   setCommandPalette: (open) => set({ commandPaletteOpen: open }),
   setSidePanel: (panel) => set({ sidePanel: panel }),
   setActiveView: (view) => set({ activeView: view }),
+  setActiveWorkstation: (ws) => set({ activeWorkstation: ws }),
+  setWorkstationStatus: (ws, status) => set((s) => ({ workstationStatus: { ...s.workstationStatus, [ws]: status } })),
+  setActiveWorkstationView: (view) => set({ activeWorkstationView: view, activeView: view }),
   setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),
   setWorkspaceState: (workspace, state) =>
     set((s) => ({
@@ -184,6 +353,7 @@ export const useAxiomStore = create<AxiomState>((set) => ({
   setIsAwake: (awake) => set({ isAwake: awake }),
   setPendingVoiceCommand: (cmd) => set({ pendingVoiceCommand: cmd }),
   setVoiceWakeTimeout: (id) => set({ voiceWakeTimeout: id }),
+  setListeningExecutive: (exec) => set({ listeningExecutive: exec }),
   addNotification: (n) =>
     set((s) => ({
       notifications: [{
@@ -228,4 +398,38 @@ export const useAxiomStore = create<AxiomState>((set) => ({
         snoozedUntil: null,
       }, ...s.notifications],
     })),
+
+  // Phase F — Board Room actions
+  setBoardMeetings: (meetings) => set({ boardMeetings: meetings }),
+  setBoardActiveMeeting: (meeting) => set({ boardActiveMeeting: meeting }),
+  setBoardKpis: (kpis) => set({ boardKpis: kpis }),
+  setBoardActionItems: (items) => set({ boardActionItems: items }),
+
+  // Phase F — Founder availability actions
+  setFounderAvailability: (availability) => set({ founderAvailability: availability }),
+  setFounderManualOverride: (override) => set({ founderManualOverride: override }),
+  setFounderLastActive: (timestamp) => set({ founderLastActive: timestamp }),
+
+  // Phase F — Emergency actions
+  setEmergencyActive: (active) => set({ emergencyActive: active }),
+  setEmergencySource: (source) => set({ emergencySource: source }),
+  setEmergencyLevel: (level) => set({ emergencyLevel: level }),
+  clearEmergency: () => set({ emergencyActive: false, emergencySource: null, emergencyLevel: null }),
+
+  // Phase F — Speaker actions
+  setActiveSpeaker: (speaker) => set({ activeSpeaker: speaker }),
+
+  // Phase G — Learning actions
+  setLearningStatus: (s) => set({ learningStatus: s }),
+  setLearningPatterns: (p) => set({ learningPatterns: p }),
+  setLearningRecommendations: (r) => set({ learningRecommendations: r }),
+  setLearningKnowledge: (k) => set({ learningKnowledge: k }),
+  setWorkflowAnalytics: (a) => set({ workflowAnalytics: a }),
+  setLearningCycles: (c) => set({ learningCycles: c }),
+  setPerformanceScores: (s) => set({ performanceScores: s }),
+  setFounderModel: (m) =>
+    set((s) => ({ founderModel: { ...s.founderModel, ...m } })),
+  setQCLearningSignals: (sigs) => set({ qcLearningSignals: sigs }),
+  setSelfHealerStatus: (st) => set({ selfHealerStatus: st }),
+  setSelectedLearningTab: (tab) => set({ selectedLearningTab: tab }),
 }));

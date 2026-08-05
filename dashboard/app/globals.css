@@ -444,3 +444,156 @@ body {
 .animate-delay-1000 {
   animation-delay: 1000ms;
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   Mobile Responsive Utilities
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Workspace sidebar — collapses to bottom bar on mobile */
+@media (max-width: 768px) {
+  .workspace-sidebar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    top: auto;
+    height: 48px;
+    flex-direction: row;
+    z-index: 40;
+    border-top: 1px solid var(--axiom-border);
+    border-right: none;
+    border-radius: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    gap: 2px;
+    padding: 4px 8px;
+  }
+
+  .workspace-sidebar .sidebar-label {
+    display: none;
+  }
+
+  .workspace-sidebar .sidebar-icon {
+    width: 36px;
+    height: 36px;
+    font-size: 16px;
+  }
+
+  .workspace-sidebar .sidebar-link {
+    padding: 4px 10px;
+    justify-content: center;
+  }
+}
+
+/* StatusBar — compress on small screens */
+@media (max-width: 640px) {
+  .status-bar-version {
+    display: none;
+  }
+
+  .status-bar-health-text {
+    display: none;
+  }
+}
+
+/* Notification center — full-width overlay on mobile */
+@media (max-width: 768px) {
+  .notification-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 50;
+    border-radius: 0;
+  }
+}
+
+/* AXIOMWS tabs — wrap on medium, scroll on small */
+@media (max-width: 900px) {
+  .axiomws-tabs {
+    flex-wrap: wrap;
+    gap: 2px;
+  }
+}
+
+@media (max-width: 640px) {
+  .axiomws-tabs {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .axiomws-tabs::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Conversation — compact on mobile */
+@media (max-width: 640px) {
+  .conversation-avatar {
+    width: 24px;
+    height: 24px;
+    font-size: 9px;
+  }
+
+  .conversation-message {
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+
+  .conversation-input {
+    font-size: 13px;
+    padding: 10px 12px;
+  }
+
+  .conversation-suggestions {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 4px;
+  }
+
+  .conversation-suggestions::-webkit-scrollbar {
+    display: none;
+  }
+
+  .conversation-suggestions button {
+    font-size: 10px;
+    white-space: nowrap;
+    padding: 4px 10px;
+    flex-shrink: 0;
+  }
+}
+
+/* Board Room — stacked on mobile */
+@media (max-width: 768px) {
+  .board-kpi-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .board-kpi-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Voice engine — smaller mic + compact indicators on mobile */
+@media (max-width: 640px) {
+  .voice-mic-button {
+    width: 44px;
+    height: 44px;
+  }
+
+  .voice-indicator-popup {
+    max-width: 200px;
+    padding: 6px 10px;
+  }
+
+  .voice-indicator-popup .voice-indicator-text {
+    font-size: 9px;
+  }
+}

@@ -6,13 +6,21 @@ import type {
   AgentDetail,
   AgentMemory,
   Approval,
+  ApprovalPipeline,
   ApprovalResponse,
+  BoardActionItemsResponse,
+  BoardDashboard,
+  BoardMeeting,
+  BoardMeetingDetail,
   Capability,
+  CommQueueEntry,
+  CommStatus,
   EventType,
   Executive,
   ExecutiveBoardStatus,
   ExecutiveDetail,
   ExecutiveLoopStatus,
+  FounderFeedItem,
   HealthSummary,
   IntelligenceProvidersResponse,
   KnowledgeEntry,
@@ -24,6 +32,8 @@ import type {
   OrganisationDetail,
   PerformanceScore,
   PlaybookEvolution,
+  QCResultSummary,
+  QCStatusSummary,
   RuntimeStatus,
   ScoreHistory,
   SystemStatus,
@@ -408,6 +418,110 @@ export const axiom = {
         method: "POST",
       }),
   },
+};
+
+// ── Phase D: Quality Control & Founder Authority ────────────────────────
+
+export const qc = {
+  status: () => fetchApi<QCStatusSummary>("/qc/status"),
+  results: (limit = 20) => fetchApi<QCResultSummary[]>(`/qc/results${buildQuery({ limit: String(limit) })}`),
+  trends: (scope = "", days = 7) => fetchApi<Record<string, unknown>>(`/qc/trends${buildQuery({ scope, days: String(days) })}`),
+};
+
+export const founder = {
+  feed: (limit = 20) => fetchApi<FounderFeedItem[]>(`/founder/feed${buildQuery({ limit: String(limit) })}`),
+  pipelines: () => fetchApi<ApprovalPipeline[]>("/founder/pipelines"),
+};
+
+// ════════════════════════════════════════════════════════════════════════
+// Phase E — Executive Intelligence API
+// ═══════════════════════════════════════════════════════════════════════
+
+export const executiveIntelligence = {
+  get: (execId: string) => fetchApi<Record<string, unknown>>(`/executives/${execId}/intelligence`),
+  greeting: (execId: string) => fetchApi<{ exec_id: string; greeting: string; timestamp: string }>(`/executives/${execId}/greeting`),
+  workflowDecisionSupport: (execId: string, workflowId: string, priority = "") =>
+    fetchApi<Record<string, unknown>>(`/executives/${execId}/workflow/decision-support`, {
+      method: "POST",
+      body: JSON.stringify({ workflow_id: workflowId, priority }),
+    }),
+  runLearningCycle: (execId: string) =>
+    fetchApi<Record<string, unknown>>(`/executives/${execId}/learning/cycle`, { method: "POST" }),
+};
+
+export const qcFeedback = {
+  submit: (patternId: string, action: string, details = "") =>
+    fetchApi<{ pattern_id: string; action: string; processed: boolean }>("/qc/feedback", {
+      method: "POST",
+      body: JSON.stringify({ pattern_id: patternId, action, details }),
+    }),
+};
+
+// ════════════════════════════════════════════════════════════════════════
+// Voice Interaction API
+// ════════════════════════════════════════════════════════════════════════
+
+import type {
+  VoiceCommandRequest,
+  VoiceCommandResponse,
+  VoiceExecutivesResponse,
+} from "./api-types";
+
+export const voice = {
+  command: (request: VoiceCommandRequest) =>
+    fetchApi<VoiceCommandResponse>("/voice/command", {
+      method: "POST",
+      body: JSON.stringify(request),
+    }),
+  listExecutives: () =>
+    fetchApi<VoiceExecutivesResponse>("/voice/executives"),
+  speak: (executive: string, text: string, urgency = "normal") =>
+    fetchApi<{ executive: string; text: string; urgency: string; queued: boolean }>("/voice/speak", {
+      method: "POST",
+      body: JSON.stringify({ executive, text, urgency }),
+    }),
+};
+
+// ════════════════════════════════════════════════════════════════════════
+// Phase F — Board Room API
+// ═══════════════════════════════════════════════════════════════════════
+
+export const board = {
+  dashboard: () => fetchApi<BoardDashboard>("/board/dashboard"),
+  meetings: (limit = 10, meetingType?: string) =>
+    fetchApi<BoardMeeting[]>(`/board/meetings${buildQuery({ limit: String(limit), meeting_type: meetingType })}`),
+  getMeeting: (id: string) => fetchApi<BoardMeetingDetail>(`/board/meetings/${id}`),
+  kpis: () => fetchApi<Record<string, Record<string, number>>>("/board/kpis"),
+  actionItems: (execId?: string) =>
+    fetchApi<BoardActionItemsResponse>(`/board/action-items${buildQuery({ exec_id: execId })}`),
+  scheduleMeeting: (meetingType = "ad_hoc", title = "", attendees?: string[]) =>
+    fetchApi<{ meeting_id: string; meeting_type: string; status: string }>("/board/meetings", {
+      method: "POST",
+      body: JSON.stringify({ meeting_type: meetingType, title, attendees }),
+    }),
+  makeDecision: (meetingId: string, title: string, description: string) =>
+    fetchApi<{ decision_id: string; meeting_id: string; approved: boolean }>(
+      `/board/meetings/${meetingId}/decisions`,
+      { method: "POST", body: JSON.stringify({ title, description }) },
+    ),
+};
+
+export const communication = {
+  status: () => fetchApi<CommStatus>("/communication/status"),
+  queue: (limit = 10) =>
+    fetchApi<CommQueueEntry[]>(`/communication/queue${buildQuery({ limit: String(limit) })}`),
+  setAvailability: (availability: string) =>
+    fetchApi<{ availability: string; set: boolean }>("/communication/founder/availability", {
+      method: "POST",
+      body: JSON.stringify({ availability }),
+    }),
+  releaseSpeaker: (executiveId: string) =>
+    fetchApi<{ released: string }>("/communication/release-speaker", {
+      method: "POST",
+      body: JSON.stringify({ executive_id: executiveId }),
+    }),
+  clearEmergency: () =>
+    fetchApi<{ emergency_cleared: boolean }>("/communication/clear-emergency", { method: "POST" }),
 };
 
 // ── Helper ────────────────────────────────────────────────────────────

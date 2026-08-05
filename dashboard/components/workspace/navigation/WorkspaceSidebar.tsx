@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useAxiomStore, type WorkspaceId } from "../../../lib/store/axiom-store";
+import { useAxiomStore, type WorkstationId, type WorkspaceId } from "../../../lib/store/axiom-store";
 
 /* ── Icon components (inline SVG, no lucide dependency in this file) ── */
 
@@ -102,58 +102,49 @@ const ICONS: Record<string, React.ReactNode> = {
   ),
 };
 
-const WORKSPACE_LABELS: Record<string, { label: string; shortcut: string }> = {
-  workspace: { label: "Founder", shortcut: "⌘1" },
-  executives: { label: "Exec Board", shortcut: "⌘2" },
-  operations: { label: "Operations", shortcut: "⌘3" },
-  knowledge: { label: "Knowledge", shortcut: "⌘4" },
-  projects: { label: "Projects", shortcut: "⌘5" },
-  creator: { label: "Creator", shortcut: "⌘6" },
-  trading: { label: "Trading", shortcut: "⌘7" },
-  console: { label: "Console", shortcut: "⌘8" },
-  communications: { label: "Inbox", shortcut: "⌘9" },
-  intelligence: { label: "Intel", shortcut: "⌘0" },
-  "content-hub": { label: "Content", shortcut: "⌥1" },
-  integrations: { label: "Integrations", shortcut: "⌥2" },
-  collaboration: { label: "Team", shortcut: "⌥3" },
-  "axiom-workspace": { label: "AXIOM", shortcut: "⌥4" },
-  research: { label: "Research", shortcut: "⌥5" },
+const WORKSPACE_LABELS: Record<string, { label: string }> = {
+  workspace: { label: "Overview" },
+  executives: { label: "Exec Board" },
+  operations: { label: "Operations" },
+  knowledge: { label: "Knowledge" },
+  projects: { label: "Projects" },
+  creator: { label: "Creator" },
+  trading: { label: "Markets" },
+  console: { label: "Console" },
+  communications: { label: "Inbox" },
+  intelligence: { label: "Intel" },
+  "content-hub": { label: "Content" },
+  integrations: { label: "Integrations" },
+  collaboration: { label: "Team" },
+  "axiom-workspace": { label: "AXIOM" },
+  research: { label: "Research" },
 };
 
-const ORDER: WorkspaceId[] = [
-  "workspace",
-  "executives",
-  "operations",
-  "knowledge",
-  "projects",
-  "creator",
-  "trading",
-  "console",
-  "communications",
-  "intelligence",
-  "content-hub",
-  "integrations",
-  "collaboration",
-  "axiom-workspace",
-  "research",
-];
+// Per-workstation contextual sidebar order
+const WORKSTATION_SIDEBAR_MAP: Record<WorkstationId, WorkspaceId[]> = {
+  axiom: ["workspace", "research", "axiom-workspace", "content-hub", "communications"],
+  bleval: ["executives", "operations", "projects", "creator", "console", "communications", "content-hub", "collaboration", "integrations", "intelligence"],
+  valta: ["trading", "operations", "intelligence", "knowledge", "content-hub", "communications"],
+  personal: ["knowledge", "intelligence", "console", "collaboration", "integrations", "creator"],
+};
 
 export default function WorkspaceSidebar() {
-  const { activeView, setActiveView, sidebarCollapsed, setSidebarCollapsed } =
+  const { activeView, setActiveView, activeWorkstation, sidebarCollapsed, setSidebarCollapsed } =
     useAxiomStore();
+
+  // Map the workstation's active view to the contextual icon list
+  const sidebarOrder = WORKSTATION_SIDEBAR_MAP[activeWorkstation] || WORKSTATION_SIDEBAR_MAP.axiom;
 
   return (
     <div
-      className={`flex flex-col items-center bg-[var(--axiom-bg-surface)] border-r border-[var(--axiom-border)] transition-all duration-200 ${
-        sidebarCollapsed ? "w-12" : "w-12"
-      }`}
+      className={`flex flex-col items-center bg-[var(--axiom-bg-surface)] border-r border-[var(--axiom-border)] transition-all duration-200 w-12`}
       style={{ paddingTop: 0 }}
     >
-      {/* Workspace icons */}
+      {/* Contextual workspace icons based on active workstation */}
       <div className="flex flex-col items-center gap-1 pt-3">
-        {ORDER.map((id, index) => {
-          const isActive = activeView === id;
-          const { label, shortcut } = WORKSPACE_LABELS[id];
+        {sidebarOrder.map((id) => {
+          const isActive = activeView === id || (id === "workspace" && activeView === "workspace");
+          const { label } = WORKSPACE_LABELS[id] || { label: id };
 
           return (
             <div key={id} className="relative group">
@@ -182,9 +173,6 @@ export default function WorkspaceSidebar() {
                 <div className="glass-panel px-2.5 py-1.5 whitespace-nowrap">
                   <span className="text-xs font-medium text-[var(--axiom-text-primary)]">
                     {label}
-                  </span>
-                  <span className="ml-2 text-[10px] text-[var(--axiom-text-tertiary)] font-mono">
-                    {shortcut}
                   </span>
                 </div>
               </div>
@@ -215,9 +203,6 @@ export default function WorkspaceSidebar() {
           <div className="glass-panel px-2.5 py-1.5 whitespace-nowrap">
             <span className="text-xs font-medium text-[var(--axiom-text-primary)]">
               Console
-            </span>
-            <span className="ml-2 text-[10px] text-[var(--axiom-text-tertiary)] font-mono">
-              ⌘8
             </span>
           </div>
         </div>
