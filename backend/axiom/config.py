@@ -35,6 +35,16 @@ class AxiomSettings:
         self.log_dir: Path = Path(
             os.getenv("AXIOM_LOG_DIR", str(REPO_ROOT / "backend" / "runtime" / "logs"))
         )
+        self.secrets_dir: Optional[str] = os.getenv("AXIOM_SECRETS_DIR")
+
+        # Production mode: only real providers allowed
+        self.real_providers_only: bool = os.getenv("REAL_PROVIDERS_ONLY", "false").lower() in ("true", "1", "yes")
+
+        # Debug mode
+        self.debug: bool = os.getenv("DEBUG", "false").lower() in ("true", "1", "yes")
+
+        # Environment
+        self.env: str = os.getenv("AXIOM_ENV", "development")
 
     def ensure_dirs(self) -> None:
         """Create runtime directories if they do not exist."""

@@ -93,6 +93,8 @@ class CapabilityAwareRouter:
       Falls back through the chain if primary fails
           ↓
       Returns the best match
+
+    In production mode (REAL_PROVIDERS_ONLY=true), mock provider is NEVER used.
     """
 
     def __init__(self, smart_router: SmartRouter) -> None:
@@ -109,73 +111,75 @@ class CapabilityAwareRouter:
         These can be overridden via the config system.
         Each capability has a priority chain — the router tries
         providers in order and falls through on failure.
+
+        In production mode, 'mock' is automatically excluded from fallback chains.
         """
         self._rules = {
             ModelCapability.REASONING: CapabilityRouterRule(
                 rule_id="reasoning",
                 capability=ModelCapability.REASONING,
                 priority_chain=["anthropic", "openai"],
-                fallback_providers=["mock"],
+                fallback_providers=[],
             ),
             ModelCapability.RESEARCH: CapabilityRouterRule(
                 rule_id="research",
                 capability=ModelCapability.RESEARCH,
                 priority_chain=["anthropic", "openai"],
-                fallback_providers=["mock"],
+                fallback_providers=[],
             ),
             ModelCapability.CODING: CapabilityRouterRule(
                 rule_id="coding",
                 capability=ModelCapability.CODING,
                 priority_chain=["anthropic", "openai"],
-                fallback_providers=["mock"],
+                fallback_providers=[],
             ),
             ModelCapability.IMAGE_GENERATION: CapabilityRouterRule(
                 rule_id="image",
                 capability=ModelCapability.IMAGE_GENERATION,
                 priority_chain=["openai"],  # e.g., DALL-E
-                fallback_providers=["mock"],
+                fallback_providers=[],
             ),
             ModelCapability.VIDEO_GENERATION: CapabilityRouterRule(
                 rule_id="video",
                 capability=ModelCapability.VIDEO_GENERATION,
                 priority_chain=[],
-                fallback_providers=["mock"],
+                fallback_providers=[],
             ),
             ModelCapability.AUDIO: CapabilityRouterRule(
                 rule_id="audio",
                 capability=ModelCapability.AUDIO,
                 priority_chain=[],
-                fallback_providers=["mock"],
+                fallback_providers=[],
             ),
             ModelCapability.TRANSCRIPTION: CapabilityRouterRule(
                 rule_id="transcription",
                 capability=ModelCapability.TRANSCRIPTION,
                 priority_chain=["openai"],  # e.g., Whisper
-                fallback_providers=["mock"],
+                fallback_providers=[],
             ),
             ModelCapability.EMBEDDINGS: CapabilityRouterRule(
                 rule_id="embeddings",
                 capability=ModelCapability.EMBEDDINGS,
                 priority_chain=["openai"],
-                fallback_providers=["mock"],
+                fallback_providers=[],
             ),
             ModelCapability.CLASSIFICATION: CapabilityRouterRule(
                 rule_id="classification",
                 capability=ModelCapability.CLASSIFICATION,
                 priority_chain=["anthropic", "openai"],
-                fallback_providers=["mock"],
+                fallback_providers=[],
             ),
             ModelCapability.EXTRACTION: CapabilityRouterRule(
                 rule_id="extraction",
                 capability=ModelCapability.EXTRACTION,
                 priority_chain=["anthropic", "openai"],
-                fallback_providers=["mock"],
+                fallback_providers=[],
             ),
             ModelCapability.GENERAL: CapabilityRouterRule(
                 rule_id="general",
                 capability=ModelCapability.GENERAL,
                 priority_chain=["anthropic", "openai"],
-                fallback_providers=["mock"],
+                fallback_providers=[],
             ),
         }
 
@@ -219,6 +223,8 @@ class CapabilityAwareRouter:
         that covers the highest-priority capability.
 
         Falls back through the chain if primary is unavailable.
+
+        In production mode, mock provider is NEVER used.
         """
         # If specific provider requested, try it first
         if preferred_provider:
@@ -243,14 +249,14 @@ class CapabilityAwareRouter:
                 if provider.available and not isinstance(provider, MockProvider):
                     return provider
 
-        # Try fallback providers
+        # Try fallback providers (skipping mock in production)
         for provider_name in rule.fallback_providers:
             if provider_name in providers:
                 provider = providers[provider_name]
-                if provider.available:
+                if provider.available and not isinstance(provider, MockProvider):
                     return provider
 
-        # Ultimate fallback
+        # Ultimate fallback to smart router
         return self._fallback_to_smart_router(task_description)
 
     def _fallback_to_smart_router(self, task_description: str) -> ModelProvider:

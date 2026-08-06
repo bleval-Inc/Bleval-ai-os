@@ -33,7 +33,7 @@ Model Assignments
   GENERAL       → NVIDIA General (fast, reliable)
 
 Fallback Chain if primary fails:
-  GLM-5.2 → Mistral Mamba → Stepfun MoE → NVIDIA General → MockProvider
+  GLM-5.2 → Mistral Mamba → Stepfun MoE → NVIDIA General → Anthropic → OpenAI
 
 Architecture Law 9: Intelligence is provider independent.
 """
@@ -44,6 +44,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional
 
+from axiom.config import settings
 from axiom.engine.base import MockProvider, ModelProvider
 
 
@@ -281,6 +282,7 @@ class SmartRouter:
       - Agent type (executives get strategic routing)
 
     If the primary model fails, falls back through the chain.
+    In production mode (REAL_PROVIDERS_ONLY=true), mock provider is NEVER used.
     """
 
     def __init__(self) -> None:
@@ -396,7 +398,10 @@ class SmartRouter:
             preferred_provider: If set, try this provider first
 
         Returns:
-            A ModelProvider instance (always at least MockProvider)
+            A ModelProvider instance.
+
+        Raises:
+            RuntimeError: If no real provider is available in production mode.
         """
         # If a specific provider is requested and available, use it
         if preferred_provider and preferred_provider in self._providers:
@@ -412,7 +417,7 @@ class SmartRouter:
         # Get the priority chain for this category
         chain = self._get_priority_chain(profile.category, agent_id)
 
-        # Return the best available provider from the chain
+        # Return the best available provider from the chain (real providers only)
         for name in chain:
             provider = self._providers.get(name)
             if provider and provider.available and not isinstance(provider, MockProvider):
@@ -423,7 +428,15 @@ class SmartRouter:
             if provider.available and not isinstance(provider, MockProvider):
                 return provider
 
-        # Last resort: mock provider
+        # In production mode, NEVER fall back to mock
+        if settings.real_providers_only or not settings.debug:
+            raise RuntimeError(
+                "No real AI provider available. "
+                "Configure at least one provider API key (NVIDIA, Anthropic, or OpenAI) "
+                "or set REAL_PROVIDERS_ONLY=false for development."
+            )
+
+        # Last resort: mock provider (only in development)
         return self._mock_provider
 
     def select_provider_for_complexity(self, complexity: str) -> ModelProvider:

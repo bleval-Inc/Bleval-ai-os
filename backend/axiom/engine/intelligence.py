@@ -250,8 +250,10 @@ class ProviderRouter:
             self._providers["openai"] = openai
             self._providers["openai-fast"] = OpenAIFastProvider()
 
-        # Always register mock as last resort
-        self._providers["mock"] = MockProvider()
+        # Register mock as last resort only if not in production mode
+        mock = MockProvider()
+        if mock.available:
+            self._providers["mock"] = mock
 
     def select_provider(
         self,
@@ -265,7 +267,10 @@ class ProviderRouter:
             preferred_provider: if set, try this provider first
 
         Returns:
-            A ModelProvider instance (always at least MockProvider)
+            A ModelProvider instance.
+
+        Raises:
+            RuntimeError: If no real provider is available in production mode.
         """
         # If a specific provider is requested and available, use it
         if preferred_provider and preferred_provider in self._providers:
@@ -297,7 +302,15 @@ class ProviderRouter:
         for provider in self._providers.values():
             return provider
 
-        # Last resort (should never reach here since mock is always registered)
+        # In production mode, NEVER fall back to mock
+        if settings.real_providers_only or not settings.debug:
+            raise RuntimeError(
+                "No real AI provider available. "
+                "Configure at least one provider API key (Anthropic or OpenAI) "
+                "or set REAL_PROVIDERS_ONLY=false for development."
+            )
+
+        # Last resort (should never reach here since mock is registered in dev)
         return MockProvider()
 
     def list_available(self) -> List[Dict[str, Any]]:

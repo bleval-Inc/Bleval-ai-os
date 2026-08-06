@@ -2,12 +2,12 @@
 Executive: yamako
 Organization: personal
 Cycle: daily_report
-Timestamp: 2026-08-05T14:53:57.586018+00:00
+Timestamp: 2026-08-06T08:21:23.575375+00:00
 
 --- Observations ---
 org_state: {'org_id': 'personal', 'departments': [{'id': 'productivity', 'agents': 0}, {'id': 'knowledge', 'agents': 0}], 'detail_loaded': True}
 memory_topics: ['architecture.md', 'glossary.md', 'goals', 'preferences', 'routines', 'founder-report']
-active_workflows: 8
+active_workflows: 4
 completed_work_this_cycle: 5
 
 --- Priorities ---
@@ -18,11 +18,11 @@ completed_work_this_cycle: 5
 --- Workflows ---
 Launched: 1
 Completed this cycle: 5
-  - development/code-review: unknown
-  - development/code-review: unknown
   - sales/prospect-research: unknown
   - development/code-review: unknown
-  - sales/prospect-research: unknown
+  - development/code-review: unknown
+  - development/code-review: unknown
+  - development/code-review: unknown
 
 === REPORT TO FOUNDER ===
 Summary: yamako completed daily_report cycle.

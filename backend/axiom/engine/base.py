@@ -10,6 +10,8 @@ import json
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional
 
+from axiom.config import settings
+
 
 class ModelProvider(ABC):
     """Abstract base class for AI model providers."""
@@ -38,7 +40,8 @@ class ModelProvider(ABC):
 class MockProvider(ModelProvider):
     """Mock provider that returns canned responses for testing.
 
-    Used when no API keys are configured and no real provider is available.
+    Only available when DEBUG=true or REAL_PROVIDERS_ONLY=false.
+    In production (REAL_PROVIDERS_ONLY=true), this provider is disabled.
     """
 
     @property
@@ -47,7 +50,8 @@ class MockProvider(ModelProvider):
 
     @property
     def available(self) -> bool:
-        return True  # Always available
+        # Only available in development/testing mode
+        return settings.debug and not settings.real_providers_only
 
     async def generate(
         self,
@@ -56,6 +60,11 @@ class MockProvider(ModelProvider):
         max_tokens: int = 4096,
         temperature: float = 0.7,
     ) -> str:
+        if not self.available:
+            raise RuntimeError(
+                "MockProvider is disabled in production mode. "
+                "Set REAL_PROVIDERS_ONLY=false and DEBUG=true to enable mock mode."
+            )
         prompt_len = len(prompt)
         return json.dumps({
             "provider": "mock",
