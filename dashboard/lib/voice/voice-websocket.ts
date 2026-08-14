@@ -59,6 +59,7 @@ export interface UseVoiceWebSocketReturn {
   sendPing: () => void;
   lastMessage: VoiceWSMessage | null;
   connectionError: string | null;
+  setShouldConnect: (should: boolean) => void;
 }
 
 export function useVoiceWebSocket(
@@ -75,49 +76,79 @@ export function useVoiceWebSocket(
     autoConnect = true,
   } = options;
 
+  // Use refs for callbacks to avoid recreating connect/disconnect
+  const onResponseRef = useRef(onResponse);
+  const onSpeakRef = useRef(onSpeak);
+  const onStatusRef = useRef(onStatus);
+  const onErrorRef = useRef(onError);
+  const onOpenRef = useRef(onOpen);
+  const onCloseRef = useRef(onClose);
+  const autoConnectRef = useRef(autoConnect);
+  const clientIdRef = useRef(clientId);
+
+  // Update refs when props change
+  onResponseRef.current = onResponse;
+  onSpeakRef.current = onSpeak;
+  onStatusRef.current = onStatus;
+  onErrorRef.current = onError;
+  onOpenRef.current = onOpen;
+  onCloseRef.current = onClose;
+  autoConnectRef.current = autoConnect;
+  clientIdRef.current = clientId;
+
   const wsRef = useRef<WebSocket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [lastMessage, setLastMessage] = useState<VoiceWSMessage | null>(null);
   const [connectionError, setConnectionError] = useState<string | null>(null);
-  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const reconnectAttempts = useRef(0);
   const maxReconnectAttempts = 5;
+  const shouldConnectRef = useRef(true);
+  const mountedRef = useRef(true);
+
+  // Track mounted state
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => { mountedRef.current = false; };
+  }, []);
 
   const connect = useCallback(() => {
     if (wsRef.current?.readyState === WebSocket.OPEN) return;
+    if (!shouldConnectRef.current) return;
 
     try {
-      const wsUrl = `${process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:8000"}/api/v1/voice/ws/${clientId}`;
+      const wsUrl = `${process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:8000"}/api/v1/voice/ws/${clientIdRef.current}`;
       wsRef.current = new WebSocket(wsUrl);
 
       wsRef.current.onopen = () => {
+        if (!mountedRef.current) return;
         setIsConnected(true);
         setConnectionError(null);
         reconnectAttempts.current = 0;
-        onOpen?.();
+        onOpenRef.current?.();
       };
 
       wsRef.current.onmessage = (event) => {
+        if (!mountedRef.current) return;
         try {
           const message: VoiceWSMessage = JSON.parse(event.data);
           setLastMessage(message);
 
           switch (message.type) {
             case "response":
-              onResponse?.(message);
+              onResponseRef.current?.(message);
               break;
             case "speak":
-              onSpeak?.(message);
+              onSpeakRef.current?.(message);
               break;
             case "status":
-              onStatus?.(message);
+              onStatusRef.current?.(message);
               break;
             case "error":
-              onError?.(message.message || "Unknown error");
+              onErrorRef.current?.(message.message || "Unknown error");
               setConnectionError(message.message || "Unknown error");
               break;
             case "pong":
-              // Heartbeat response
               break;
           }
         } catch (err) {
@@ -125,30 +156,41 @@ export function useVoiceWebSocket(
         }
       };
 
-      wsRef.current.onclose = () => {
+      wsRef.current.onclose = (event) => {
+        if (!mountedRef.current) return;
         setIsConnected(false);
-        onClose?.();
+        onCloseRef.current?.();
 
-        // Attempt reconnection
-        if (reconnectAttempts.current < maxReconnectAttempts) {
+        const isCleanClose = event.code === 1000 || event.code === 1001;
+        const shouldReconnect = shouldConnectRef.current &&
+                                reconnectAttempts.current < maxReconnectAttempts &&
+                                event.code !== 1006;
+
+        if (shouldReconnect && !isCleanClose) {
           reconnectAttempts.current += 1;
           const delay = Math.min(1000 * 2 ** reconnectAttempts.current, 30000);
           reconnectTimeoutRef.current = setTimeout(() => {
             connect();
           }, delay);
+        } else if (isCleanClose) {
+          reconnectAttempts.current = 0;
         }
       };
 
       wsRef.current.onerror = (error) => {
-        console.error("WebSocket error:", error);
-        setConnectionError("WebSocket connection failed");
-        onError?.("WebSocket connection failed");
+        if (!mountedRef.current) return;
+        if (wsRef.current?.readyState === WebSocket.CONNECTING) {
+          setConnectionError("WebSocket connection failed");
+        }
+        onErrorRef.current?.("WebSocket connection failed");
       };
     } catch (err) {
       console.error("Failed to create WebSocket:", err);
-      setConnectionError("Failed to create WebSocket connection");
+      if (mountedRef.current) {
+        setConnectionError("Failed to create WebSocket connection");
+      }
     }
-  }, [clientId, onOpen, onClose, onResponse, onSpeak, onStatus, onError]);
+  }, []);
 
   const disconnect = useCallback(() => {
     if (reconnectTimeoutRef.current) {
@@ -159,7 +201,9 @@ export function useVoiceWebSocket(
       wsRef.current.close();
       wsRef.current = null;
     }
-    setIsConnected(false);
+    if (mountedRef.current) {
+      setIsConnected(false);
+    }
   }, []);
 
   const sendCommand = useCallback(
@@ -192,15 +236,24 @@ export function useVoiceWebSocket(
     }
   }, []);
 
-  // Auto-connect on mount
+  const setShouldConnect = useCallback((should: boolean) => {
+    shouldConnectRef.current = should;
+    if (!should) {
+      disconnect();
+    } else if (autoConnectRef.current) {
+      connect();
+    }
+  }, [connect, disconnect]);
+
+  // Auto-connect on mount - only depends on autoConnect ref, not callbacks
   useEffect(() => {
-    if (autoConnect) {
+    if (autoConnectRef.current) {
       connect();
     }
     return () => {
       disconnect();
     };
-  }, [autoConnect, connect, disconnect]);
+  }, [connect, disconnect]);
 
   // Heartbeat
   useEffect(() => {
@@ -219,6 +272,7 @@ export function useVoiceWebSocket(
     sendPing,
     lastMessage,
     connectionError,
+    setShouldConnect,
   };
 }
 
@@ -235,53 +289,102 @@ export interface UseVoiceBroadcastReturn {
   connect: () => void;
   disconnect: () => void;
   sendSpeak: (executive: string, text: string, urgency?: "normal" | "high" | "emergency") => void;
+  setShouldConnect: (should: boolean) => void;
 }
 
 export function useVoiceBroadcast(
   options: UseVoiceBroadcastOptions
 ): UseVoiceBroadcastReturn {
   const { onSpeak, onStatus, autoConnect = true } = options;
+
+  // Use refs for callbacks to avoid recreating connect/disconnect
+  const onSpeakRef = useRef(onSpeak);
+  const onStatusRef = useRef(onStatus);
+  const autoConnectRef = useRef(autoConnect);
+
+  // Update refs when props change
+  onSpeakRef.current = onSpeak;
+  onStatusRef.current = onStatus;
+  autoConnectRef.current = autoConnect;
+
   const wsRef = useRef<WebSocket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
+  const shouldConnectRef = useRef(true);
+  const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const reconnectAttempts = useRef(0);
+  const maxReconnectAttempts = 5;
+  const mountedRef = useRef(true);
+
+  // Track mounted state
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => { mountedRef.current = false; };
+  }, []);
 
   const connect = useCallback(() => {
     if (wsRef.current?.readyState === WebSocket.OPEN) return;
+    if (!shouldConnectRef.current) return;
 
     try {
       const wsUrl = `${process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:8000"}/api/v1/voice/ws/broadcast`;
       wsRef.current = new WebSocket(wsUrl);
 
       wsRef.current.onopen = () => {
+        if (!mountedRef.current) return;
         setIsConnected(true);
+        reconnectAttempts.current = 0;
       };
 
       wsRef.current.onmessage = (event) => {
+        if (!mountedRef.current) return;
         try {
           const message: VoiceWSMessage = JSON.parse(event.data);
           if (message.type === "speak") {
-            onSpeak?.(message);
+            onSpeakRef.current?.(message);
           } else if (message.type === "status") {
-            onStatus?.(message);
+            onStatusRef.current?.(message);
           }
         } catch (err) {
           console.error("Failed to parse broadcast message:", err);
         }
       };
 
-      wsRef.current.onclose = () => {
+      wsRef.current.onclose = (event) => {
+        if (!mountedRef.current) return;
         setIsConnected(false);
+
+        const isCleanClose = event.code === 1000 || event.code === 1001;
+        const shouldReconnect = shouldConnectRef.current &&
+                                reconnectAttempts.current < maxReconnectAttempts &&
+                                event.code !== 1006;
+
+        if (shouldReconnect && !isCleanClose) {
+          reconnectAttempts.current += 1;
+          const delay = Math.min(1000 * 2 ** reconnectAttempts.current, 30000);
+          reconnectTimeoutRef.current = setTimeout(() => {
+            connect();
+          }, delay);
+        } else if (isCleanClose) {
+          reconnectAttempts.current = 0;
+        }
       };
     } catch (err) {
       console.error("Failed to create broadcast WebSocket:", err);
     }
-  }, [onSpeak, onStatus]);
+  }, []);
 
   const disconnect = useCallback(() => {
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current);
+      reconnectTimeoutRef.current = null;
+    }
     if (wsRef.current) {
       wsRef.current.close();
       wsRef.current = null;
     }
-    setIsConnected(false);
+    if (mountedRef.current) {
+      setIsConnected(false);
+    }
   }, []);
 
   const sendSpeak = useCallback(
@@ -300,17 +403,27 @@ export function useVoiceBroadcast(
     []
   );
 
+  const setShouldConnect = useCallback((should: boolean) => {
+    shouldConnectRef.current = should;
+    if (!should) {
+      disconnect();
+    } else if (autoConnectRef.current) {
+      connect();
+    }
+  }, [connect, disconnect]);
+
   useEffect(() => {
-    if (autoConnect) {
+    if (autoConnectRef.current) {
       connect();
     }
     return () => disconnect();
-  }, [autoConnect, connect, disconnect]);
+  }, [connect, disconnect]);
 
   return {
     isConnected,
     connect,
     disconnect,
     sendSpeak,
+    setShouldConnect,
   };
 }

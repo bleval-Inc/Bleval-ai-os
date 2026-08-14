@@ -183,9 +183,18 @@ export default function SystemTelemetry({
   }, []);
 
   useEffect(() => {
-    fetch();
-    intervalRef.current = setInterval(fetch, 5000);
+    let mounted = true;
+    const load = async () => {
+      await fetch();
+      if (mounted) {
+        intervalRef.current = setInterval(() => {
+          fetch();
+        }, 5000);
+      }
+    };
+    load();
     return () => {
+      mounted = false;
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
   }, [fetch]);

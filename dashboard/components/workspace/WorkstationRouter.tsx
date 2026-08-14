@@ -6,6 +6,9 @@ import AXIOMWS from "./workstations/AXIOMWS";
 import BLEVALWS from "./workstations/BLEVALWS";
 import VALTAWS from "./workstations/VALTAWS";
 import PERSONALWS from "./workstations/PERSONALWS";
+import BoardroomWS from "./workstations/BoardroomWS";
+import SystemWS from "./workstations/SystemWS";
+import SettingsWS from "./workstations/SettingsWS";
 
 const pageVariants = {
   initial: { opacity: 0, x: 16 },
@@ -18,6 +21,9 @@ const WORKSTATION_MAP: Record<WorkstationId, React.FC> = {
   bleval: BLEVALWS,
   valta: VALTAWS,
   personal: PERSONALWS,
+  boardroom: BoardroomWS,
+  system: SystemWS,
+  settings: SettingsWS,
 };
 
 export default function WorkstationRouter() {

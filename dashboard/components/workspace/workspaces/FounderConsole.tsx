@@ -71,7 +71,7 @@ function Row({ label, value }: { label: string; value: string }) {
 }
 
 export default function FounderConsole() {
-  const storeKey = "console";
+  const storeKey: "settings" = "settings";
   const workspaceState = useAxiomStore((s) => s.workspaceStates[storeKey]);
   const setWorkspaceState = useAxiomStore((s) => s.setWorkspaceState);
   const expandedSections = workspaceState?.expandedSections ?? {};

@@ -3,8 +3,7 @@
 import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAxiomStore } from "../../lib/store/axiom-store";
-import { executives as execApi } from "../../lib/api";
-import type { WorkspaceId } from "../../lib/store/axiom-store";
+import type { WorkspaceId, WorkstationId } from "../../lib/store/axiom-store";
 
 /* ── Fuzzy match (character-sequence) ────────────────────────────── */
 
@@ -65,7 +64,7 @@ function addToHistory(id: string) {
 /* ── Component ───────────────────────────────────────────────────── */
 
 export default function CommandPalette() {
-  const { commandPaletteOpen, setCommandPalette, setActiveView } = useAxiomStore();
+  const { commandPaletteOpen, setCommandPalette, setActiveView, setActiveWorkstation } = useAxiomStore();
 
   const [query, setQuery] = useState("");
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -74,75 +73,31 @@ export default function CommandPalette() {
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
-  /* Build static navigation commands */
+  /* Build static navigation commands - only valid workspace IDs */
   const navCommands: Command[] = useMemo(
     () => [
-      { id: "goto-workspace", label: "Go to Founder Workspace", description: "Open conversation with AXIOM", category: "Navigation", shortcut: "⌘1", keywords: ["chat", "home"], action: () => { setActiveView("workspace"); setCommandPalette(false); } },
-      { id: "goto-executives", label: "Go to Executive Board", description: "View Jenson, Valta Prime, Yamako", category: "Navigation", shortcut: "⌘2", keywords: ["exec", "board", "agents"], action: () => { setActiveView("executives"); setCommandPalette(false); } },
-      { id: "goto-operations", label: "Go to Operations Center", description: "Runtime, events, health", category: "Navigation", shortcut: "⌘3", keywords: ["ops", "runtime", "health", "status"], action: () => { setActiveView("operations"); setCommandPalette(false); } },
-      { id: "goto-knowledge", label: "Go to Knowledge", description: "Unified search, knowledge graph", category: "Navigation", shortcut: "⌘4", keywords: ["search", "memory", "learn"], action: () => { setActiveView("knowledge"); setCommandPalette(false); } },
-      { id: "goto-projects", label: "Go to Projects", description: "Timeline, artifacts, tasks", category: "Navigation", shortcut: "⌘5", keywords: ["tasks", "artifacts"], action: () => { setActiveView("projects"); setCommandPalette(false); } },
-      { id: "goto-creator", label: "Go to Creator Studio", description: "Image, video, audio, campaigns", category: "Navigation", shortcut: "⌘6", keywords: ["create", "media", "generate"], action: () => { setActiveView("creator"); setCommandPalette(false); } },
-      { id: "goto-trading", label: "Go to Trading Terminal", description: "Macro, charts, positions, risk", category: "Navigation", shortcut: "⌘7", keywords: ["finance", "market"], action: () => { setActiveView("trading"); setCommandPalette(false); } },
-      { id: "goto-console", label: "Go to Founder Console", description: "Settings, API keys, security", category: "Navigation", shortcut: "⌘8", keywords: ["settings", "config", "admin"], action: () => { setActiveView("console"); setCommandPalette(false); } },
-      { id: "goto-communications", label: "Go to Communications Hub", description: "Universal inbox", category: "Navigation", shortcut: "⌘9", keywords: ["inbox", "messages", "notifications"], action: () => { setActiveView("communications"); setCommandPalette(false); } },
-      { id: "goto-intelligence", label: "Go to Intelligence Center", description: "Live reasoning, providers, tokens", category: "Navigation", shortcut: "⌘0", keywords: ["llm", "models", "reason"], action: () => { setActiveView("intelligence"); setCommandPalette(false); } },
-      { id: "goto-content-hub", label: "Go to Content Hub", description: "Assets library", category: "Navigation", shortcut: "⌥1", keywords: ["assets", "gallery", "media"], action: () => { setActiveView("content-hub"); setCommandPalette(false); } },
-      { id: "goto-integrations", label: "Go to Integrations", description: "Connected services", category: "Navigation", shortcut: "⌥2", keywords: ["services", "github", "gmail"], action: () => { setActiveView("integrations"); setCommandPalette(false); } },
-      { id: "goto-collaboration", label: "Go to Collaboration Workspace", description: "Team sessions and roster", category: "Navigation", shortcut: "⌥3", keywords: ["team", "sessions", "roster"], action: () => { setActiveView("collaboration"); setCommandPalette(false); } },
+      { id: "goto-workspace", label: "Go to Home", description: "Open AXIOM home workspace", category: "Navigation", shortcut: "⌘1", keywords: ["home", "chat"], action: () => { setActiveView("workspace"); setCommandPalette(false); } },
+      { id: "goto-boardroom", label: "Go to Boardroom", description: "Executive governance", category: "Navigation", shortcut: "⌘B", keywords: ["board", "governance"], action: () => { setActiveView("boardroom"); setActiveWorkstation("boardroom"); setCommandPalette(false); } },
+      { id: "goto-system", label: "Go to System", description: "System monitoring & health", category: "Navigation", shortcut: "⌘5", keywords: ["system", "health", "monitor"], action: () => { setActiveView("system"); setActiveWorkstation("system"); setCommandPalette(false); } },
+      { id: "goto-settings", label: "Go to Settings", description: "Configuration & preferences", category: "Navigation", shortcut: "⌘,", keywords: ["settings", "config"], action: () => { setActiveView("settings"); setActiveWorkstation("settings"); setCommandPalette(false); } },
+      { id: "goto-bleval", label: "Go to Bleval Inc", description: "Company operations workstation", category: "Navigation", shortcut: "⌘2", keywords: ["bleval", "operations", "jenson"], action: () => { setActiveWorkstation("bleval"); setActiveView("workspace"); setCommandPalette(false); } },
+      { id: "goto-valta", label: "Go to House of Valta", description: "Markets & strategy workstation", category: "Navigation", shortcut: "⌘3", keywords: ["valta", "markets", "strategy"], action: () => { setActiveWorkstation("valta"); setActiveView("workspace"); setCommandPalette(false); } },
+      { id: "goto-personal", label: "Go to Personal", description: "Personal operations workstation", category: "Navigation", shortcut: "⌘4", keywords: ["personal", "ops", "yamako"], action: () => { setActiveWorkstation("personal"); setActiveView("workspace"); setCommandPalette(false); } },
     ],
-    [setActiveView, setCommandPalette],
-  );
-
-  const actionCommands: Command[] = useMemo(
-    () => [
-      { id: "new-conversation", label: "New conversation", description: "Start a fresh chat", category: "Actions", keywords: ["chat", "start"], action: () => { setActiveView("workspace"); setCommandPalette(false); } },
-      { id: "toggle-command-center", label: "Toggle Command Center", description: "Switch between dashboard and chat", category: "Actions", keywords: ["dashboard", "briefing"], action: () => { setActiveView("workspace"); setCommandPalette(false); } },
-    ],
-    [setActiveView, setCommandPalette],
+    [setActiveView, setActiveWorkstation, setCommandPalette],
   );
 
   const systemCommands: Command[] = useMemo(
     () => [
-      { id: "system-status", label: "System status", description: "View runtime health", category: "System", keywords: ["health", "uptime"], action: () => { setActiveView("operations"); setCommandPalette(false); } },
       { id: "close-palette", label: "Close command palette", description: "Dismiss this menu", category: "System", shortcut: "Esc", action: () => setCommandPalette(false) },
     ],
-    [setActiveView, setCommandPalette],
+    [setCommandPalette],
   );
-
-  /* Fetch dynamic commands on open */
-  useEffect(() => {
-    if (!commandPaletteOpen) return;
-    setHistory(getHistory());
-
-    (async () => {
-      const dynamic: Command[] = [];
-
-      try {
-        const board = await execApi.boardStatus();
-        if (board) {
-          for (const [id, exec] of Object.entries(board)) {
-            dynamic.push({
-              id: `executive-${id}`,
-              label: `View executive: ${id}`,
-              description: `${exec.status} · ${exec.org}`,
-              category: "Executives",
-              action: () => { setActiveView("executives"); setCommandPalette(false); },
-            });
-          }
-        }
-      } catch {
-        // Board unavailable
-      }
-
-      setStaticCommands(dynamic);
-    })();
-  }, [commandPaletteOpen, setActiveView, setCommandPalette]);
 
   /* Combine all commands */
   const allCommands = useMemo(
-    () => [...navCommands, ...actionCommands, ...staticCommands, ...systemCommands],
-    [navCommands, actionCommands, staticCommands, systemCommands],
+    () => [...navCommands, ...staticCommands, ...systemCommands],
+    [navCommands, staticCommands, systemCommands],
   );
 
   /* ── Fuzzy filtering ────────────────────────────────────────────── */
@@ -173,7 +128,7 @@ export default function CommandPalette() {
       if (recentCmds.length > 0) sections.push({ title: "Recent", items: recentCmds });
     }
 
-    for (const cat of ["Navigation", "Executives", "Actions", "System"]) {
+    for (const cat of ["Navigation", "System"]) {
       const items = groups.get(cat);
       if (items) sections.push({ title: cat, items });
     }

@@ -1,106 +1,72 @@
 @import "tailwindcss";
 
 /* ── AXIOM OS Design System ──────────────────────────────────────────
- * Apple-quality. Clean. Confident. No cyberpunk, no glow, no clutter.
- * Glassmorphism + neumorphism blend. Typography-first.
+ * Apple-quality. Clean. Confident. Premium executive command system.
+ * Dark-first: near-black / charcoal / midnight blue
+ * Subtle blue/purple atmospheric lighting, restrained glass effects
  * ──────────────────────────────────────────────────────────────────── */
 
-/* ═══════════════════════════════════════════════════════════════════
-   AXIOM Color System
-   ═══════════════════════════════════════════════════════════════════ */
-
 :root {
-  /* Core backgrounds — warm, elegant */
-  --axiom-bg-base: #fafaf9;
-  --axiom-bg-surface: #ffffff;
-  --axiom-bg-elevated: #f5f5f4;
-  --axiom-bg-glass: rgba(255, 255, 255, 0.7);
+  /* Core backgrounds — dark, premium, near-black with subtle depth */
+  --axiom-bg-base: #050608;
+  --axiom-bg-surface: #0a0c10;
+  --axiom-bg-elevated: #0f1218;
+  --axiom-bg-glass: rgba(10, 12, 16, 0.7);
+  --axiom-bg-glass-hover: rgba(15, 18, 24, 0.85);
 
   /* Core text */
-  --axiom-text-primary: #1c1917;
-  --axiom-text-secondary: #57534e;
-  --axiom-text-tertiary: #a8a29e;
+  --axiom-text-primary: #f0f1f3;
+  --axiom-text-secondary: #8b8d93; 
+  --axiom-text-tertiary: #4a4d55;
 
-  /* Accent — calm indigo */
-  --axiom-accent: #6366f1;
-  --axiom-accent-hover: #4f46e5;
-  --axiom-accent-subtle: rgba(99, 102, 241, 0.08);
-  --axiom-accent-muted: rgba(99, 102, 241, 0.15);
+  /* Accent — electric blue → indigo → subtle violet */
+  --axiom-accent: #6d7cff;
+  --axiom-accent-hover: #8b96ff;
+  --axiom-accent-muted: #5a67e0;
+  --axiom-accent-subtle: rgba(109, 124, 255, 0.06);
+  --axiom-accent-glow: rgba(109, 124, 255, 0.15);
+  --axiom-violet: #a88cff;
+  --axiom-violet-subtle: rgba(168, 140, 255, 0.06);
 
   /* Semantic */
-  --axiom-success: #22c55e;
-  --axiom-warning: #f59e0b;
-  --axiom-error: #ef4444;
-  --axiom-info: #3b82f6;
+  --axiom-success: #22d377;
+  --axiom-warning: #ffb830;
+  --axiom-error: #ff4d6a;
+  --axiom-info: #4da3ff;
 
-  /* Borders */
-  --axiom-border: rgba(28, 25, 23, 0.08);
-  --axiom-border-glass: rgba(255, 255, 255, 0.2);
+  /* Borders — extremely subtle */
+  --axiom-border: rgba(240, 241, 243, 0.04);
+  --axiom-border-hover: rgba(240, 241, 243, 0.08);
+  --axiom-border-accent: rgba(109, 124, 255, 0.12);
 
-  /* Shadows */
-  --axiom-shadow-sm: 0 1px 2px rgba(28, 25, 23, 0.05);
-  --axiom-shadow-md: 0 4px 6px -1px rgba(28, 25, 23, 0.06),
-    0 2px 4px -2px rgba(28, 25, 23, 0.05);
-  --axiom-shadow-lg: 0 10px 15px -3px rgba(28, 25, 23, 0.06),
-    0 4px 6px -4px rgba(28, 25, 23, 0.05);
-  --axiom-shadow-xl: 0 20px 25px -5px rgba(28, 25, 23, 0.08),
-    0 8px 10px -6px rgba(28, 25, 23, 0.05);
+  /* Shadows — depth without heaviness */
+  --axiom-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --axiom-shadow-md: 0 4px 12px -2px rgba(0, 0, 0, 0.35);
+  --axiom-shadow-lg: 0 12px 28px -4px rgba(0, 0, 0, 0.4);
+  --axiom-shadow-xl: 0 24px 48px -8px rgba(0, 0, 0, 0.45);
+  --axiom-shadow-glow: 0 0 24px rgba(109, 124, 255, 0.12);
 
   /* Radius */
-  --axiom-radius-sm: 6px;
-  --axiom-radius-md: 10px;
+  --axiom-radius-sm: 8px;
+  --axiom-radius-md: 12px;
   --axiom-radius-lg: 16px;
   --axiom-radius-xl: 24px;
   --axiom-radius-full: 9999px;
 
-  /* Font */
-  --axiom-font-sans: "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI",
-    Roboto, sans-serif;
-  --axiom-font-mono: "Geist Mono", "SF Mono", Monaco, "Cascadia Code",
-    monospace;
+  /* Font — modern, precise, executive */
+  --axiom-font-sans: "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --axiom-font-mono: "Geist Mono", "SF Mono", Monaco, "Cascadia Code", monospace;
 
-  /* Transitions */
+  /* Transitions — smooth, calm */
   --axiom-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
   --axiom-ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
   --axiom-duration-fast: 150ms;
   --axiom-duration-normal: 250ms;
   --axiom-duration-slow: 400ms;
-}
 
-/* ═══════════════════════════════════════════════════════════════════
-   Dark Mode
-   ═══════════════════════════════════════════════════════════════════ */
-
-@theme inline {
-  --color-background: var(--axiom-bg-base);
-  --color-foreground: var(--axiom-text-primary);
-  --font-sans: var(--axiom-font-sans);
-  --font-mono: var(--axiom-font-mono);
-}
-
-.dark,
-.dark :root {
-  --axiom-bg-base: #0c0a09;
-  --axiom-bg-surface: #1c1917;
-  --axiom-bg-elevated: #292524;
-  --axiom-bg-glass: rgba(28, 25, 23, 0.7);
-
-  --axiom-text-primary: #fafaf9;
-  --axiom-text-secondary: #a8a29e;
-  --axiom-text-tertiary: #57534e;
-
-  --axiom-accent: #818cf8;
-  --axiom-accent-hover: #6366f1;
-  --axiom-accent-subtle: rgba(129, 140, 248, 0.08);
-  --axiom-accent-muted: rgba(129, 140, 248, 0.15);
-
-  --axiom-border: rgba(250, 250, 249, 0.08);
-  --axiom-border-glass: rgba(250, 250, 249, 0.1);
-
-  --axiom-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
-  --axiom-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
-  --axiom-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
-  --axiom-shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.4);
+  /* Ambient gradient stops */
+  --axiom-ambient-1: rgba(109, 124, 255, 0.03);
+  --axiom-ambient-2: rgba(168, 140, 255, 0.02);
 }
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -111,8 +77,15 @@
   box-sizing: border-box;
 }
 
-body {
+html {
   background: var(--axiom-bg-base);
+}
+
+body {
+  background:
+    radial-gradient(ellipse 80% 50% at 50% 0%, var(--axiom-ambient-1), transparent 70%),
+    radial-gradient(ellipse 60% 40% at 100% 100%, var(--axiom-ambient-2), transparent 60%),
+    var(--axiom-bg-base);
   color: var(--axiom-text-primary);
   font-family: var(--axiom-font-sans);
   -webkit-font-smoothing: antialiased;
@@ -126,12 +99,12 @@ body {
    ═══════════════════════════════════════════════════════════════════ */
 
 ::selection {
-  background: var(--axiom-accent-muted);
+  background: var(--axiom-accent-glow);
   color: var(--axiom-text-primary);
 }
 
 /* ═══════════════════════════════════════════════════════════════════
-   Scrollbar
+   Scrollbar — invisible until needed
    ═══════════════════════════════════════════════════════════════════ */
 
 ::-webkit-scrollbar {
@@ -146,6 +119,8 @@ body {
 ::-webkit-scrollbar-thumb {
   background: var(--axiom-text-tertiary);
   border-radius: 3px;
+  border: 2px solid transparent;
+  background-clip: content-box;
 }
 
 ::-webkit-scrollbar-thumb:hover {
@@ -157,443 +132,135 @@ body {
    ═══════════════════════════════════════════════════════════════════ */
 
 *:focus-visible {
-  outline: 2px solid var(--axiom-accent);
+  outline: 1px solid var(--axiom-accent);
   outline-offset: 2px;
   border-radius: 4px;
 }
 
 /* ═══════════════════════════════════════════════════════════════════
-   Utility Classes
+   Glassmorphism — subtle, integrated
    ═══════════════════════════════════════════════════════════════════ */
 
 .glass-panel {
   background: var(--axiom-bg-glass);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
   border: 1px solid var(--axiom-border);
+  border-radius: var(--axiom-radius-lg);
+  height: 55px;
+}
+
+.glass-panel-hover {
+  background: var(--axiom-bg-glass-hover);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid var(--axiom-border-hover);
   border-radius: var(--axiom-radius-lg);
 }
 
-.glass-panel-light {
-  background: rgba(255, 255, 255, 0.5);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid var(--axiom-border-glass);
+.glass-panel-strong {
+  background: rgba(10, 12, 16, 0.85);
+  backdrop-filter: blur(32px);
+  -webkit-backdrop-filter: blur(32px);
+  border: 1px solid var(--axiom-border-hover);
   border-radius: var(--axiom-radius-lg);
+  box-shadow: var(--axiom-shadow-lg);
 }
 
-.glass-card {
-  background: var(--axiom-bg-surface);
+.glass-pill {
+  background: var(--axiom-bg-glass);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
   border: 1px solid var(--axiom-border);
-  border-radius: var(--axiom-radius-md);
-  box-shadow: var(--axiom-shadow-sm);
-  transition: box-shadow var(--axiom-duration-normal) var(--axiom-ease-smooth);
-}
-
-.glass-card:hover {
-  box-shadow: var(--axiom-shadow-md);
-}
-
-.neumorph {
-  background: var(--axiom-bg-elevated);
-  border-radius: var(--axiom-radius-md);
-  box-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.05),
-    inset -2px -2px 5px rgba(255, 255, 255, 0.1);
-}
-
-.text-gradient {
-  background: linear-gradient(135deg, var(--axiom-text-primary), var(--axiom-accent));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  border-radius: var(--axiom-radius-full);
+  box-shadow: var(--axiom-shadow-md), var(--axiom-shadow-glow);
 }
 
 /* ═══════════════════════════════════════════════════════════════════
    Animation Keyframes
    ═══════════════════════════════════════════════════════════════════ */
 
-@keyframes boot-load {
-  0% {
-    width: 0%;
-    opacity: 0;
-  }
-  10% {
-    opacity: 1;
-  }
-  100% {
-    width: 100%;
-    opacity: 1;
-  }
-}
-
-@keyframes boot-fade-in {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes boot-fade-out {
-  from {
-    opacity: 1;
-  }
-  to {
-    opacity: 0;
-  }
-}
-
-@keyframes pulse-subtle {
-  0%,
-  100% {
-    opacity: 0.4;
-  }
-  50% {
-    opacity: 0.8;
-  }
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 @keyframes slide-up {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes slide-down {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes slide-in-right {
-  from {
-    opacity: 0;
-    transform: translateX(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
+  from { opacity: 0; transform: translateX(12px); }
+  to { opacity: 1; transform: translateX(0); }
 }
 
 @keyframes scale-in {
-  from {
-    opacity: 0;
-    transform: scale(0.96);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
 }
 
 @keyframes waveform {
-  0% {
-    height: 4px;
-  }
-  50% {
-    height: 24px;
-  }
-  100% {
-    height: 4px;
-  }
+  0%, 100% { height: 4px; }
+  50% { height: 18px; }
+}
+
+@keyframes pulse-subtle {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
 }
 
 @keyframes shimmer {
-  0% {
-    background-position: -200% 0;
-  }
-  100% {
-    background-position: 200% 0;
-  }
-}
-
-@keyframes float {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-4px);
-  }
-}
-
-@keyframes breathe {
-  0%,
-  100% {
-    opacity: 0.6;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 1;
-    transform: scale(1.02);
-  }
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
 }
 
 @keyframes dot-pulse {
-  0% {
-    transform: scale(1);
-    opacity: 1;
-  }
-  50% {
-    transform: scale(1.5);
-    opacity: 0.3;
-  }
-  100% {
-    transform: scale(1);
-    opacity: 1;
-  }
+  0%, 100% { transform: scale(1); opacity: 0.6; }
+  50% { transform: scale(1.3); opacity: 1; }
 }
 
 /* ═══════════════════════════════════════════════════════════════════
    Animation Utility Classes
    ═══════════════════════════════════════════════════════════════════ */
 
-.animate-boot-load {
-  animation: boot-load 1.2s var(--axiom-ease-smooth) forwards;
-}
-
-.animate-boot-fade-in {
-  animation: boot-fade-in 0.8s var(--axiom-ease-smooth) forwards;
-}
-
-.animate-boot-fade-out {
-  animation: boot-fade-out 0.5s var(--axiom-ease-smooth) forwards;
-}
-
-.animate-slide-up {
-  animation: slide-up 0.5s var(--axiom-ease-smooth) forwards;
-}
-
-.animate-slide-down {
-  animation: slide-down 0.3s var(--axiom-ease-smooth) forwards;
-}
-
-.animate-slide-in-right {
-  animation: slide-in-right 0.3s var(--axiom-ease-smooth) forwards;
-}
-
-.animate-scale-in {
-  animation: scale-in 0.2s var(--axiom-ease-smooth) forwards;
-}
-
-.animate-waveform {
-  animation: waveform 0.8s var(--axiom-ease-smooth) infinite;
-}
-
-.animate-pulse-subtle {
-  animation: pulse-subtle 2s ease-in-out infinite;
-}
-
-.animate-shimmer {
-  animation: shimmer 1.5s var(--axiom-ease-smooth) infinite;
-}
-
-.animate-float {
-  animation: float 3s var(--axiom-ease-smooth) infinite;
-}
-
-.animate-breathe {
-  animation: breathe 3s var(--axiom-ease-smooth) infinite;
-}
-
-.animate-dot-pulse {
-  animation: dot-pulse 1.5s ease-in-out infinite;
-}
-
-.animate-delay-100 {
-  animation-delay: 100ms;
-}
-.animate-delay-200 {
-  animation-delay: 200ms;
-}
-.animate-delay-300 {
-  animation-delay: 300ms;
-}
-.animate-delay-400 {
-  animation-delay: 400ms;
-}
-.animate-delay-500 {
-  animation-delay: 500ms;
-}
-.animate-delay-600 {
-  animation-delay: 600ms;
-}
-.animate-delay-700 {
-  animation-delay: 700ms;
-}
-.animate-delay-800 {
-  animation-delay: 800ms;
-}
-.animate-delay-900 {
-  animation-delay: 900ms;
-}
-.animate-delay-1000 {
-  animation-delay: 1000ms;
-}
+.animate-fade-in { animation: fade-in var(--axiom-duration-normal) var(--axiom-ease-smooth) forwards; }
+.animate-slide-up { animation: slide-up var(--axiom-duration-normal) var(--axiom-ease-smooth) forwards; }
+.animate-slide-down { animation: slide-down var(--axiom-duration-fast) var(--axiom-ease-smooth) forwards; }
+.animate-slide-in-right { animation: slide-in-right var(--axiom-duration-normal) var(--axiom-ease-smooth) forwards; }
+.animate-scale-in { animation: scale-in var(--axiom-duration-fast) var(--axiom-ease-smooth) forwards; }
+.animate-waveform { animation: waveform 1s var(--axiom-ease-smooth) infinite; }
+.animate-pulse-subtle { animation: pulse-subtle 2.5s ease-in-out infinite; }
+.animate-shimmer { animation: shimmer 2s var(--axiom-ease-smooth) infinite; }
+.animate-dot-pulse { animation: dot-pulse 1.8s ease-in-out infinite; }
 
 /* ═══════════════════════════════════════════════════════════════════
-   Mobile Responsive Utilities
+   Utility Classes
    ═══════════════════════════════════════════════════════════════════ */
 
-/* Workspace sidebar — collapses to bottom bar on mobile */
-@media (max-width: 768px) {
-  .workspace-sidebar {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    top: auto;
-    height: 48px;
-    flex-direction: row;
-    z-index: 40;
-    border-top: 1px solid var(--axiom-border);
-    border-right: none;
-    border-radius: 0;
-    overflow-x: auto;
-    overflow-y: hidden;
-    gap: 2px;
-    padding: 4px 8px;
-  }
+.text-balance { text-wrap: balance; }
+.truncate-1 { display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
+.truncate-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 
-  .workspace-sidebar .sidebar-label {
-    display: none;
-  }
-
-  .workspace-sidebar .sidebar-icon {
-    width: 36px;
-    height: 36px;
-    font-size: 16px;
-  }
-
-  .workspace-sidebar .sidebar-link {
-    padding: 4px 10px;
-    justify-content: center;
-  }
+/* Scroll area — minimal */
+.axiom-scroll {
+  overflow: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--axiom-text-tertiary) transparent;
 }
 
-/* StatusBar — compress on small screens */
-@media (max-width: 640px) {
-  .status-bar-version {
-    display: none;
-  }
+/* Hide scrollbar */
+.hide-scrollbar::-webkit-scrollbar { display: none; }
+.hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-  .status-bar-health-text {
-    display: none;
-  }
-}
+/* Mono for data */
+.font-mono-sm { font-family: var(--axiom-font-mono); font-size: 0.6875rem; }
+.font-mono-xs { font-family: var(--axiom-font-mono); font-size: 0.625rem; }
 
-/* Notification center — full-width overlay on mobile */
-@media (max-width: 768px) {
-  .notification-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 50;
-    border-radius: 0;
-  }
-}
-
-/* AXIOMWS tabs — wrap on medium, scroll on small */
-@media (max-width: 900px) {
-  .axiomws-tabs {
-    flex-wrap: wrap;
-    gap: 2px;
-  }
-}
-
-@media (max-width: 640px) {
-  .axiomws-tabs {
-    overflow-x: auto;
-    flex-wrap: nowrap;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-  }
-
-  .axiomws-tabs::-webkit-scrollbar {
-    display: none;
-  }
-}
-
-/* Conversation — compact on mobile */
-@media (max-width: 640px) {
-  .conversation-avatar {
-    width: 24px;
-    height: 24px;
-    font-size: 9px;
-  }
-
-  .conversation-message {
-    padding: 8px 10px;
-    font-size: 12px;
-  }
-
-  .conversation-input {
-    font-size: 13px;
-    padding: 10px 12px;
-  }
-
-  .conversation-suggestions {
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-    padding-bottom: 4px;
-  }
-
-  .conversation-suggestions::-webkit-scrollbar {
-    display: none;
-  }
-
-  .conversation-suggestions button {
-    font-size: 10px;
-    white-space: nowrap;
-    padding: 4px 10px;
-    flex-shrink: 0;
-  }
-}
-
-/* Board Room — stacked on mobile */
-@media (max-width: 768px) {
-  .board-kpi-grid {
-    grid-template-columns: 1fr 1fr;
-  }
-}
-
-@media (max-width: 640px) {
-  .board-kpi-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* Voice engine — smaller mic + compact indicators on mobile */
-@media (max-width: 640px) {
-  .voice-mic-button {
-    width: 44px;
-    height: 44px;
-  }
-
-  .voice-indicator-popup {
-    max-width: 200px;
-    padding: 6px 10px;
-  }
-
-  .voice-indicator-popup .voice-indicator-text {
-    font-size: 9px;
-  }
-}
+/* Tabular numbers */
+.tabular-nums { font-variant-numeric: tabular-nums; }

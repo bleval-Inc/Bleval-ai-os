@@ -126,6 +126,9 @@ async function wakeExecutive(execId: ExecutiveId) {
 // ── VoiceEngine ────────────────────────────────────────────────────────
 
 export default function VoiceEngine() {
+  const store = useAxiomStore();
+
+  // Optimized selectors - destructure once to avoid 19 separate subscriptions
   const {
     voiceActive,
     setVoiceActive,
@@ -145,17 +148,21 @@ export default function VoiceEngine() {
     emergencyLevel,
     clearEmergency,
     listeningExecutive,
-  } = useAxiomStore();
+  } = store;
 
-  // ── Refs ─────────────────────────────────────────────────────────────
-  const wakeRecognitionRef = useRef<any>(null);
+  // Keep refs synced for callbacks
+  const isAwakeRef = useRef(isAwake);
+  const voiceActiveRef = useRef(voiceActive);
+  const listeningExecutiveRef = useRef(listeningExecutive);
+  const emergencyActiveRef = useRef(emergencyActive);
+
+  // Refs for timeouts and cleanup
   const wakeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const wakeRecognitionRef = useRef<any>(null); // SpeechRecognition (webkit/standard)
   const wakeRestartTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const isAwakeRef = useRef(false);
-  const voiceActiveRef = useRef(false);
+  const cleanupActivityRef = useRef<() => void | null>(null);
+  const cleanupHealthPollRef = useRef<() => void | null>(null);
   const hasGreeted = useRef(false);
-  const cleanupActivityRef = useRef<(() => void) | null>(null);
-  const cleanupHealthPollRef = useRef<(() => void) | null>(null);
 
   // ── State ────────────────────────────────────────────────────────────
   const [voicesReady, setVoicesReady] = useState(false);
@@ -167,9 +174,21 @@ export default function VoiceEngine() {
   const [queueLength, setQueueLength] = useState(0);
 
   // WebSocket for real-time voice communication
+  const [clientId] = useState<string>(() => {
+    if (typeof window !== "undefined") {
+      let id = sessionStorage.getItem("voice-client-id");
+      if (!id) {
+        id = `voice-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+        sessionStorage.setItem("voice-client-id", id);
+      }
+      return id;
+    }
+    return `voice-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  });
+
   const voiceWs = useVoiceWebSocket({
-    clientId: `voice-${Date.now()}-${Math.random().toString(36).slice(2)}`,
-    autoConnect: true,
+    clientId,
+    autoConnect: false, // We'll connect manually when backend is ready
     onResponse: (message) => {
       if (message.response) {
         requestSpeak(message.executive as SpeakerId, message.response, "normal");
@@ -224,6 +243,8 @@ export default function VoiceEngine() {
   // ── Keep refs in sync ────────────────────────────────────────────────
   useEffect(() => { isAwakeRef.current = isAwake; }, [isAwake]);
   useEffect(() => { voiceActiveRef.current = voiceActive; }, [voiceActive]);
+  useEffect(() => { listeningExecutiveRef.current = listeningExecutive; }, [listeningExecutive]);
+  useEffect(() => { emergencyActiveRef.current = emergencyActive; }, [emergencyActive]);
   useEffect(() => {
     // Sync the listening executive state with isAwake and isListening
     if (!isAwake || !isListening) {
@@ -237,6 +258,23 @@ export default function VoiceEngine() {
     Promise.all([loadSpeakVoices(), loadAllVoices()]).then(() => setVoicesReady(true));
     setVoiceActive(true);
     enumerateAudioDevices();
+
+    // Start backend health checker and connect WebSocket when ready
+    const checkBackendAndConnect = async () => {
+      try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/v1/health`);
+        if (res.ok) {
+          voiceWs.setShouldConnect(true);
+        } else {
+          voiceWs.setShouldConnect(false);
+        }
+      } catch {
+        voiceWs.setShouldConnect(false);
+      }
+    };
+
+    checkBackendAndConnect();
+    const healthInterval = setInterval(checkBackendAndConnect, 30000);
 
     // Install activity tracking
     cleanupActivityRef.current = installActivityTracking();
@@ -260,8 +298,10 @@ export default function VoiceEngine() {
     });
 
     return () => {
+      clearInterval(healthInterval);
       cleanupActivityRef.current?.();
       cleanupHealthPollRef.current?.();
+      voiceWs.setShouldConnect(false);
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -587,7 +627,8 @@ export default function VoiceEngine() {
     r.onend = () => {
       if (voiceActiveRef.current) {
         if (wakeRestartTimeout.current) clearTimeout(wakeRestartTimeout.current);
-        wakeRestartTimeout.current = setTimeout(startWakeListener, 300);
+        // Increased from 300ms to 2000ms to prevent CPU thrashing
+        wakeRestartTimeout.current = setTimeout(startWakeListener, 2000);
       }
     };
 

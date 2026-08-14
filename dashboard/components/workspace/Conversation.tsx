@@ -120,11 +120,9 @@ export default function Conversation() {
       const initialMsg = text.trim();
       const activeView = useAxiomStore.getState().activeView;
       const agentId =
-        activeView === "executives"
+        activeView === "boardroom"
           ? "jenson"
-          : activeView === "workspace"
-            ? "founder"
-            : "founder";
+          : "founder";
 
       const response = await sendChat(initialMsg, agentId);
 
