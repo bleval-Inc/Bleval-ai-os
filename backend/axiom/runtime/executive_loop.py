@@ -25,7 +25,10 @@ import json
 from datetime import datetime, timezone
 from typing import Any, Callable, Dict, List, Optional
 
+from axiom.models.executive import DecisionOutcome
 from axiom.models.workflows import WorkflowStatus
+from axiom.runtime.communication import UrgencyLevel
+from axiom.runtime.executive_memory import ExecutiveMemoryManager
 
 
 # ── Schedule Configuration ─────────────────────────────────────────────
@@ -49,19 +52,7 @@ EXECUTIVE_DEFAULT_SCHEDULES = {
     },
 }
 
-# Executive → Organization mapping
-EXECUTIVE_ORGS: Dict[str, str] = {
-    "jenson": "bleval",
-    "valta_prime": "hov",
-    "yamako": "personal",
-}
-
-# Executive → Department mapping
-EXECUTIVE_DEPTS: Dict[str, List[str]] = {
-    "jenson": ["sales", "marketing", "development", "operations", "finance"],
-    "valta_prime": ["brand", "creative", "research", "content", "growth", "operations"],
-    "yamako": ["productivity", "knowledge"],
-}
+from axiom.models.executive_constants import EXECUTIVE_ORGS, EXECUTIVE_DEPTS
 
 
 # ── Cycle Phase Helpers ────────────────────────────────────────────────
@@ -164,6 +155,19 @@ class ExecutiveRuntimeLoop:
         self.org_id = EXECUTIVE_ORGS.get(exec_id, "")
         self.departments = EXECUTIVE_DEPTS.get(exec_id, [])
 
+        # Persistent memory
+        self._memory: Optional[ExecutiveMemoryManager] = None
+
+        # Communication & Board Room references (set by ExecutiveBoard)
+        self._communication: Optional[Any] = None
+        self._board_room: Optional[Any] = None
+
+        # POI Monitor — only Valta Prime uses this
+        self._poi_monitor: Optional[Any] = None
+
+        # Schedule Coordinator — only Yamako uses this
+        self._schedule_coordinator: Optional[Any] = None
+
     @property
     def is_running(self) -> bool:
         return self._running
@@ -187,10 +191,54 @@ class ExecutiveRuntimeLoop:
 
     # ── Lifecycle ──────────────────────────────────────────────────────
 
+    def set_communication(self, comm: Any) -> None:
+        """Set the communication coordinator reference."""
+        self._communication = comm
+
+    def set_board_room(self, board_room: Any) -> None:
+        """Set the board room reference."""
+        self._board_room = board_room
+
+    @property
+    def memory(self) -> Optional[ExecutiveMemoryManager]:
+        return self._memory
+
+    @property
+    def poi_monitor(self) -> Optional[Any]:
+        return self._poi_monitor
+
     async def start(self) -> None:
         """Start the executive runtime loop."""
         if self._running:
             return
+
+        # Load persistent memory
+        self._memory = ExecutiveMemoryManager(
+            exec_id=self.exec_id,
+            runtime=self._runtime,
+        )
+        self._memory.load()
+
+        # Initialise POI Monitor for Valta Prime
+        if self.exec_id == "valta_prime":
+            from axiom.runtime.poi_monitor import POIMonitor
+            self._poi_monitor = POIMonitor(runtime=self._runtime)
+            if self._runtime.logger:
+                self._runtime.logger.info(
+                    "executive",
+                    "Valta Prime POI Monitor initialised with default POIs",
+                )
+
+        # Initialise Schedule Coordinator for Yamako
+        if self.exec_id == "yamako":
+            from axiom.runtime.schedule_coordinator import ScheduleCoordinator
+            self._schedule_coordinator = ScheduleCoordinator(runtime=self._runtime)
+            self._schedule_coordinator.build_today()
+            if self._runtime.logger:
+                self._runtime.logger.info(
+                    "executive",
+                    "Yamako Schedule Coordinator initialised",
+                )
 
         self._running = True
         self._task = asyncio.create_task(self._run_loop())
@@ -258,6 +306,20 @@ class ExecutiveRuntimeLoop:
                                 "executive",
                                 f"Executive {self.exec_id} cycle '{schedule_name}' failed: {exc}",
                             )
+
+            # Valta Prime: Check POIs every tick (rapid monitoring)
+            if self.exec_id == "valta_prime" and self._poi_monitor:
+                try:
+                    await self._check_valta_prime_pois()
+                except Exception:
+                    pass
+
+            # Yamako: Check schedule reminders every tick
+            if self.exec_id == "yamako" and self._schedule_coordinator:
+                try:
+                    await self._check_yamako_schedule()
+                except Exception:
+                    pass
 
             await asyncio.sleep(tick_interval)
 
@@ -329,9 +391,36 @@ class ExecutiveRuntimeLoop:
                 },
             )
 
-        # 9. Report to Founder (for daily/official reports)
+        # 9. Record decision in executive memory
+        if self._memory:
+            self._memory.record_decision(
+                decision_type=f"cycle_{cycle_type}",
+                description=f"Executive cycle completed. Top priority: {priorities[0] if priorities else 'None'}. Launched {workflows_launched} workflows.",
+                reasoning=f"Cycle based on org state ({len(org_state.get('departments', []))} depts), "
+                          f"{len(active_workflows)} active workflows, {len(completed_work)} items completed.",
+                outcome=DecisionOutcome.SUCCESS if workflows_launched > 0 or not active_workflows else DecisionOutcome.PENDING,
+                tags=[cycle_type, self.org_id],
+            )
+            # Load learnings from completed work
+            for w in completed_work:
+                self._memory.record_learning(
+                    pattern_type="success" if w.get("status") in ("completed", "COMPLETED") else "insight",
+                    description=f"Workflow {w.get('workflow_id', 'unknown')} completed in cycle",
+                    impact=f"Contributed to {self.org_id} operations",
+                )
+
+        # 10. Report to Founder (for daily/official reports)
         if is_daily_report:
             await self._report_to_founder(report)
+
+        # 11. Publish KPIs to board room if available
+        if self._memory and self._board_room:
+            try:
+                snapshot = self._memory.get_kpi_snapshot()
+                if snapshot:
+                    self._board_room.publish_kpi_snapshot(self.exec_id, snapshot)
+            except Exception:
+                pass
 
         return {
             "cycle": cycle_type,
@@ -632,7 +721,7 @@ class ExecutiveRuntimeLoop:
             try:
                 self._runtime.memory.write_agent_memory(
                     agent_id=self.exec_id,
-                    key=f"founder-report-{self._cycle_count}",
+                    key="founder-report",
                     content=report,
                 )
             except Exception:
@@ -646,17 +735,115 @@ class ExecutiveRuntimeLoop:
                 details={"cycle": self._cycle_count, "report_length": len(report)},
             )
 
+    # ── Valta Prime POI Monitoring ────────────────────────────────────────
+
+    async def _check_valta_prime_pois(self) -> None:
+        """Valta Prime: check monitored POIs against current prices.
+
+        In a production environment, this would hook into real market data.
+        Currently simulates periodic checks against default POI levels.
+        """
+        if not self._poi_monitor:
+            return
+
+        # Monitor GOLD and US30 with simulated prices
+        # In production: replace with real price feed
+        instruments = ["GOLD", "US30"]
+        import random
+        base_prices = {"GOLD": 2360.0, "US30": 40600.0}
+
+        for instrument in instruments:
+            base = base_prices.get(instrument, 100.0)
+            # Simulate price moving gradually — checks all active POIs
+            simulated_price = base + random.uniform(-30, 30)
+            alerts = self._poi_monitor.check_price(instrument, simulated_price)
+
+            for alert in alerts:
+                # POI triggered! Escalate immediately via communication coordinator
+                escalation_msg = self._poi_monitor.format_quick_alert(alert)
+
+                if self._communication:
+                    await self._communication.send(
+                        sender="valta_prime",
+                        recipient="founder",
+                        urgency=UrgencyLevel.ESCALATION,
+                        subject=f"⚠️ POI TRIGGERED — {alert.instrument} @ {alert.current_price}",
+                        body=escalation_msg,
+                        context={
+                            "poi_id": alert.poi_id,
+                            "instrument": alert.instrument,
+                            "price_level": alert.price_level,
+                            "current_price": alert.current_price,
+                            "scenario_a": alert.scenario_a,
+                            "scenario_b": alert.scenario_b,
+                        },
+                        requires_response=True,
+                    )
+
+                    # Log and record in memory
+                    if self._memory:
+                        self._memory.record_decision(
+                            decision_type="poi_alert",
+                            description=f"POI triggered on {alert.instrument}: price at {alert.current_price}, POI level {alert.price_level}",
+                            reasoning=f"Price reached Founder-defined POI. Scenarios prepared and alerted.",
+                            tags=["poi", "emergency", alert.instrument.lower()],
+                        )
+
     # ── Status ─────────────────────────────────────────────────────────
 
     def get_status(self) -> Dict[str, Any]:
         """Return the current status of this executive loop."""
-        return {
+        status = {
             "exec_id": self.exec_id,
             "org_id": self.org_id,
             "running": self._running,
             "cycle_count": self._cycle_count,
             "schedules": list(self._schedules.keys()),
         }
+        if self._poi_monitor:
+            try:
+                status["poi_monitor"] = self._poi_monitor.get_dashboard()
+            except Exception:
+                pass
+        if self._schedule_coordinator:
+            try:
+                status["schedule"] = self._schedule_coordinator.get_dashboard()
+            except Exception:
+                pass
+        return status
+
+    # ── Yamako Schedule Checking ──────────────────────────────────────────
+
+    async def _check_yamako_schedule(self) -> None:
+        """Yamako: check Founder's schedule and send reminders."""
+        if not self._schedule_coordinator:
+            return
+
+        # 1. Check for schedule reminders (15-min warnings, starting-now alerts)
+        reminders = self._schedule_coordinator.get_reminders()
+        for reminder in reminders:
+            if self._communication:
+                # Send non-intrusive reminders
+                await self._communication.send(
+                    sender="yamako",
+                    recipient="founder",
+                    urgency="NORMAL",
+                    subject=f"⏰ {reminder['block']}",
+                    body=reminder["message"],
+                    context={"block": reminder["block"], "type": reminder["type"]},
+                )
+
+        # 2. Check for sleep reminder (wind-down, lights-out)
+        sleep_reminder = self._schedule_coordinator.get_sleep_reminder()
+        if sleep_reminder and self._communication:
+            await self._communication.send(
+                sender="yamako",
+                recipient="founder",
+                urgency="NORMAL",
+                subject="🌙 Sleep Reminder",
+                body=sleep_reminder,
+                context={"type": "sleep"},
+            )
 
 
 # =========================================================================
@@ -685,6 +872,16 @@ class ExecutiveBoard:
     def __init__(self, runtime: Any) -> None:
         self._runtime = runtime
         self._loops: Dict[str, ExecutiveRuntimeLoop] = {}
+        self._communication: Optional[Any] = None
+        self._board_room: Optional[Any] = None
+
+    def set_communication_coordinator(self, comm: Any) -> None:
+        """Wire the communication coordinator into the board."""
+        self._communication = comm
+
+    def set_board_room(self, board_room: Any) -> None:
+        """Wire the board room into the board."""
+        self._board_room = board_room
 
     async def start_all(self) -> None:
         """Create and start all executive runtime loops."""
@@ -694,6 +891,12 @@ class ExecutiveBoard:
                 runtime=self._runtime,
                 intelligence_callback=self._intelligence_generate,
             )
+            # Wire communication coordinator
+            if self._communication:
+                loop.set_communication(self._communication)
+            # Wire board room
+            if self._board_room:
+                loop.set_board_room(self._board_room)
             self._loops[exec_id] = loop
             await loop.start()
 

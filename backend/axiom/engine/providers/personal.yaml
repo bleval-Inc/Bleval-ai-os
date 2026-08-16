@@ -1,0 +1,72 @@
+# Personal Organization — Provider Configurations
+# Version: 1.0.0
+
+providers:
+  - id: calendar
+    name: Personal Calendar
+    type: personal
+    description: "Personal calendar management via CalDAV/Google/Outlook"
+    version: "1.0.0"
+    auth:
+      type: "oauth2"
+      client_id_env_var: "PERSONAL_CALENDAR_CLIENT_ID"
+      client_secret_env_var: "PERSONAL_CALENDAR_CLIENT_SECRET"
+      token_url: "https://oauth2.googleapis.com/token"
+      scopes:
+        - "https://www.googleapis.com/auth/calendar"
+    rate_limit:
+      requests_per_minute: 30
+      requests_per_hour: 500
+      token_bucket_refill_rate: 0.5
+    retry:
+      max_attempts: 3
+      base_delay_seconds: 1.0
+    circuit_breaker:
+      failure_threshold: 5
+      timeout_seconds: 30.0
+    capabilities:
+      - read_events
+      - create_events
+      - manage_schedule
+    config:
+      default_calendar: "primary"
+    health_check_endpoint: "/v3/calendars/primary"
+    health_check_interval_seconds: 120
+    enabled: true
+    tags: ["personal", "calendar", "scheduling"]
+
+  - id: email
+    name: Personal Email
+    type: personal
+    description: "Personal email management via IMAP/SMTP/Gmail API"
+    version: "1.0.0"
+    auth:
+      type: "oauth2"
+      client_id_env_var: "PERSONAL_EMAIL_CLIENT_ID"
+      client_secret_env_var: "PERSONAL_EMAIL_CLIENT_SECRET"
+      token_url: "https://oauth2.googleapis.com/token"
+      scopes:
+        - "https://www.googleapis.com/auth/gmail.modify"
+        - "https://www.googleapis.com/auth/gmail.send"
+    rate_limit:
+      requests_per_minute: 30
+      requests_per_hour: 500
+      token_bucket_refill_rate: 0.5
+    retry:
+      max_attempts: 3
+      base_delay_seconds: 1.0
+    circuit_breaker:
+      failure_threshold: 5
+      timeout_seconds: 30.0
+    capabilities:
+      - read_email
+      - send_email
+      - organize_inbox
+    config:
+      default_label: "inbox"
+      imap_host: "imap.gmail.com"
+      smtp_host: "smtp.gmail.com"
+    health_check_endpoint: "/v1/users/me/profile"
+    health_check_interval_seconds: 120
+    enabled: true
+    tags: ["personal", "email", "communication"]

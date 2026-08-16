@@ -1,26 +1,266 @@
 @import "tailwindcss";
 
+/* ── AXIOM OS Design System ──────────────────────────────────────────
+ * Apple-quality. Clean. Confident. Premium executive command system.
+ * Dark-first: near-black / charcoal / midnight blue
+ * Subtle blue/purple atmospheric lighting, restrained glass effects
+ * ──────────────────────────────────────────────────────────────────── */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Core backgrounds — dark, premium, near-black with subtle depth */
+  --axiom-bg-base: #050608;
+  --axiom-bg-surface: #0a0c10;
+  --axiom-bg-elevated: #0f1218;
+  --axiom-bg-glass: rgba(10, 12, 16, 0.7);
+  --axiom-bg-glass-hover: rgba(15, 18, 24, 0.85);
+
+  /* Core text */
+  --axiom-text-primary: #f0f1f3;
+  --axiom-text-secondary: #8b8d93; 
+  --axiom-text-tertiary: #4a4d55;
+
+  /* Accent — electric blue → indigo → subtle violet */
+  --axiom-accent: #6d7cff;
+  --axiom-accent-hover: #8b96ff;
+  --axiom-accent-muted: #5a67e0;
+  --axiom-accent-subtle: rgba(109, 124, 255, 0.06);
+  --axiom-accent-glow: rgba(109, 124, 255, 0.15);
+  --axiom-violet: #a88cff;
+  --axiom-violet-subtle: rgba(168, 140, 255, 0.06);
+
+  /* Semantic */
+  --axiom-success: #22d377;
+  --axiom-warning: #ffb830;
+  --axiom-error: #ff4d6a;
+  --axiom-info: #4da3ff;
+
+  /* Borders — extremely subtle */
+  --axiom-border: rgba(240, 241, 243, 0.04);
+  --axiom-border-hover: rgba(240, 241, 243, 0.08);
+  --axiom-border-accent: rgba(109, 124, 255, 0.12);
+
+  /* Shadows — depth without heaviness */
+  --axiom-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --axiom-shadow-md: 0 4px 12px -2px rgba(0, 0, 0, 0.35);
+  --axiom-shadow-lg: 0 12px 28px -4px rgba(0, 0, 0, 0.4);
+  --axiom-shadow-xl: 0 24px 48px -8px rgba(0, 0, 0, 0.45);
+  --axiom-shadow-glow: 0 0 24px rgba(109, 124, 255, 0.12);
+
+  /* Radius */
+  --axiom-radius-sm: 8px;
+  --axiom-radius-md: 12px;
+  --axiom-radius-lg: 16px;
+  --axiom-radius-xl: 24px;
+  --axiom-radius-full: 9999px;
+
+  /* Font — modern, precise, executive */
+  --axiom-font-sans: "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --axiom-font-mono: "Geist Mono", "SF Mono", Monaco, "Cascadia Code", monospace;
+
+  /* Transitions — smooth, calm */
+  --axiom-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --axiom-ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+  --axiom-duration-fast: 150ms;
+  --axiom-duration-normal: 250ms;
+  --axiom-duration-slow: 400ms;
+
+  /* Ambient gradient stops */
+  --axiom-ambient-1: rgba(109, 124, 255, 0.03);
+  --axiom-ambient-2: rgba(168, 140, 255, 0.02);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/* ═══════════════════════════════════════════════════════════════════
+   Base Styles
+   ═══════════════════════════════════════════════════════════════════ */
+
+* {
+  box-sizing: border-box;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  background: var(--axiom-bg-base);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background:
+    radial-gradient(ellipse 80% 50% at 50% 0%, var(--axiom-ambient-1), transparent 70%),
+    radial-gradient(ellipse 60% 40% at 100% 100%, var(--axiom-ambient-2), transparent 60%),
+    var(--axiom-bg-base);
+  color: var(--axiom-text-primary);
+  font-family: var(--axiom-font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow: hidden;
+  user-select: none;
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   Selection
+   ═══════════════════════════════════════════════════════════════════ */
+
+::selection {
+  background: var(--axiom-accent-glow);
+  color: var(--axiom-text-primary);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   Scrollbar — invisible until needed
+   ═══════════════════════════════════════════════════════════════════ */
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--axiom-text-tertiary);
+  border-radius: 3px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--axiom-text-secondary);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   Focus Ring
+   ═══════════════════════════════════════════════════════════════════ */
+
+*:focus-visible {
+  outline: 1px solid var(--axiom-accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   Glassmorphism — subtle, integrated
+   ═══════════════════════════════════════════════════════════════════ */
+
+.glass-panel {
+  background: var(--axiom-bg-glass);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid var(--axiom-border);
+  border-radius: var(--axiom-radius-lg);
+  height: 55px;
+}
+
+.glass-panel-hover {
+  background: var(--axiom-bg-glass-hover);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid var(--axiom-border-hover);
+  border-radius: var(--axiom-radius-lg);
+}
+
+.glass-panel-strong {
+  background: rgba(10, 12, 16, 0.85);
+  backdrop-filter: blur(32px);
+  -webkit-backdrop-filter: blur(32px);
+  border: 1px solid var(--axiom-border-hover);
+  border-radius: var(--axiom-radius-lg);
+  box-shadow: var(--axiom-shadow-lg);
+}
+
+.glass-pill {
+  background: var(--axiom-bg-glass);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid var(--axiom-border);
+  border-radius: var(--axiom-radius-full);
+  box-shadow: var(--axiom-shadow-md), var(--axiom-shadow-glow);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   Animation Keyframes
+   ═══════════════════════════════════════════════════════════════════ */
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slide-down {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slide-in-right {
+  from { opacity: 0; transform: translateX(12px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes waveform {
+  0%, 100% { height: 4px; }
+  50% { height: 18px; }
+}
+
+@keyframes pulse-subtle {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes dot-pulse {
+  0%, 100% { transform: scale(1); opacity: 0.6; }
+  50% { transform: scale(1.3); opacity: 1; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   Animation Utility Classes
+   ═══════════════════════════════════════════════════════════════════ */
+
+.animate-fade-in { animation: fade-in var(--axiom-duration-normal) var(--axiom-ease-smooth) forwards; }
+.animate-slide-up { animation: slide-up var(--axiom-duration-normal) var(--axiom-ease-smooth) forwards; }
+.animate-slide-down { animation: slide-down var(--axiom-duration-fast) var(--axiom-ease-smooth) forwards; }
+.animate-slide-in-right { animation: slide-in-right var(--axiom-duration-normal) var(--axiom-ease-smooth) forwards; }
+.animate-scale-in { animation: scale-in var(--axiom-duration-fast) var(--axiom-ease-smooth) forwards; }
+.animate-waveform { animation: waveform 1s var(--axiom-ease-smooth) infinite; }
+.animate-pulse-subtle { animation: pulse-subtle 2.5s ease-in-out infinite; }
+.animate-shimmer { animation: shimmer 2s var(--axiom-ease-smooth) infinite; }
+.animate-dot-pulse { animation: dot-pulse 1.8s ease-in-out infinite; }
+
+/* ═══════════════════════════════════════════════════════════════════
+   Utility Classes
+   ═══════════════════════════════════════════════════════════════════ */
+
+.text-balance { text-wrap: balance; }
+.truncate-1 { display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
+.truncate-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+/* Scroll area — minimal */
+.axiom-scroll {
+  overflow: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--axiom-text-tertiary) transparent;
+}
+
+/* Hide scrollbar */
+.hide-scrollbar::-webkit-scrollbar { display: none; }
+.hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Mono for data */
+.font-mono-sm { font-family: var(--axiom-font-mono); font-size: 0.6875rem; }
+.font-mono-xs { font-family: var(--axiom-font-mono); font-size: 0.625rem; }
+
+/* Tabular numbers */
+.tabular-nums { font-variant-numeric: tabular-nums; }

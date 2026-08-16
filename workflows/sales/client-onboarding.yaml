@@ -1,0 +1,51 @@
+# Client Onboarding Workflow
+# Version: 3.0.0
+
+name: Client Onboarding
+org: bleval
+department: sales
+coordinator: jenson
+
+agents:
+  - forge
+  - ledger
+
+steps:
+  - id: 1
+    name: "Create Project"
+    agent: ledger
+    description: "Create project entry, set milestones, timeline, and resource allocation"
+    outputs:
+      - project-plan
+    events_emitted: []
+
+  - id: 2
+    name: "Setup Repository"
+    agent: forge
+    description: "Create repository, configure CI/CD, set up project structure"
+    inputs:
+      - project-plan
+    outputs:
+      - repository-setup
+    events_emitted: []
+
+  - id: 3
+    name: "Plan Implementation"
+    agent: forge
+    description: "Create implementation plan with technical approach and sprint breakdown"
+    inputs:
+      - repository-setup
+    outputs:
+      - implementation-plan
+    events_emitted: []
+
+  - id: 4
+    name: "Assign Team"
+    agent: ledger
+    description: "Assign development team, set roles, and kick off sprint planning"
+    inputs:
+      - implementation-plan
+    outputs:
+      - team-assignment
+    events_emitted:
+      - project-ready

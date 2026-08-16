@@ -1,0 +1,52 @@
+# Social Media Planning Workflow
+# Version: 3.0.0
+
+name: Social Media Planning
+org: bleval
+department: marketing
+coordinator: jenson
+
+agents:
+  - creator
+  - analyst
+
+steps:
+  - id: 1
+    name: "Plan Social Calendar"
+    agent: creator
+    description: "Plan social media posts aligned with content strategy and campaign calendar"
+    outputs:
+      - social-calendar
+    events_emitted: []
+
+  - id: 2
+    name: "Create Assets"
+    agent: creator
+    description: "Create visual assets, copy, and media for each scheduled post"
+    inputs:
+      - social-calendar
+    outputs:
+      - social-assets
+    events_emitted: []
+
+  - id: 3
+    name: "Schedule Posts"
+    agent: creator
+    description: "Schedule content across social platforms with optimal timing"
+    inputs:
+      - social-assets
+    outputs:
+      - scheduled-posts
+    events_emitted:
+      - social-content-scheduled
+
+  - id: 4
+    name: "Track Engagement"
+    agent: analyst
+    description: "Monitor engagement metrics and analyze content performance"
+    inputs:
+      - scheduled-posts
+    outputs:
+      - engagement-report
+    events_emitted:
+      - metric-updated

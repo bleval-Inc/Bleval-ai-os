@@ -1,0 +1,51 @@
+# Client Retention Workflow
+# Version: 3.0.0
+
+name: Client Retention
+org: bleval
+department: sales
+coordinator: jenson
+
+agents:
+  - pulse
+  - ledger
+
+steps:
+  - id: 1
+    name: "Monitor Client Health"
+    agent: pulse
+    description: "Monitor client health metrics, engagement levels, and support interactions"
+    outputs:
+      - health-metrics
+    events_emitted: []
+
+  - id: 2
+    name: "Analyze Satisfaction"
+    agent: pulse
+    description: "Analyze satisfaction indicators including NPS, support feedback, and usage trends"
+    inputs:
+      - health-metrics
+    outputs:
+      - satisfaction-analysis
+    events_emitted: []
+
+  - id: 3
+    name: "Flag Churn Risks"
+    agent: ledger
+    description: "Identify at-risk clients, flag churn indicators, and assess severity"
+    inputs:
+      - satisfaction-analysis
+    outputs:
+      - churn-risk-report
+    events_emitted: []
+
+  - id: 4
+    name: "Recommend Improvements"
+    agent: ledger
+    description: "Generate retention recommendations and improvement actions for each risk segment"
+    inputs:
+      - churn-risk-report
+    outputs:
+      - retention-recommendations
+    events_emitted:
+      - client-health-update

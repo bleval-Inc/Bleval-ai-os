@@ -1,0 +1,42 @@
+# Autonomous Development Cycle Trigger
+# Version: 1.0.0
+# Scheduled trigger to run Jenson's autonomous development lifecycle
+
+name: Autonomous Development Cycle Trigger
+org: bleval
+department: development
+coordinator: jenson
+trigger_event: system-scheduled
+cron: "0 */6 * * *"  # Every 6 hours
+
+agents:
+  - jenson
+
+steps:
+  - id: "trigger.cycle"
+    name: "Trigger Autonomous Development Cycle"
+    agent: jenson
+    description: |
+      Trigger the autonomous development lifecycle workflow.
+      This checks for work and runs a full development cycle if work is available.
+    tool_invocations:
+      - provider: github
+        tool: github_search_issues
+        parameters:
+          query: "repo:bleval/axiom-os is:open is:issue label:autonomous-ready"
+          per_page: 1
+    outputs:
+      - work_found
+    events_emitted:
+      - development-autonomous-cycle
+    condition: "{{work_found.total_count > 0}}"
+
+  - id: "trigger.no_work"
+    name: "No Work Available"
+    agent: jenson
+    description: |
+      Log that no autonomous work was found this cycle.
+    condition: "{{work_found.total_count == 0}}"
+    outputs:
+      - logged
+    events_emitted: []
