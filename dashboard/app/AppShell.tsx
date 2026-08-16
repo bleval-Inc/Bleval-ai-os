@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { AnimatePresence } from "framer-motion";
 import BootSequence from "../components/boot/BootSequence";
 import VoiceEngine from "../components/axiom/VoiceEngine";
-import SystemTelemetry from "../components/axiom/SystemTelemetry";
 import { ShellLayout } from "../components/shell/ShellLayout";
 
 function getInitialBootState(): { bootComplete: boolean; hasBooted: boolean } {
@@ -49,7 +48,6 @@ export default function AppShell({
           <ShellLayout>
             {children}
             <VoiceEngine />
-            <SystemTelemetry />
           </ShellLayout>
         )}
       </AnimatePresence>

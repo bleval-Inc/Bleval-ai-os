@@ -28,7 +28,10 @@ const WORKSTATION_MAP: Record<WorkstationId, React.FC> = {
 
 export default function WorkstationRouter() {
   const activeWorkstation = useAxiomStore((s) => s.activeWorkstation);
-  const W = WORKSTATION_MAP[activeWorkstation];
+  // Fall back to AXIOM if the store holds a key that isn't a valid workstation
+  // (e.g. the "workspace" home view). This guarantees the router never tries
+  // to render an undefined element (React error #130).
+  const W = WORKSTATION_MAP[activeWorkstation] ?? AXIOMWS;
 
   return (
     <div className="flex-1 flex overflow-hidden">

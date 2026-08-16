@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useRouter } from "next/navigation";
 import { useAxiomStore } from "@/lib/store/axiom-store";
 import { speak, stopSpeaking } from "@/lib/voice/speak";
 import { axiom } from "@/lib/api";
@@ -45,6 +46,7 @@ const ACTIONS = [
 ];
 
 export default function AXIOMInterface() {
+  const router = useRouter();
   const [messages, setMessages] = useState<Message[]>([WELCOME_MESSAGE]);
   const [input, setInput] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
@@ -72,14 +74,10 @@ export default function AXIOMInterface() {
     inputRef.current?.focus();
   }, []);
 
-  // Handle voice commands from VoiceEngine
-  useEffect(() => {
-    if (pendingVoiceCommand) {
-      const cmd = pendingVoiceCommand;
-      setPendingVoiceCommand(null);
-      handleSend(cmd);
-    }
-  }, [pendingVoiceCommand]);
+  const goHome = useCallback(() => {
+    useAxiomStore.getState().setActiveWorkstation("axiom");
+    router.push("/");
+  }, [router]);
 
   const axiomSpeak = useCallback(
     (text: string) => {
@@ -163,6 +161,15 @@ export default function AXIOMInterface() {
     }
   };
 
+  // Handle voice commands from VoiceEngine (defined after handleSend)
+  useEffect(() => {
+    if (pendingVoiceCommand) {
+      const cmd = pendingVoiceCommand;
+      setPendingVoiceCommand(null);
+      handleSend(cmd);
+    }
+  }, [pendingVoiceCommand]);
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -186,6 +193,33 @@ export default function AXIOMInterface() {
 
   return (
     <div className="flex-1 flex flex-col h-full bg-[var(--axiom-bg-base)]">
+      {/* Header with back navigation to the home dashboard */}
+      <div className="flex items-center gap-2 px-4 md:px-6 py-2.5 border-b border-[var(--axiom-border)]/40 bg-[var(--axiom-bg-surface)]/30 backdrop-blur-xl flex-shrink-0">
+        <motion.button
+          onClick={goHome}
+          whileHover={{ scale: 1.04 }}
+          whileTap={{ scale: 0.96 }}
+          className="group flex items-center gap-2 px-3 py-1.5 rounded-lg text-[var(--axiom-text-secondary)] hover:text-[var(--axiom-text-primary)] hover:bg-[var(--axiom-bg-elevated)]/60 transition-colors"
+          title="Back to Home Dashboard"
+          aria-label="Back to Home Dashboard"
+        >
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="text-[var(--axiom-accent)] transition-transform duration-200 group-hover:-translate-x-0.5"
+          >
+            <path d="M19 12H5M12 19l-7-7 7-7" />
+          </svg>
+          <span className="text-xs font-semibold tracking-widest uppercase">Home</span>
+        </motion.button>
+      </div>
+
       {/* Main conversation area */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Scrollable messages */}

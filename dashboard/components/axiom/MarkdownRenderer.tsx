@@ -158,7 +158,7 @@ function parseMarkdown(content: string): React.ReactNode {
 
 function parseInline(text: string): React.ReactNode {
   // Handle inline code, bold, italic, links
-  const parts = text.split(/(`[^`]+`|\*\*[^*]+\*\*|\*[^*]+\*|\[([^\]]+)\]\(([^)]+)\))/);
+  const parts = text.split(/(`[^`]+`|\*\*[^*]+\*\*|\*[^*]+\*|\[[^\]]+\]\([^)]+\))/);
   return (
     <span>
       {parts.map((part, idx) => {

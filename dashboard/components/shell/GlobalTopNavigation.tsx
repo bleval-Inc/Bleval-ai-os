@@ -402,9 +402,9 @@ export function GlobalTopNavigation() {
         )}
       </AnimatePresence>
 
-      {/* Main navigation bar - single seamless glass surface */}
-      <div className="fixed top-0 left-0 right-0 z-40 h-11 pt-[28px]">
-        <div className="h-full flex items-center justify-between px-4 glass-panel border-b border-[var(--axiom-border)]/50">
+      {/* Main navigation bar - single seamless glass surface, establishes the top boundary */}
+      <div className="relative z-40 flex-shrink-0 h-11">
+        <div className="h-full flex items-center justify-between px-4 bg-[var(--axiom-bg-glass)] backdrop-blur-xl border-b border-[var(--axiom-border)]/50">
           {/* LEFT: AXIOM Symbol + Identity */}
           <div className="flex items-center gap-3">
             <button

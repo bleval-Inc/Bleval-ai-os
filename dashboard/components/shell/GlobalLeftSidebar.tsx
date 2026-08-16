@@ -1,6 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
+import { useRouter } from "next/navigation";
 import { useAxiomStore, type WorkspaceId, type WorkstationId } from "../../lib/store/axiom-store";
 import { cn } from "../../lib/utils";
 
@@ -96,6 +97,7 @@ const GLOBAL_NAV_ITEMS: { id: WorkspaceId | WorkstationId; label: string; shortL
 ] as const;
 
 export function GlobalLeftSidebar() {
+  const router = useRouter();
   const { activeView, setActiveView, activeWorkstation, setActiveWorkstation, sidebarCollapsed, setSidebarCollapsed } = useAxiomStore();
 
   // Determine if current view matches a global nav item
@@ -106,7 +108,7 @@ export function GlobalLeftSidebar() {
   return (
     <div
       className={cn(
-        "fixed top-11 left-0 bottom-0 z-30 flex flex-col",
+        "relative z-30 flex flex-col flex-shrink-0",
         "bg-[var(--axiom-bg-surface)]/70 backdrop-blur-xl border-r border-[var(--axiom-border)]/50",
         "transition-all duration-300 ease-out",
         sidebarCollapsed ? "w-16" : "w-64"
@@ -123,7 +125,14 @@ export function GlobalLeftSidebar() {
               <button
                 onClick={() => {
                   // Handle workstation switches vs view switches
-                  if (item.id === "workspace" || item.id === "boardroom" || item.id === "system" || item.id === "settings") {
+                  if (item.id === "workspace") {
+                    // HOME is the dashboard route, not a workstation. Navigate back to it
+                    // and reset the store to a valid workstation id (this also avoids the
+                    // invalid "workspace" key that used to trigger React error #130).
+                    router.push("/");
+                    setActiveView("workspace");
+                    setActiveWorkstation("axiom");
+                  } else if (item.id === "boardroom" || item.id === "system" || item.id === "settings") {
                     setActiveWorkstation(item.id as WorkstationId);
                     setActiveView(item.id);
                   } else {

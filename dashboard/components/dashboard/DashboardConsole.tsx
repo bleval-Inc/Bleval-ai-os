@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
@@ -38,13 +39,32 @@ export default function DashboardConsole({
   const holographicBorder = "rgba(0, 212, 255, 0.4)";
   const holographicGlow = "rgba(0, 212, 255, 0.3)";
 
+  // Minimal scroll indicator (hidden default scrollbar, clean right-edge line)
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [thumb, setThumb] = useState({ progress: 0, size: 100, visible: false });
+
+  const handleScroll = () => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const max = el.scrollHeight - el.clientHeight;
+    const visible = max > 0;
+    const size = visible ? Math.max(12, (el.clientHeight / el.scrollHeight) * 100) : 100;
+    const progress = visible ? el.scrollTop / max : 0;
+    setThumb({ progress, size, visible });
+  };
+
+  // Recompute the indicator once data arrives so the thumb tracks the real content.
+  useEffect(() => {
+    handleScroll();
+  }, [loading, metrics.length]);
+
   return (
     <motion.button
       onClick={onClick}
       onMouseEnter={() => onHover(true)}
       onMouseLeave={() => onHover(false)}
       className={cn(
-        "relative group w-full min-h-[220px] md:min-h-[260px] rounded-2xl overflow-hidden",
+        "relative group w-full h-full min-h-[300px] rounded-2xl overflow-hidden",
         "backdrop-blur-xl",
         "transition-all duration-500 ease-out",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--axiom-accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--axiom-bg-base)]",
@@ -106,14 +126,14 @@ export default function DashboardConsole({
       </div>
 
       {/* Content */}
-      <div className="relative p-6 md:p-8 flex flex-col h-full z-10">
+      <div className="relative p-5 flex flex-col h-full z-10">
 
         {/* Header */}
-        <div className="flex items-start justify-between mb-6">
+        <div className="flex items-start justify-between mb-4 pb-3 border-b border-[rgba(0,212,255,0.12)]">
           <div className="flex items-center gap-3">
             {/* Icon with holographic blue gradient */}
             <div className={cn(
-              "w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 relative overflow-hidden",
+              "w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 relative overflow-hidden",
               "bg-gradient-to-br",
               holographicGradient,
               "shadow-[0_0_25px_-5px_rgba(0,212,255,0.5)]"
@@ -125,7 +145,7 @@ export default function DashboardConsole({
               </div>
             </div>
             <div>
-              <h3 className="text-lg md:text-xl font-medium text-[var(--axiom-text-primary)] tracking-tight">
+              <h3 className="text-base md:text-lg font-medium text-[var(--axiom-text-primary)] tracking-tight">
                 {title}
               </h3>
               <p className="text-[11px] text-[var(--axiom-text-tertiary)] font-medium uppercase tracking-wider">
@@ -150,8 +170,10 @@ export default function DashboardConsole({
           </motion.div>
         </div>
 
-        {/* Metrics Grid */}
-        <div className="flex-1 grid grid-cols-2 gap-3 md:gap-4">
+        {/* Metrics Grid - scrollable region (hidden default scrollbar) */}
+        <div className="flex-1 min-h-0 relative mt-2">
+          <div ref={scrollRef} onScroll={handleScroll} className="absolute inset-0 overflow-y-auto hide-scrollbar pr-1.5">
+            <div className="grid grid-cols-2 gap-3 md:gap-4">
           {loading ? (
             Array.from({ length: 6 }).map((_, i) => (
               <motion.div
@@ -170,7 +192,7 @@ export default function DashboardConsole({
             metrics.map((metric, i) => (
               <motion.div
                 key={metric.label}
-                className="relative p-3 md:p-4 rounded-xl backdrop-blur-sm group-hover-animate"
+                className="relative p-3 md:p-4 rounded-xl backdrop-blur-sm group-hover-animate flex flex-col min-h-[96px]"
                 style={{
                   background: "linear-gradient(135deg, rgba(0, 212, 255, 0.04) 0%, rgba(0, 153, 255, 0.06) 100%)",
                   border: "1px solid rgba(0, 212, 255, 0.12)",
@@ -194,7 +216,7 @@ export default function DashboardConsole({
                 <p className="text-[10px] font-medium text-[var(--axiom-text-tertiary)] uppercase tracking-wider mb-1.5">
                   {metric.label}
                 </p>
-                <p className="text-xl md:text-2xl font-light text-[var(--axiom-text-primary)] tabular-nums">
+                <p className="text-xl md:text-2xl font-light text-[var(--axiom-text-primary)] tabular-nums mt-auto">
                   {typeof metric.value === "number" ? metric.value.toLocaleString() : metric.value}
                 </p>
               </motion.div>
@@ -218,6 +240,22 @@ export default function DashboardConsole({
               </p>
             </div>
           )}
+            </div>
+          </div>
+
+          {/* Right-edge scroll indicator - minimal line, highlights scroll position */}
+          <div className="absolute right-0.5 top-1 bottom-1 w-[2px] rounded-full bg-[var(--axiom-border-hover)]/80 z-20 pointer-events-none overflow-hidden">
+            <motion.div
+              className="absolute left-0 w-full rounded-full bg-[var(--axiom-accent)]"
+              style={{
+                height: `${thumb.size}%`,
+                top: `${thumb.progress * (100 - thumb.size)}%`,
+                boxShadow: "0 0 8px rgba(0,212,255,0.55)",
+              }}
+              animate={{ opacity: thumb.visible && !loading ? 1 : 0 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
+            />
+          </div>
         </div>
 
         {/* Bottom holographic accent line */}
