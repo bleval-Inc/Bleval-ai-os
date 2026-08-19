@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAxiomStore, type WorkspaceId, type WorkstationId } from "../../lib/store/axiom-store";
 import { cn } from "../../lib/utils";
 
-// Only the 7 primary navigation items per spec
+// Only the primary navigation items per spec
 const GLOBAL_NAV_ITEMS: { id: WorkspaceId | WorkstationId; label: string; shortLabel: string; shortcut: string; icon: React.ReactNode }[] = [
   {
     id: "workspace",
@@ -82,18 +82,6 @@ const GLOBAL_NAV_ITEMS: { id: WorkspaceId | WorkstationId; label: string; shortL
       </svg>
     ),
   },
-  {
-    id: "settings",
-    label: "SETTINGS",
-    shortLabel: "SETTINGS",
-    shortcut: "⌘,",
-    icon: (
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="12" cy="12" r="3" />
-        <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
-      </svg>
-    ),
-  },
 ] as const;
 
 export function GlobalLeftSidebar() {
@@ -132,7 +120,7 @@ export function GlobalLeftSidebar() {
                     router.push("/");
                     setActiveView("workspace");
                     setActiveWorkstation("axiom");
-                  } else if (item.id === "boardroom" || item.id === "system" || item.id === "settings") {
+                  } else if (item.id === "boardroom" || item.id === "system") {
                     setActiveWorkstation(item.id as WorkstationId);
                     setActiveView(item.id);
                   } else {
