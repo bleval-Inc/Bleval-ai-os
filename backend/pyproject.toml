@@ -39,3 +39,4 @@ axiom = "axiom.cli.main:app"
 
 [tool.pytest.ini_options]
 testpaths = ["backend"]
+asyncio_mode = "auto"
