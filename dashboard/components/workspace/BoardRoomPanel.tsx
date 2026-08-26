@@ -10,7 +10,7 @@ import type {
   BoardDashboard,
 } from "../../lib/api-types";
 
-// ── Types ──────────────────────────────────────────────────────────────
+// Types
 
 type PanelTab = "meetings" | "kpis" | "actions";
 
@@ -21,7 +21,7 @@ interface KpiCard {
   label: string;
 }
 
-// ── Color helpers ───────────────────────────────────────────────────────
+// Color helpers
 
 const STATUS_COLORS: Record<string, string> = {
   scheduled: "text-amber-400 border-amber-400/30 bg-amber-400/10",
@@ -47,7 +47,7 @@ const PRIORITY_COLORS: Record<string, string> = {
   low: "text-blue-400 border-blue-400/30 bg-blue-400/10",
 };
 
-// ── BoardRoomPanel ──────────────────────────────────────────────────────
+// BoardRoomPanel
 
 export default function BoardRoomPanel() {
   const [activeTab, setActiveTab] = useState<PanelTab>("meetings");
@@ -58,7 +58,7 @@ export default function BoardRoomPanel() {
   const [error, setError] = useState<string | null>(null);
   const [pollingInterval, setPollingInterval] = useState<ReturnType<typeof setInterval> | null>(null);
 
-  // ── Data Fetching ─────────────────────────────────────────────────────
+  // Data Fetching
   const fetchData = useCallback(async () => {
     try {
       const [dash, mList, kpiRes] = await Promise.all([
@@ -102,7 +102,7 @@ export default function BoardRoomPanel() {
     }
   }, []);
 
-  // ── Polling ───────────────────────────────────────────────────────────
+  // Polling
   useEffect(() => {
     fetchData();
     const interval = setInterval(fetchData, 15000);
@@ -110,7 +110,7 @@ export default function BoardRoomPanel() {
     return () => clearInterval(interval);
   }, [fetchData]);
 
-  // ── Helpers ───────────────────────────────────────────────────────────
+  // Helpers
   function formatMetricLabel(key: string): string {
     return key
       .replace(/_/g, " ")
@@ -138,7 +138,7 @@ export default function BoardRoomPanel() {
     return colors[exec.toLowerCase()] ?? "text-gray-400";
   }
 
-  // ── RENDER ────────────────────────────────────────────────────────────
+  // RENDER
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -230,7 +230,7 @@ export default function BoardRoomPanel() {
   );
 }
 
-// ── Meetings Tab ────────────────────────────────────────────────────────
+// Meetings Tab
 
 function MeetingsTab({
   meetings,
@@ -388,7 +388,7 @@ function MeetingCard({
   );
 }
 
-// ── KPIs Tab ────────────────────────────────────────────────────────────
+// KPIs Tab
 
 function KpisTab({
   kpiData,
@@ -444,7 +444,7 @@ function KpisTab({
   );
 }
 
-// ── Actions Tab ─────────────────────────────────────────────────────────
+// Actions Tab
 
 import type { BoardActionItemsResponse } from "../../lib/api-types";
 

@@ -55,7 +55,7 @@ function ErrorPanel({ msg, onRetry }: { msg: string; onRetry: () => void }) {
   );
 }
 
-/* ── Knowledge card ──────────────────────────────────────────────────── */
+/* Knowledge card */
 
 function KnowledgeCard({ entry }: { entry: KnowledgeEntry }) {
   const [open, setOpen] = useState(false);
@@ -114,7 +114,7 @@ function KnowledgeCard({ entry }: { entry: KnowledgeEntry }) {
   );
 }
 
-/* ── KnowledgeWorkspace (default export) ─────────────────────────────── */
+/* KnowledgeWorkspace (default export) */
 
 export default function KnowledgeWorkspace() {
   const [status, setStatus] = useState<LearningStatus | null>(null);
@@ -155,7 +155,7 @@ export default function KnowledgeWorkspace() {
     [entries, search],
   );
 
-  /* ── Render ─────────────────────────────────────────────────────── */
+  /* Render */
   if (loading) return <Skeleton />;
   if (error) return <ErrorPanel msg={error} onRetry={fetchAll} />;
 

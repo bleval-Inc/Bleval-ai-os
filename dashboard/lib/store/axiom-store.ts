@@ -40,7 +40,7 @@ export interface SelfHealerStatus {
   circuitBreakers: Record<string, { attempts: number; open: boolean }>;
 }
 
-// ── Workstation identifiers (Foundation Shell) ───────────────────────────
+// Workstation identifiers (Foundation Shell)
 export type WorkstationId =
   | "axiom"
   | "bleval"
@@ -52,7 +52,7 @@ export type WorkstationId =
 
 export type WorkstationStatus = "healthy" | "degraded" | "busy" | "idle";
 
-// ── Workspace identifiers (only core views) ───────────────────────────────
+// Workspace identifiers (only core views)
 export type WorkspaceId =
   | "workspace"         // Home/Overview
   | "boardroom"         // Board Room

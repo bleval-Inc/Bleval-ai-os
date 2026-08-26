@@ -4,7 +4,7 @@ import { useState, useMemo, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAxiomStore, type EnhancedNotification } from "../../lib/store/axiom-store";
 
-/* ── Helpers ─────────────────────────────────────────────────────── */
+/* Helpers */
 
 function timeLabel(ts: number): string {
   const diff = Date.now() - ts;
@@ -26,7 +26,7 @@ function dateGroupLabel(ts: number): string {
 
 type FilterMode = "all" | "unread" | "urgent";
 
-/* ── Category Icon ────────────────────────────────────────────────── */
+/* Category Icon */
 
 function CategoryIcon({ category }: { category: string }) {
   const icons: Record<string, string> = {
@@ -52,7 +52,7 @@ function CategoryIcon({ category }: { category: string }) {
   );
 }
 
-/* ── Priority border color ────────────────────────────────────────── */
+/* Priority border color */
 
 function priorityBorder(p: string): string {
   if (p === "urgent") return "border-l-[3px] border-l-red-400";
@@ -65,7 +65,7 @@ function priorityOpacity(p: string): string {
   return "";
 }
 
-/* ── Notification Row ─────────────────────────────────────────────── */
+/* Notification Row */
 
 function NotificationRow({
   n,
@@ -130,7 +130,7 @@ function NotificationRow({
   );
 }
 
-/* ── Main Component ───────────────────────────────────────────────── */
+/* Main Component */
 
 export default function NotificationCenter() {
   const {

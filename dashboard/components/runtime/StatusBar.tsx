@@ -8,7 +8,7 @@ import { healthDotColor, formatTimestamp } from "../../lib/utils";
 import NotificationCenter from "../workspace/NotificationCenter";
 import type { FounderAvailability } from "../../lib/api-types";
 
-// ── Workstation nav ─────────────────────────────────────────────────────
+// Workstation nav
 
 const workstationNavItems: { id: WorkstationId; label: string; shortcut: string }[] = [
   { id: "axiom", label: "AXIOM", shortcut: "⌘1" },
@@ -36,7 +36,7 @@ const AVAILABILITY_CONFIG: Record<FounderAvailability, { label: string; color: s
   unknown: { label: "Unknown", color: "text-gray-400", dot: "bg-gray-400" },
 };
 
-// ── WorkstationNavItem ─────────────────────────────────────────────────
+// WorkstationNavItem
 
 function WorkstationNavItem({ id, label, shortcut }: { id: WorkstationId; label: string; shortcut: string }) {
   const activeWorkstation = useAxiomStore((s) => s.activeWorkstation);
@@ -62,7 +62,7 @@ function WorkstationNavItem({ id, label, shortcut }: { id: WorkstationId; label:
   );
 }
 
-// ── AvailabilityDot ─────────────────────────────────────────────────────
+// AvailabilityDot
 
 function AvailabilityDot() {
   const availability = useAxiomStore((s) => s.founderAvailability);
@@ -76,7 +76,7 @@ function AvailabilityDot() {
   );
 }
 
-// ── DNDToggle ──────────────────────────────────────────────────────────
+// DNDToggle
 
 function DNDToggle() {
   const founderManualOverride = useAxiomStore((s) => s.founderManualOverride);
@@ -110,7 +110,7 @@ function DNDToggle() {
   );
 }
 
-// ── StatusBar ───────────────────────────────────────────────────────────
+// StatusBar
 
 export default function StatusBar() {
   const {

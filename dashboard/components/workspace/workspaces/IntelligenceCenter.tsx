@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
-/* ── Types ────────────────────────────────────────────────────────── */
+/* Types */
 
 interface ReasoningStep {
   id: string; type: string; title: string; description: string; duration_ms: number; confidence: number;
@@ -19,7 +19,7 @@ interface ProviderUsage {
   requests: number; avg_latency_ms: number; cost_estimate: number;
 }
 
-/* ── Mock Data ────────────────────────────────────────────────────── */
+/* Mock Data */
 
 const MOCK_REASONING: ActiveReasoning[] = [
   {
@@ -57,7 +57,7 @@ const MOCK_PROVIDERS: ProviderUsage[] = [
   { provider: "NVIDIA", model: "GLM-5.2", tokens_in: 56000, tokens_out: 8000, requests: 34, avg_latency_ms: 2100, cost_estimate: 0.00 },
 ];
 
-/* ── Helpers ──────────────────────────────────────────────────────── */
+/* Helpers */
 
 function StatusDot({ status }: { status: string }) {
   const colors: Record<string, string> = { reasoning: "bg-blue-400 animate-pulse", executing: "bg-amber-400", complete: "bg-emerald-400", error: "bg-red-400" };
@@ -89,7 +89,7 @@ function StatCard({ label, value, sub, pulse }: { label: string; value: string; 
   );
 }
 
-/* ── Reasoning Detail ─────────────────────────────────────────────── */
+/* Reasoning Detail */
 
 function ReasoningDetail({ item }: { item: ActiveReasoning }) {
   const [expanded, setExpanded] = useState(false);
@@ -143,7 +143,7 @@ function ReasoningDetail({ item }: { item: ActiveReasoning }) {
   );
 }
 
-/* ── Main Component ───────────────────────────────────────────────── */
+/* Main Component */
 
 export default function IntelligenceCenter() {
   const [activeReasoning] = useState(MOCK_REASONING);

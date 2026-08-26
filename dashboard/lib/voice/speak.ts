@@ -1,4 +1,4 @@
-// ── AXIOM Voice Engine ────────────────────────────────────────────
+// AXIOM Voice Engine
 // Primary: browser SpeechSynthesis — free, unlimited, no API key
 // Premium: ElevenLabs — purely optional upgrade (set a key to activate)
 //
@@ -15,7 +15,7 @@
 
 import type { SpeechOptions } from "./types";
 
-// ── Voice selection ───────────────────────────────────────────────
+// Voice selection
 
 let axiomVoice: SpeechSynthesisVoice | null = null;
 let voicesLoaded = false;
@@ -119,7 +119,7 @@ function selectBestVoice(voices: SpeechSynthesisVoice[]): SpeechSynthesisVoice |
   return voices[0] ?? null;
 }
 
-// ── State ─────────────────────────────────────────────────────────
+// State
 
 let currentUtterance: SpeechSynthesisUtterance | null = null;
 
@@ -140,7 +140,7 @@ export function isAxiomSpeaking(): boolean {
   return false;
 }
 
-// ── Speak ─────────────────────────────────────────────────────────
+// Speak
 
 /**
  * Speak text through AXIOM's voice.
@@ -159,7 +159,7 @@ export async function speak(
   // Cancel any current speech first
   stopSpeaking();
 
-  // ── Try ElevenLabs if configured (purely optional upgrade) ───
+  // Try ElevenLabs if configured (purely optional upgrade)
   if (getElevenLabsKey()) {
     try {
       const { generateSpeech, playAudio } = await import("./elevenlabs");
@@ -176,7 +176,7 @@ export async function speak(
     }
   }
 
-  // ── Primary: browser SpeechSynthesis (free, unlimited) ────────
+  // Primary: browser SpeechSynthesis (free, unlimited)
   const utterance = new SpeechSynthesisUtterance(text);
 
   // Select the best natural voice
@@ -211,7 +211,7 @@ export async function speak(
   window.speechSynthesis.speak(utterance);
 }
 
-// ── Stop ──────────────────────────────────────────────────────────
+// Stop
 
 export function stopSpeaking(): void {
   if (typeof window !== "undefined") {
@@ -228,7 +228,7 @@ export function stopSpeaking(): void {
   }
 }
 
-// ── ElevenLabs integration (re-export for convenience) ─────────────
+// ElevenLabs integration (re-export for convenience)
 
 let _elevenLabsKey: string | null = null;
 
@@ -245,7 +245,7 @@ export function getElevenLabsKey(): string | null {
   return _elevenLabsKey;
 }
 
-// ── Voice info ────────────────────────────────────────────────────
+// Voice info
 
 export function getAxiomVoiceInfo() {
   const hasElevenLabs = !!getElevenLabsKey();

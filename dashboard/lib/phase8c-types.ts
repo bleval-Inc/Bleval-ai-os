@@ -1,4 +1,4 @@
-// ── Phase 8C — Collaboration, Integrations & Intelligence Types ──────
+// Phase 8C - Collaboration, Integrations & Intelligence Types
 // Types for: Communications Hub, Intelligence Layer, Content Hub, Integrations
 
 // ═══════════════════════════════════════════════════════════════════════

@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 
-/* ── Empty State ──────────────────────────────────────────────────── */
+/* Empty State */
 
 interface EmptyStateProps {
   icon?: ReactNode;
@@ -36,7 +36,7 @@ export function EmptyState({ icon, title, description, action, className = "" }:
   );
 }
 
-/* ── Error State ──────────────────────────────────────────────────── */
+/* Error State */
 
 interface ErrorStateProps {
   message: string;
@@ -64,7 +64,7 @@ export function ErrorState({ message, onRetry, className = "" }: ErrorStateProps
   );
 }
 
-/* ── Offline State ────────────────────────────────────────────────── */
+/* Offline State */
 
 interface OfflineStateProps {
   lastCheck?: string;

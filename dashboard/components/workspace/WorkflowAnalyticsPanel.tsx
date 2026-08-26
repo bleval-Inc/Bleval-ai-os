@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { learning as learningApi } from "../../lib/api";
 import type { WorkflowAnalytics } from "../../lib/api-types";
 
-// ── WorkflowAnalyticsPanel ─────────────────────────────────────────────
+// WorkflowAnalyticsPanel
 
 export default function WorkflowAnalyticsPanel() {
   const [analytics, setAnalytics] = useState<WorkflowAnalytics[]>([]);
@@ -165,7 +165,7 @@ export default function WorkflowAnalyticsPanel() {
   );
 }
 
-// ── InsightCard ────────────────────────────────────────────────────────
+// InsightCard
 
 function InsightCard({
   title,

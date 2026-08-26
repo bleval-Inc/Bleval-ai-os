@@ -14,7 +14,7 @@ import CommandCenterLearning from "./CommandCenterLearning";
 import CommandCenterActions from "./CommandCenterActions";
 import type { HealthSummary, ExecutiveBoardStatus, Approval, LearningRecommendation, LearningPattern, KnowledgeEntry } from "../../../lib/api-types";
 
-/* ── Staggered entry animation ────────────────────────────────────── */
+/* Staggered entry animation */
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -24,7 +24,7 @@ const containerVariants = {
   },
 };
 
-/* ── Main Component ───────────────────────────────────────────────── */
+/* Main Component */
 
 export default function CommandCenter() {
   const { setRuntime, setHealth, setExecutiveBoard } = useAxiomStore();
@@ -111,7 +111,7 @@ export default function CommandCenter() {
     }
   }, []);
 
-  /* ── Loading state ──────────────────────────────────────────────── */
+  /* Loading state */
   if (loading && !health && !execBoard) {
     return (
       <div className="flex-1 overflow-y-auto">
@@ -120,7 +120,7 @@ export default function CommandCenter() {
     );
   }
 
-  /* ── Error state (no data at all) ───────────────────────────────── */
+  /* Error state (no data at all) */
   if (error && !health && !execBoard) {
     return (
       <div className="flex-1 flex items-center justify-center">

@@ -1,4 +1,4 @@
-// ── AXIOM Voice Types ──────────────────────────────────────────────
+// AXIOM Voice Types
 
 export interface SpeechOptions {
   rate?: number;

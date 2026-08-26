@@ -1,4 +1,4 @@
-// ── Speech Arbiter ─────────────────────────────────────────────────────
+// Speech Arbiter
 // Client-side speech coordination that mirrors the backend
 // CommunicationCoordinator's rules — one speaker at a time, urgency-based
 // queuing, emergency preemption.
@@ -16,7 +16,7 @@ import { speak, stopSpeaking } from "./speak";
 import { getVoiceProfile } from "./voices";
 import { useAxiomStore } from "../store/axiom-store";
 
-// ── Types ──────────────────────────────────────────────────────────────
+// Types
 
 export type SpeechUrgency = "silent" | "low" | "normal" | "high" | "critical" | "escalation";
 
@@ -46,7 +46,7 @@ const DOMAIN_PRIORITY: Record<SpeakerId, number> = {
   axiom: 3,
 };
 
-// ── State ──────────────────────────────────────────────────────────────
+// State
 
 let _activeSpeaker: SpeakerId | null = null;
 let _queue: SpeechRequest[] = [];
@@ -56,7 +56,7 @@ let _onSpeakingStarted: ((speaker: SpeakerId) => void) | null = null;
 let _onSpeakingEnded: (() => void) | null = null;
 let _onQueueChanged: ((queue: SpeechRequest[]) => void) | null = null;
 
-// ── Callbacks ──────────────────────────────────────────────────────────
+// Callbacks
 
 export function setArbiterCallbacks(callbacks: {
   onSpeakingStarted?: (speaker: SpeakerId) => void;
@@ -68,7 +68,7 @@ export function setArbiterCallbacks(callbacks: {
   if (callbacks.onQueueChanged) _onQueueChanged = callbacks.onQueueChanged;
 }
 
-// ── Public API ─────────────────────────────────────────────────────────
+// Public API
 
 /** Request to speak. Routes through the arbiter for queue/interrupt logic. */
 export async function requestSpeak(
@@ -204,7 +204,7 @@ export function clearEmergencyOverride(): void {
   _emergencySpeaker = null;
 }
 
-// ── Internal ───────────────────────────────────────────────────────────
+// Internal
 
 function processQueue(): void {
   // Don't process if emergency is active

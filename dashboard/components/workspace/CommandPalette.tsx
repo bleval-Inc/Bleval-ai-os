@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useAxiomStore } from "../../lib/store/axiom-store";
 import type { WorkspaceId, WorkstationId } from "../../lib/store/axiom-store";
 
-/* ── Fuzzy match (character-sequence) ────────────────────────────── */
+/* Fuzzy match (character-sequence) */
 
 function fuzzyMatch(query: string, text: string): boolean {
   if (!query) return true;
@@ -18,13 +18,13 @@ function fuzzyMatch(query: string, text: string): boolean {
   return qi >= q.length;
 }
 
-/* ── Strip natural-language prefixes ─────────────────────────────── */
+/* Strip natural-language prefixes */
 
 function stripPrefix(input: string): string {
   return input.replace(/^(?:go\s+to|open|run|launch|switch\s+to|navigate\s+to)\s+/i, "").trim();
 }
 
-/* ── Command type ────────────────────────────────────────────────── */
+/* Command type */
 
 interface Command {
   id: string;
@@ -36,7 +36,7 @@ interface Command {
   action: () => void;
 }
 
-/* ── History helpers ─────────────────────────────────────────────── */
+/* History helpers */
 
 const HISTORY_KEY = "axiom-command-history";
 const MAX_HISTORY = 10;
@@ -61,7 +61,7 @@ function addToHistory(id: string) {
   }
 }
 
-/* ── Component ───────────────────────────────────────────────────── */
+/* Component */
 
 export default function CommandPalette() {
   const { commandPaletteOpen, setCommandPalette, setActiveView, setActiveWorkstation } = useAxiomStore();
@@ -100,7 +100,7 @@ export default function CommandPalette() {
     [navCommands, staticCommands, systemCommands],
   );
 
-  /* ── Fuzzy filtering ────────────────────────────────────────────── */
+  /* Fuzzy filtering */
 
   const stripQuery = stripPrefix(query.trim());
 
@@ -138,7 +138,7 @@ export default function CommandPalette() {
 
   const flatItems = useMemo(() => grouped.flatMap((g) => g.items), [grouped]);
 
-  /* ── Keyboard & selection ────────────────────────────────────────── */
+  /* Keyboard & selection */
 
   useEffect(() => { setSelectedIndex(0); }, [query]);
 
@@ -185,7 +185,7 @@ export default function CommandPalette() {
     }
   };
 
-  /* ── Render ──────────────────────────────────────────────────────── */
+  /* Render */
 
   return (
     <AnimatePresence>

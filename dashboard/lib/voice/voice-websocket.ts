@@ -1,4 +1,4 @@
-// ── Voice WebSocket Hook ──────────────────────────────────────────────
+// Voice WebSocket Hook
 // Real-time bidirectional voice communication with executives
 
 import { useEffect, useRef, useState, useCallback } from "react";
@@ -276,7 +276,7 @@ export function useVoiceWebSocket(
   };
 }
 
-// ── Broadcast WebSocket for multi-client voice notifications ──────────
+// Broadcast WebSocket for multi-client voice notifications
 
 export interface UseVoiceBroadcastOptions {
   onSpeak?: (speak: VoiceWSMessage) => void;

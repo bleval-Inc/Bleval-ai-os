@@ -37,7 +37,7 @@ import type { SpeakerId } from "../../lib/api-types";
 import { voice } from "../../lib/api";
 import { useVoiceWebSocket, type SpeechUrgency } from "../../lib/voice/voice-websocket";
 
-// ── Types ──────────────────────────────────────────────────────────────
+// Types
 
 export interface AudioDeviceInfo {
   id: string;
@@ -123,7 +123,7 @@ async function wakeExecutive(execId: ExecutiveId) {
   await requestSpeak(execId, greetings[execId] || `${config.shortName} online.`, "normal");
 }
 
-// ── VoiceEngine ────────────────────────────────────────────────────────
+// VoiceEngine
 
 export default function VoiceEngine() {
   const store = useAxiomStore();
@@ -164,7 +164,7 @@ export default function VoiceEngine() {
   const cleanupHealthPollRef = useRef<() => void | null>(null);
   const hasGreeted = useRef(false);
 
-  // ── State ────────────────────────────────────────────────────────────
+  // State
   const [voicesReady, setVoicesReady] = useState(false);
   const [showTooltip, setShowTooltip] = useState(false);
   const [pttActive, setPttActive] = useState(false);
@@ -240,7 +240,7 @@ export default function VoiceEngine() {
   // Initialize founder detector polling
   useFounderState();
 
-  // ── Keep refs in sync ────────────────────────────────────────────────
+  // Keep refs in sync
   useEffect(() => { isAwakeRef.current = isAwake; }, [isAwake]);
   useEffect(() => { voiceActiveRef.current = voiceActive; }, [voiceActive]);
   useEffect(() => { listeningExecutiveRef.current = listeningExecutive; }, [listeningExecutive]);
@@ -252,7 +252,7 @@ export default function VoiceEngine() {
     }
   }, [isAwake, isListening]);
 
-  // ── Initialize on Mount ──────────────────────────────────────────────
+  // Initialize on Mount
   useEffect(() => {
     // Load both speech system voices and executive voice profiles
     Promise.all([loadSpeakVoices(), loadAllVoices()]).then(() => setVoicesReady(true));
@@ -306,7 +306,7 @@ export default function VoiceEngine() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ── Audio Device Enumeration ─────────────────────────────────────────
+  // Audio Device Enumeration
   const enumerateAudioDevices = useCallback(async () => {
     try {
       await navigator.mediaDevices
@@ -346,7 +346,7 @@ export default function VoiceEngine() {
     return () => navigator.mediaDevices?.removeEventListener("devicechange", handler);
   }, [enumerateAudioDevices]);
 
-  // ── Process Command ─────────────────────────────────────────────────
+  // Process Command
   const processCommand = useCallback(
     async (command: string) => {
       if (wakeTimeoutRef.current) clearTimeout(wakeTimeoutRef.current);
@@ -453,7 +453,7 @@ export default function VoiceEngine() {
     ],
   );
 
-  // ── Wake Timeout ─────────────────────────────────────────────────────
+  // Wake Timeout
   const clearWakeTimeout = useCallback(() => {
     if (wakeTimeoutRef.current) {
       clearTimeout(wakeTimeoutRef.current);
@@ -471,7 +471,7 @@ export default function VoiceEngine() {
     }, 30000);
   }, [clearWakeTimeout, setIsAwake, setIsListening]);
 
-  // ── Wake AXIOM ──────────────────────────────────────────────────────
+  // Wake AXIOM
   const wakeAxiom = useCallback(async () => {
     clearWakeTimeout();
     setIsAwake(true);
@@ -497,7 +497,7 @@ export default function VoiceEngine() {
     setWakeTimeout();
   }, [clearWakeTimeout, setIsAwake, setIsListening, addNotification, setWakeTimeout]);
 
-  // ── Wake Executive ──────────────────────────────────────────────────────
+  // Wake Executive
   const wakeExecutiveByName = useCallback(async (execId: ExecutiveId) => {
     if (execId === "axiom") {
       wakeAxiom();
@@ -533,7 +533,7 @@ export default function VoiceEngine() {
     setWakeTimeout();
   }, [clearWakeTimeout, setIsAwake, setIsListening, addNotification, setWakeTimeout, wakeAxiom]);
 
-  // ── Boot Greeting ────────────────────────────────────────────────────
+  // Boot Greeting
   useEffect(() => {
     if (hasGreeted.current || !voiceActive || !voicesReady) return;
     hasGreeted.current = true;
@@ -551,7 +551,7 @@ export default function VoiceEngine() {
     return () => clearTimeout(t);
   }, [voiceActive, voicesReady]);
 
-  // ── Continuous Wake-Word Listener ────────────────────────────────────
+  // Continuous Wake-Word Listener
   const startWakeListener = useCallback(() => {
     if (typeof window === "undefined") return;
     const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -648,7 +648,7 @@ export default function VoiceEngine() {
     };
   }, [voiceActive, startWakeListener]);
 
-  // ── Push-to-Talk ─────────────────────────────────────────────────────
+  // Push-to-Talk
   const startPushToTalk = useCallback(() => {
     const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SR) return;
@@ -706,7 +706,7 @@ export default function VoiceEngine() {
     }
   }, [processCommand, setIsListening, setIsAwake, startWakeListener]);
 
-  // ── Keyboard Shortcut ───────────────────────────────────────────────
+  // Keyboard Shortcut
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
@@ -720,7 +720,7 @@ export default function VoiceEngine() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [voiceActive, setVoiceActive, startPushToTalk]);
 
-  // ── Cleanup on Unmount ─────────────────────────────────────────────
+  // Cleanup on Unmount
   useEffect(() => {
     return () => {
       if (wakeRecognitionRef.current) {
@@ -732,11 +732,11 @@ export default function VoiceEngine() {
     };
   }, [clearWakeTimeout]);
 
-  // ── Derived ──────────────────────────────────────────────────────────
+  // Derived
   const currentSpeakerConfig = activeSpeaker ? SPEAKER_CONFIG[activeSpeaker] : null;
   const voiceInfo = voicesReady ? getVoiceInfo().axiom?.name ?? "Browser" : "Loading...";
 
-  // ── RENDER ─────────────────────────────────────────────────────────
+  // RENDER
   return (
     <>
       {/* Emergency banner */}
