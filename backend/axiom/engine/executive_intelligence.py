@@ -515,10 +515,10 @@ class ExecutiveIntelligence:
     def _analyze_launch_risks(
         self,
         workflow_id: str,
-        summary: Optional[WorkflowAnalyticsSummary],
-        patterns: List[DetectedPattern],
-        recs: List[LearningRecommendation],
-    ) -> tuple[List[str], List[str]]:
+        summary: Optional["WorkflowAnalyticsSummary"],
+        patterns: List["DetectedPattern"],
+        recs: List["LearningRecommendation"],
+    ) -> "tuple[List[str], List[str]]":
         """Analyze risks and insights for a workflow launch."""
         warnings = []
         insights = []

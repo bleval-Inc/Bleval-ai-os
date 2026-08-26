@@ -1,16 +1,17 @@
 "use client";
 
 import { useEffect } from "react";
-import { useAxiomStore } from "@/lib/store/axiom-store";
-import WorkstationRouter from "@/components/workspace/WorkstationRouter";
+import { useRouter } from "next/navigation";
 
+// SETTINGS was consolidated into the SYSTEM workstation. Keep the old
+// /settings URL as an alias so bookmarked links land on the unified AXIOM
+// control centre instead of 404ing or reaching a removed route.
 export default function SettingsPage() {
-  const { setActiveWorkstation, setActiveView } = useAxiomStore();
+  const router = useRouter();
 
   useEffect(() => {
-    setActiveWorkstation("settings");
-    setActiveView("settings");
-  }, [setActiveWorkstation, setActiveView]);
+    router.replace("/system");
+  }, [router]);
 
-  return <WorkstationRouter />;
+  return null;
 }

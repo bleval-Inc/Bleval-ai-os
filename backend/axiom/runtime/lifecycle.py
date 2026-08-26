@@ -65,16 +65,29 @@ from axiom.engine.executive_intelligence import ExecutiveIntelligence, Executive
 from axiom.engine.qc_learning_pipeline import QCtoLearningPipeline
 
 # PHASE H — Platform Integrations
-from axiom.engine.provider_registry import ProviderRegistry, get_provider_registry
-from axiom.integrations.github import GitHubProvider
-from axiom.integrations.market_data import MarketDataProvider
-from axiom.integrations.mt5 import MT5Provider
-from axiom.integrations.tradingview import TradingViewProvider
-from axiom.integrations.crm import CRMProvider
-from axiom.integrations.email import EmailProvider
-from axiom.integrations.calendar import CalendarProvider
-from axiom.integrations.slack import SlackProvider
-from axiom.integrations.whatsapp import WhatsAppProvider
+# Note: ProviderRegistry and providers imported lazily to avoid circular imports
+# from axiom.engine.provider_registry import ProviderRegistry, get_provider_registry
+# from axiom.integrations.github import GitHubProvider
+# from axiom.integrations.market_data import MarketDataProvider
+# from axiom.integrations.mt5 import MT5Provider
+# from axiom.integrations.tradingview import TradingViewProvider
+# from axiom.integrations.crm import CRMProvider
+# from axiom.integrations.email import EmailProvider
+# from axiom.integrations.calendar import CalendarProvider
+# from axiom.integrations.slack import SlackProvider
+# from axiom.integrations.whatsapp import WhatsAppProvider
+
+# PHASE 1 — Unified Integration Layer
+# Lazy import to avoid circular dependency with provider registry
+# from axiom.integrations.layer import IntegrationLayer
+
+# PHASE 7 — Resource-Aware Runtime
+from axiom.runtime.resource import RuntimeOrchestrator, OrchestratorConfig
+
+# PHASE 8 — Executive Integration
+from axiom.runtime.executive_integration import ExecutiveIntegration, ExecutiveIntegrationConfig
+from axiom.data.database import DatabaseManager
+from axiom.engine.intelligence import IntelligenceEngine
 
 
 class AxiomRuntime:
@@ -141,6 +154,15 @@ class AxiomRuntime:
         # PHASE H — Platform Integrations
         self.provider_registry: Optional[ProviderRegistry] = None
 
+        # PHASE 1 — Unified Integration Layer
+        self.integration_layer: Optional[IntegrationLayer] = None
+
+        # PHASE 7 — Resource-Aware Runtime
+        self.runtime_orchestrator: Optional[RuntimeOrchestrator] = None
+
+        # PHASE 8 — Executive Integration
+        self.executive_integration: Optional[ExecutiveIntegration] = None
+
     # ── Bootstrap ────────────────────────────────────────────────────────
 
     async def bootstrap(self) -> None:
@@ -169,13 +191,41 @@ class AxiomRuntime:
 
         # ── PHASE H: Provider Registry — Platform Integrations ─────────────
 
-        # Initialise Provider Registry
+        # Initialise Provider Registry (lazy import to avoid circular deps)
+        from axiom.engine.provider_registry import get_provider_registry
         self.provider_registry = get_provider_registry()
 
-        # Register all integration providers
-        await self._register_integration_providers()
+        # Register all integration providers (lazy imports)
+        from axiom.integrations.github import GitHubProvider
+        from axiom.integrations.market_data import MarketDataProvider
+        from axiom.integrations.mt5 import MT5Provider
+        from axiom.integrations.tradingview import TradingViewProvider
+        from axiom.integrations.crm import CRMProvider
+        from axiom.integrations.email import EmailProvider
+        from axiom.integrations.calendar import CalendarProvider
+        from axiom.integrations.slack import SlackProvider
+        from axiom.integrations.whatsapp import WhatsAppProvider
+
+        # Register provider implementations
+        self.provider_registry.register_implementation("github", GitHubProvider)
+        self.provider_registry.register_implementation("market_data", MarketDataProvider)
+        self.provider_registry.register_implementation("mt5", MT5Provider)
+        self.provider_registry.register_implementation("tradingview", TradingViewProvider)
+        self.provider_registry.register_implementation("crm", CRMProvider)
+        self.provider_registry.register_implementation("email", EmailProvider)
+        self.provider_registry.register_implementation("calendar", CalendarProvider)
+        self.provider_registry.register_implementation("slack", SlackProvider)
+        self.provider_registry.register_implementation("whatsapp", WhatsAppProvider)
 
         # ── End PHASE H ───────────────────────────────────────────────────
+
+        # ── PHASE 1: Unified Integration Layer ──────────────────────────────
+
+        # Initialise Integration Layer with event engine (created next)
+        # Note: IntegrationLayer will be fully initialized after event engine
+        # We create a placeholder and initialize in start()
+
+        # ── End PHASE 1 ────────────────────────────────────────────────────
 
         # Event engine (must be created before WorkflowEngine so we can wire it)
         self.event = EventEngine()
@@ -423,6 +473,45 @@ class AxiomRuntime:
 
         # ── End PHASE E ─────────────────────────────────────────────────
 
+        # ── PHASE 1: Initialize Integration Layer ───────────────────────────
+
+        # Now that event engine is started, initialize the integration layer
+        from axiom.integrations.layer import IntegrationLayer
+        self.integration_layer = IntegrationLayer(logger=self.logger)
+        await self.integration_layer.initialize(event_engine=self.event)
+
+        # Start scheduled integrations
+        started = await self.integration_layer.start_all_scheduled()
+        if self.logger:
+            self.logger.info(
+                "lifecycle",
+                f"PHASE 1 — Unified Integration Layer started: {started} scheduled integrations running"
+            )
+
+        # ── End PHASE 1 ────────────────────────────────────────────────────
+
+        # ── PHASE 7: Initialize Resource-Aware Runtime ──────────────────────
+
+        # Initialize orchestrator with all components
+        self.runtime_orchestrator = RuntimeOrchestrator(
+            logger=self.logger,
+            event_engine=self.event,
+            integration_layer=self.integration_layer,
+            executive_loops={
+                exec_id: self.executive_board.get_loop(exec_id)
+                for exec_id in self.executive_board.EXECUTIVE_IDS
+            } if self.executive_board else {},
+        )
+        await self.runtime_orchestrator.start()
+
+        if self.logger:
+            self.logger.info(
+                "lifecycle",
+                "PHASE 7 — Resource-Aware Runtime started: Monitor + Scheduler + Quotas + Orchestrator"
+            )
+
+        # ── End PHASE 7 ────────────────────────────────────────────────────
+
         # Start Board Room (autonomous meeting scheduling)
         if self.board_room:
             await self.board_room.start()
@@ -448,6 +537,37 @@ class AxiomRuntime:
                     f"{boot_result.duration_ms:.0f}ms)",
                 )
 
+        # ── PHASE 8: Initialize Executive Integration ────────────────────────
+
+        # Initialize database manager
+        database_manager = DatabaseManager()
+
+        # Initialize Executive Integration with all system components
+        self.executive_integration = ExecutiveIntegration(
+            runtime=self,
+            config=ExecutiveIntegrationConfig(),
+            logger=self.logger,
+        )
+        await self.executive_integration.initialize(
+            executive_board=self.executive_board,
+            axiom_core=self.axiom,
+            resource_orchestrator=self.runtime_orchestrator,
+            integration_layer=self.integration_layer,
+            database_manager=database_manager,
+            intelligence_engine=self.intelligence,
+        )
+
+        # Start executive sync loop
+        await self.executive_integration.start_sync_loop()
+
+        if self.logger:
+            self.logger.info(
+                "lifecycle",
+                "PHASE 8 — Executive Integration started: Jenson/Bleval + Valta Prime/Trading + Yamako/Personal fully integrated"
+            )
+
+        # ── End PHASE 8 ────────────────────────────────────────────────────
+
         self._running = True
 
         if self.logger:
@@ -461,6 +581,30 @@ class AxiomRuntime:
             self.logger.info("lifecycle", "Axiom OS runtime shutting down")
 
         # Stop in reverse order
+        # ── PHASE 8: Shutdown Executive Integration ───────────────────────────
+        if self.executive_integration:
+            await self.executive_integration.stop_sync_loop()
+            if self.logger:
+                self.logger.info("lifecycle", "PHASE 8 — Executive Integration shutdown complete")
+
+        # ── End PHASE 8 ───────────────────────────────────────────────────
+
+        # ── PHASE 7: Shutdown Resource-Aware Runtime ───────────────────────────
+        if self.runtime_orchestrator:
+            await self.runtime_orchestrator.stop()
+            if self.logger:
+                self.logger.info("lifecycle", "PHASE 7 — Resource-Aware Runtime shutdown complete")
+
+        # ── End PHASE 7 ───────────────────────────────────────────────────
+
+        # ── PHASE 1: Shutdown Integration Layer ──────────────────────────────
+        if self.integration_layer:
+            await self.integration_layer.shutdown()
+            if self.logger:
+                self.logger.info("lifecycle", "PHASE 1 — Unified Integration Layer shutdown complete")
+
+        # ── End PHASE 1 ───────────────────────────────────────────────────
+
         # ── PHASE H: Shutdown Platform Integrations ────────────────────────────
         if self.provider_registry:
             await self.provider_registry.shutdown_all()
@@ -786,35 +930,7 @@ class AxiomRuntime:
                 f"System tools wired: {tools_count} tools available for AI function-calling",
             )
 
-    # ── PHASE H: Provider Registration ──────────────────────────────────────
-
-    async def _register_integration_providers(self) -> None:
-        """Register all Phase H integration providers with the ProviderRegistry."""
-        if not self.provider_registry:
-            return
-
-        # Register provider implementations
-        provider_implementations = {
-            "github": GitHubProvider,
-            "market_data": MarketDataProvider,
-            "mt5": MT5Provider,
-            "tradingview": TradingViewProvider,
-            "crm": CRMProvider,
-            "email": EmailProvider,
-            "calendar": CalendarProvider,
-            "slack": SlackProvider,
-            "whatsapp": WhatsAppProvider,
-        }
-
-        for provider_id, provider_class in provider_implementations.items():
-            try:
-                self.provider_registry.register_implementation(provider_id, provider_class)
-                if self.logger:
-                    self.logger.info("lifecycle", f"Registered provider implementation: {provider_id}")
-            except Exception as e:
-                if self.logger:
-                    self.logger.error("lifecycle", f"Failed to register provider implementation {provider_id}: {e}")
-
+    
         # Initialize providers for each organization
         await self._initialize_providers_for_organizations()
 
@@ -894,6 +1010,8 @@ class AxiomRuntime:
                 "founder_gateway": self.founder_gateway is not None,
                 # PHASE H Components
                 "provider_registry": self.provider_registry is not None,
+                # PHASE 1 Components
+                "integration_layer": self.integration_layer is not None,
             },
         }
 
@@ -969,6 +1087,8 @@ class AxiomRuntime:
             },
             # PHASE H Status
             "phase_h": phase_h_status,
+            # PHASE 1 Status
+            "phase_1": self.integration_layer.get_summary() if self.integration_layer else {},
         }
 
     # ── QC Learning Pipeline Callbacks ──────────────────────────────────────

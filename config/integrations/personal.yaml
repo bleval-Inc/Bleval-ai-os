@@ -1,0 +1,187 @@
+# Personal Operations — Integration Configurations
+# Version: 3.0.0
+
+integrations:
+  # ─────────────────────────────────────────────────────────────────────────
+  # CALENDAR — Personal calendar management
+  # ─────────────────────────────────────────────────────────────────────────
+  - integration_id: "personal-calendar"
+    name: "Personal Calendar Integration"
+    description: "Personal scheduling, availability, and calendar sync"
+    provider_id: "calendar"
+    org_id: "personal"
+    enabled: true
+    schedule: "0 */4 * * *"  # Every 4 hours
+    tags: ["personal", "scheduling", "productivity"]
+
+    connection:
+      protocol: "https"
+      base_url: "https://www.googleapis.com/calendar/v3"  # Google Calendar example
+      timeout_seconds: 30
+      max_connections: 5
+
+    auth:
+      strategy: "oauth2"
+      credentials:
+        client_id_env_var: "GOOGLE_CLIENT_ID"
+        client_secret_env_var: "GOOGLE_CLIENT_SECRET"
+        token_env_var: "GOOGLE_CALENDAR_TOKEN"
+      token_url: "https://oauth2.googleapis.com/token"
+      scopes:
+        - "https://www.googleapis.com/auth/calendar.readonly"
+        - "https://www.googleapis.com/auth/calendar.events"
+      auto_refresh: true
+      token_refresh_threshold_seconds: 300
+
+    fetch:
+      page_size: 250
+      max_pages: 20
+      pagination_strategy: "page"
+      default_filters:
+        singleEvents: "true"
+        orderBy: "startTime"
+        timeMin: "{{now}}"
+      incremental_field: "updated"
+      concurrent_requests: 1
+
+    validation:
+      mode: "lenient"
+      required_fields: ["id", "summary", "start", "end"]
+      schema:
+        type: "object"
+        properties:
+          id: {type: "string"}
+          summary: {type: "string"}
+          description: {type: "string"}
+          start: {type: "object"}
+          end: {type: "object"}
+          status: {type: "string"}
+          htmlLink: {type: "string", format: "uri"}
+        required: ["id", "summary", "start", "end"]
+
+    normalization:
+      field_mapping:
+        "htmlLink": "url"
+        "created": "created_timestamp"
+        "updated": "updated_timestamp"
+      standardize_timestamps: true
+      timestamp_format: "iso8601"
+      standardize_identifiers: true
+
+    deduplication:
+      strategy: "exact_match"
+      key_fields: ["id"]
+      keep_strategy: "last"
+
+    cache:
+      strategy: "tiered"
+      memory_max_size: 10000
+      memory_ttl_seconds: 3600
+      persistent_path: "cache/integrations/personal_calendar"
+      key_fields: ["id"]
+      key_prefix: "personal_calendar"
+
+    persistence:
+      targets: ["domain_database", "event_store"]
+      domain_db_path: "data/personal/productivity.db"
+      table_name: "calendar_events"
+      batch_size: 100
+      flush_interval_seconds: 600
+      conflict_strategy: "upsert"
+      primary_key: "id"
+
+    monitoring:
+      enabled: true
+      health_check_interval_seconds: 1800
+      alert_on_failure: true
+      alert_threshold_error_rate: 0.2
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # EMAIL — Personal email
+  # ─────────────────────────────────────────────────────────────────────────
+  - integration_id: "personal-email"
+    name: "Personal Email Integration"
+    description: "Personal email inbox, sent items, and analytics"
+    provider_id: "email"
+    org_id: "personal"
+    enabled: true
+    schedule: "*/30 * * * *"  # Every 30 minutes
+    tags: ["personal", "email", "communication"]
+
+    connection:
+      protocol: "https"
+      base_url: "https://gmail.googleapis.com/gmail/v1"  # Gmail example
+      timeout_seconds: 30
+      max_connections: 5
+
+    auth:
+      strategy: "oauth2"
+      credentials:
+        client_id_env_var: "GOOGLE_CLIENT_ID"
+        client_secret_env_var: "GOOGLE_CLIENT_SECRET"
+        token_env_var: "GOOGLE_GMAIL_TOKEN"
+      token_url: "https://oauth2.googleapis.com/token"
+      scopes:
+        - "https://www.googleapis.com/auth/gmail.readonly"
+        - "https://www.googleapis.com/auth/gmail.send"
+      auto_refresh: true
+      token_refresh_threshold_seconds: 300
+
+    fetch:
+      page_size: 100
+      max_pages: 10
+      pagination_strategy: "page"
+      default_filters:
+        labelIds: "INBOX"
+        maxResults: 100
+      incremental_field: "historyId"
+      concurrent_requests: 1
+
+    validation:
+      mode: "lenient"
+      required_fields: ["id", "threadId", "labelIds"]
+      schema:
+        type: "object"
+        properties:
+          id: {type: "string"}
+          threadId: {type: "string"}
+          labelIds: {type: "array", items: {type: "string"}}
+          snippet: {type: "string"}
+          payload: {type: "object"}
+        required: ["id", "threadId"]
+
+    normalization:
+      field_mapping:
+        "threadId": "thread_id"
+        "historyId": "history_id"
+      standardize_timestamps: true
+      timestamp_format: "iso8601"
+      standardize_identifiers: true
+
+    deduplication:
+      strategy: "exact_match"
+      key_fields: ["id"]
+      keep_strategy: "last"
+
+    cache:
+      strategy: "tiered"
+      memory_max_size: 5000
+      memory_ttl_seconds: 1800
+      persistent_path: "cache/integrations/personal_email"
+      key_fields: ["id"]
+      key_prefix: "personal_email"
+
+    persistence:
+      targets: ["domain_database", "event_store"]
+      domain_db_path: "data/personal/knowledge.db"
+      table_name: "email_messages"
+      batch_size: 50
+      flush_interval_seconds: 1800
+      conflict_strategy: "upsert"
+      primary_key: "id"
+
+    monitoring:
+      enabled: true
+      health_check_interval_seconds: 1800
+      alert_on_failure: true
+      alert_threshold_error_rate: 0.2
