@@ -1,0 +1,432 @@
+# Bleval Inc — Integration Configurations
+# Version: 3.0.0
+# Each integration defines a complete governed lifecycle
+
+integrations:
+  # ─────────────────────────────────────────────────────────────────────────
+  # SLACK — Team communication integration
+  # ─────────────────────────────────────────────────────────────────────────
+  - integration_id: "bleval-slack"
+    name: "Bleval Slack Integration"
+    description: "Team communication, notifications, and channel monitoring for Bleval Inc"
+    provider_id: "slack"
+    org_id: "bleval"
+    enabled: true
+    schedule: "*/5 * * * *"  # Every 5 minutes
+    tags: ["communication", "notifications", "team"]
+
+    connection:
+      protocol: "https"
+      base_url: "https://slack.com/api"
+      timeout_seconds: 30
+      max_connections: 10
+
+    auth:
+      strategy: "bearer_token"
+      credentials:
+        token_env_var: "SLACK_BOT_TOKEN"
+      auto_refresh: false
+
+    fetch:
+      page_size: 100
+      max_pages: 10
+      pagination_strategy: "cursor"
+      default_filters:
+        types: "public_channel"
+        exclude_archived: true
+      incremental_field: "latest"
+      concurrent_requests: 2
+
+    validation:
+      mode: "strict"
+      required_fields: ["channel_id", "text", "ts"]
+      schema:
+        type: "object"
+        properties:
+          channel_id: {type: "string"}
+          text: {type: "string"}
+          ts: {type: "string"}
+          user: {type: "string"}
+          type: {type: "string"}
+        required: ["channel_id", "text", "ts"]
+
+    normalization:
+      field_mapping:
+        "ts": "timestamp"
+        "user": "user_id"
+        "thread_ts": "thread_timestamp"
+      standardize_timestamps: true
+      timestamp_format: "iso8601"
+      standardize_identifiers: true
+
+    deduplication:
+      strategy: "composite_key"
+      composite_fields: ["channel_id", "ts"]
+      keep_strategy: "last"
+
+    cache:
+      strategy: "tiered"
+      memory_max_size: 5000
+      memory_ttl_seconds: 300
+      persistent_path: "cache/integrations/slack"
+      key_fields: ["channel_id", "ts"]
+      key_prefix: "bleval_slack"
+
+    persistence:
+      targets: ["domain_database", "event_store"]
+      domain_db_path: "data/bleval/communications.db"
+      table_name: "slack_messages"
+      batch_size: 50
+      flush_interval_seconds: 60
+      conflict_strategy: "upsert"
+      primary_key: "channel_id_ts"
+
+    monitoring:
+      enabled: true
+      health_check_interval_seconds: 60
+      alert_on_failure: true
+      alert_on_degraded: true
+      alert_threshold_error_rate: 0.05
+      alert_threshold_latency_p99_ms: 5000
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # GITHUB — Version control integration
+  # ─────────────────────────────────────────────────────────────────────────
+  - integration_id: "bleval-github"
+    name: "Bleval GitHub Integration"
+    description: "Code repository, PRs, issues, and code review for Bleval Inc"
+    provider_id: "github"
+    org_id: "bleval"
+    enabled: true
+    schedule: "*/10 * * * *"  # Every 10 minutes
+    tags: ["development", "version_control", "code_review"]
+
+    connection:
+      protocol: "https"
+      base_url: "https://api.github.com"
+      timeout_seconds: 30
+      max_connections: 10
+
+    auth:
+      strategy: "bearer_token"
+      credentials:
+        token_env_var: "GITHUB_TOKEN"
+      auto_refresh: false
+
+    fetch:
+      page_size: 100
+      max_pages: 20
+      pagination_strategy: "cursor"
+      default_filters:
+        state: "all"
+        sort: "updated"
+      incremental_field: "since"
+      concurrent_requests: 3
+
+    validation:
+      mode: "strict"
+      required_fields: ["id", "repository", "type"]
+      schema:
+        type: "object"
+        properties:
+          id: {type: "integer"}
+          repository: {type: "string"}
+          type: {type: "string", enum: ["pull_request", "issue", "commit", "release"]}
+          title: {type: "string"}
+          state: {type: "string"}
+          created_at: {type: "string", format: "date-time"}
+          updated_at: {type: "string", format: "date-time"}
+        required: ["id", "repository", "type"]
+
+    normalization:
+      field_mapping:
+        "number": "pr_number"
+        "html_url": "url"
+        "merged_at": "merged_timestamp"
+      standardize_timestamps: true
+      timestamp_format: "iso8601"
+
+    deduplication:
+      strategy: "composite_key"
+      composite_fields: ["repository", "type", "id"]
+      keep_strategy: "last"
+
+    cache:
+      strategy: "tiered"
+      memory_max_size: 10000
+      memory_ttl_seconds: 600
+      persistent_path: "cache/integrations/github"
+      key_fields: ["repository", "type", "id"]
+      key_prefix: "bleval_github"
+
+    persistence:
+      targets: ["domain_database", "event_store", "search_index"]
+      domain_db_path: "data/bleval/development.db"
+      table_name: "github_events"
+      batch_size: 100
+      flush_interval_seconds: 120
+      conflict_strategy: "upsert"
+      primary_key: "repository_type_id"
+
+    monitoring:
+      enabled: true
+      health_check_interval_seconds: 120
+      alert_on_failure: true
+      alert_threshold_error_rate: 0.03
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # CRM — Customer relationship management
+  # ─────────────────────────────────────────────────────────────────────────
+  - integration_id: "bleval-crm"
+    name: "Bleval CRM Integration"
+    description: "Lead management, contacts, and opportunities for Bleval Inc"
+    provider_id: "crm"
+    org_id: "bleval"
+    enabled: true
+    schedule: "0 */1 * * *"  # Every hour
+    tags: ["sales", "leads", "customers"]
+
+    connection:
+      protocol: "https"
+      base_url: "https://api.hubspot.com"  # Example - replace with actual CRM
+      timeout_seconds: 30
+      max_connections: 5
+
+    auth:
+      strategy: "bearer_token"
+      credentials:
+        token_env_var: "HUBSPOT_API_KEY"
+      auto_refresh: false
+
+    fetch:
+      page_size: 100
+      max_pages: 50
+      pagination_strategy: "offset"
+      default_filters:
+        properties: "email,firstname,lastname,company,lifecyclestage,hs_lead_status"
+      incremental_field: "lastmodifieddate"
+      concurrent_requests: 1
+
+    validation:
+      mode: "lenient"
+      required_fields: ["email"]
+      schema:
+        type: "object"
+        properties:
+          email: {type: "string", format: "email"}
+          firstname: {type: "string"}
+          lastname: {type: "string"}
+          company: {type: "string"}
+          lifecyclestage: {type: "string"}
+          hs_lead_status: {type: "string"}
+        required: ["email"]
+
+    normalization:
+      field_mapping:
+        "firstname": "first_name"
+        "lastname": "last_name"
+        "lifecyclestage": "lifecycle_stage"
+        "hs_lead_status": "lead_status"
+      standardize_timestamps: true
+      timestamp_format: "iso8601"
+      standardize_identifiers: true
+      standardize_currency: true
+      base_currency: "USD"
+
+    deduplication:
+      strategy: "exact_match"
+      key_fields: ["email"]
+      keep_strategy: "max_field"
+      keep_field: "lastmodifieddate"
+
+    cache:
+      strategy: "tiered"
+      memory_max_size: 20000
+      memory_ttl_seconds: 1800
+      persistent_path: "cache/integrations/crm"
+      key_fields: ["email"]
+      key_prefix: "bleval_crm"
+
+    persistence:
+      targets: ["domain_database", "event_store"]
+      domain_db_path: "data/bleval/sales.db"
+      table_name: "contacts"
+      batch_size: 100
+      flush_interval_seconds: 300
+      conflict_strategy: "upsert"
+      primary_key: "email"
+
+    monitoring:
+      enabled: true
+      health_check_interval_seconds: 300
+      alert_on_failure: true
+      alert_threshold_error_rate: 0.1
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # EMAIL — Outreach and communication
+  # ─────────────────────────────────────────────────────────────────────────
+  - integration_id: "bleval-email"
+    name: "Bleval Email Integration"
+    description: "Outbound email sequences, tracking, and analytics"
+    provider_id: "email"
+    org_id: "bleval"
+    enabled: true
+    schedule: "*/15 * * * *"  # Every 15 minutes
+    tags: ["communication", "outreach", "tracking"]
+
+    connection:
+      protocol: "https"
+      base_url: "https://api.sendgrid.com"  # Example - replace with actual provider
+      timeout_seconds: 30
+      max_connections: 10
+
+    auth:
+      strategy: "api_key"
+      credentials:
+        token_env_var: "SENDGRID_API_KEY"
+      auto_refresh: false
+
+    fetch:
+      page_size: 500
+      max_pages: 10
+      pagination_strategy: "offset"
+      default_filters:
+        categories: "outreach,transactional"
+      incremental_field: "last_event_time"
+      concurrent_requests: 2
+
+    validation:
+      mode: "strict"
+      required_fields: ["message_id", "to_email", "subject", "status"]
+      schema:
+        type: "object"
+        properties:
+          message_id: {type: "string"}
+          to_email: {type: "string", format: "email"}
+          from_email: {type: "string", format: "email"}
+          subject: {type: "string"}
+          status: {type: "string", enum: ["sent", "delivered", "opened", "clicked", "bounced", "spam"]}
+          timestamp: {type: "string", format: "date-time"}
+        required: ["message_id", "to_email", "subject", "status"]
+
+    normalization:
+      field_mapping:
+        "sg_message_id": "message_id"
+        "email": "to_email"
+        "event": "status"
+      standardize_timestamps: true
+      timestamp_format: "iso8601"
+      standardize_identifiers: true
+
+    deduplication:
+      strategy: "exact_match"
+      key_fields: ["message_id", "to_email", "status"]
+      keep_strategy: "last"
+
+    cache:
+      strategy: "tiered"
+      memory_max_size: 10000
+      memory_ttl_seconds: 1800
+      persistent_path: "cache/integrations/email"
+      key_fields: ["message_id", "to_email"]
+      key_prefix: "bleval_email"
+
+    persistence:
+      targets: ["domain_database", "event_store", "time_series"]
+      domain_db_path: "data/bleval/communications.db"
+      table_name: "email_events"
+      batch_size: 200
+      flush_interval_seconds: 60
+      conflict_strategy: "upsert"
+      primary_key: "message_id_to_email_status"
+
+    monitoring:
+      enabled: true
+      health_check_interval_seconds: 180
+      alert_on_failure: true
+      alert_on_rate_limited: true
+      alert_threshold_error_rate: 0.05
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # CALENDLY — Scheduling
+  # ─────────────────────────────────────────────────────────────────────────
+  - integration_id: "bleval-calendly"
+    name: "Bleval Calendly Integration"
+    description: "Meeting scheduling, availability, and calendar sync"
+    provider_id: "calendly"
+    org_id: "bleval"
+    enabled: true
+    schedule: "0 */2 * * *"  # Every 2 hours
+    tags: ["scheduling", "calendar", "meetings"]
+
+    connection:
+      protocol: "https"
+      base_url: "https://api.calendly.com"
+      timeout_seconds: 30
+      max_connections: 5
+
+    auth:
+      strategy: "bearer_token"
+      credentials:
+        token_env_var: "CALENDLY_API_TOKEN"
+      auto_refresh: false
+
+    fetch:
+      page_size: 100
+      max_pages: 10
+      pagination_strategy: "cursor"
+      default_filters:
+        status: "active"
+      incremental_field: "created_at"
+      concurrent_requests: 1
+
+    validation:
+      mode: "lenient"
+      required_fields: ["uuid", "name", "event_type"]
+      schema:
+        type: "object"
+        properties:
+          uuid: {type: "string"}
+          name: {type: "string"}
+          event_type: {type: "string"}
+          start_time: {type: "string", format: "date-time"}
+          end_time: {type: "string", format: "date-time"}
+          invitee_email: {type: "string", format: "email"}
+          status: {type: "string"}
+        required: ["uuid", "name"]
+
+    normalization:
+      field_mapping:
+        "invitee_email": "email"
+        "event_type_uuid": "event_type_id"
+      standardize_timestamps: true
+      timestamp_format: "iso8601"
+      standardize_identifiers: true
+
+    deduplication:
+      strategy: "composite_key"
+      composite_fields: ["uuid", "invitee_email"]
+      keep_strategy: "last"
+
+    cache:
+      strategy: "tiered"
+      memory_max_size: 5000
+      memory_ttl_seconds: 3600
+      persistent_path: "cache/integrations/calendly"
+      key_fields: ["uuid"]
+      key_prefix: "bleval_calendly"
+
+    persistence:
+      targets: ["domain_database", "event_store"]
+      domain_db_path: "data/bleval/sales.db"
+      table_name: "scheduled_meetings"
+      batch_size: 50
+      flush_interval_seconds: 300
+      conflict_strategy: "upsert"
+      primary_key: "uuid"
+
+    monitoring:
+      enabled: true
+      health_check_interval_seconds: 600
+      alert_on_failure: true
+      alert_threshold_error_rate: 0.1

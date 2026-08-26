@@ -1,13 +1,13 @@
 === Executive Cycle Report ===
 Executive: valta_prime
-Organization: hov
+Organization: house_of_valta
 Cycle: daily_report
-Timestamp: 2026-08-26T14:24:05.713152+00:00
+Timestamp: 2026-08-23T12:20:14.312999+00:00
 
 --- Observations ---
-org_state: {'org_id': 'hov', 'departments': [{'id': 'brand', 'agents': 0}, {'id': 'creative', 'agents': 0}, {'id': 'research', 'agents': 0}, {'id': 'content', 'agents': 0}, {'id': 'growth', 'agents': 0}, {'id': 'operations', 'agents': 0}], 'detail_loaded': True}
-memory_topics: ['architecture.md', 'glossary.md', 'brand_identity', 'mission', 'values', 'founder-report']
-active_workflows: 0
+org_state: {'org_id': 'house_of_valta', 'departments': []}
+memory_topics: ['architecture.md', 'glossary.md', 'founder-report']
+active_workflows: 468
 completed_work_this_cycle: 5
 
 --- Priorities ---
@@ -19,10 +19,10 @@ completed_work_this_cycle: 5
 Launched: 1
 Completed this cycle: 5
   - sales/prospect-research: unknown
-  - development/feature-development: unknown
   - sales/prospect-research: unknown
   - sales/prospect-research: unknown
   - sales/prospect-research: unknown
+  - development/code-review: unknown
 
 === REPORT TO FOUNDER ===
 Summary: valta_prime completed daily_report cycle.

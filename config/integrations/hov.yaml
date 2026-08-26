@@ -1,0 +1,147 @@
+# House of Valta (HOV) — Integration Configurations
+# Version: 3.0.0
+
+integrations:
+  # ─────────────────────────────────────────────────────────────────────────
+  # SLACK — Brand/Creative team communication
+  # ─────────────────────────────────────────────────────────────────────────
+  - integration_id: "hov-slack"
+    name: "HOV Slack Integration"
+    description: "Brand strategy, creative direction, and growth team communication"
+    provider_id: "slack"
+    org_id: "hov"
+    enabled: true
+    schedule: "*/10 * * * *"  # Every 10 minutes
+    tags: ["communication", "brand", "creative"]
+
+    connection:
+      protocol: "https"
+      base_url: "https://slack.com/api"
+      timeout_seconds: 30
+      max_connections: 10
+
+    auth:
+      strategy: "bearer_token"
+      credentials:
+        token_env_var: "HOV_SLACK_BOT_TOKEN"
+      auto_refresh: false
+
+    fetch:
+      page_size: 100
+      max_pages: 10
+      pagination_strategy: "cursor"
+      default_filters:
+        types: "public_channel"
+        exclude_archived: true
+      incremental_field: "latest"
+      concurrent_requests: 2
+
+    validation:
+      mode: "lenient"
+      required_fields: ["channel_id", "text", "ts"]
+
+    normalization:
+      field_mapping:
+        "ts": "timestamp"
+        "user": "user_id"
+      standardize_timestamps: true
+      timestamp_format: "iso8601"
+
+    deduplication:
+      strategy: "composite_key"
+      composite_fields: ["channel_id", "ts"]
+      keep_strategy: "last"
+
+    cache:
+      strategy: "tiered"
+      memory_max_size: 5000
+      memory_ttl_seconds: 600
+      persistent_path: "cache/integrations/hov_slack"
+      key_fields: ["channel_id", "ts"]
+      key_prefix: "hov_slack"
+
+    persistence:
+      targets: ["domain_database", "event_store"]
+      domain_db_path: "data/hov/communications.db"
+      table_name: "slack_messages"
+      batch_size: 50
+      flush_interval_seconds: 120
+      conflict_strategy: "upsert"
+      primary_key: "channel_id_ts"
+
+    monitoring:
+      enabled: true
+      health_check_interval_seconds: 120
+      alert_on_failure: true
+      alert_threshold_error_rate: 0.1
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # CALENDLY — Creative/Strategy meeting scheduling
+  # ─────────────────────────────────────────────────────────────────────────
+  - integration_id: "hov-calendly"
+    name: "HOV Calendly Integration"
+    description: "Client meetings, creative reviews, and strategy sessions"
+    provider_id: "calendly"
+    org_id: "hov"
+    enabled: true
+    schedule: "0 */3 * * *"  # Every 3 hours
+    tags: ["scheduling", "client_meetings", "creative_reviews"]
+
+    connection:
+      protocol: "https"
+      base_url: "https://api.calendly.com"
+      timeout_seconds: 30
+      max_connections: 5
+
+    auth:
+      strategy: "bearer_token"
+      credentials:
+        token_env_var: "HOV_CALENDLY_API_TOKEN"
+      auto_refresh: false
+
+    fetch:
+      page_size: 100
+      max_pages: 10
+      pagination_strategy: "cursor"
+      default_filters:
+        status: "active"
+      incremental_field: "created_at"
+      concurrent_requests: 1
+
+    validation:
+      mode: "lenient"
+      required_fields: ["uuid", "name"]
+
+    normalization:
+      field_mapping:
+        "invitee_email": "email"
+      standardize_timestamps: true
+      timestamp_format: "iso8601"
+
+    deduplication:
+      strategy: "composite_key"
+      composite_fields: ["uuid", "invitee_email"]
+      keep_strategy: "last"
+
+    cache:
+      strategy: "tiered"
+      memory_max_size: 3000
+      memory_ttl_seconds: 7200
+      persistent_path: "cache/integrations/hov_calendly"
+      key_fields: ["uuid"]
+      key_prefix: "hov_calendly"
+
+    persistence:
+      targets: ["domain_database", "event_store"]
+      domain_db_path: "data/hov/operations.db"
+      table_name: "scheduled_meetings"
+      batch_size: 50
+      flush_interval_seconds: 600
+      conflict_strategy: "upsert"
+      primary_key: "uuid"
+
+    monitoring:
+      enabled: true
+      health_check_interval_seconds: 600
+      alert_on_failure: true
+      alert_threshold_error_rate: 0.15

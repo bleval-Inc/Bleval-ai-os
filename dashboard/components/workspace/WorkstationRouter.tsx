@@ -3,12 +3,11 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useAxiomStore, type WorkstationId } from "../../lib/store/axiom-store";
 import AXIOMWS from "./workstations/AXIOMWS";
-import BLEVALWS from "./workstations/BLEVALWS";
+import BLEVALINCWorkstation from "./workstations/bleval/BLEVALINCWorkstation";
 import VALTAWS from "./workstations/VALTAWS";
 import PERSONALWS from "./workstations/PERSONALWS";
 import BoardroomWS from "./workstations/BoardroomWS";
 import SystemWS from "./workstations/SystemWS";
-import SettingsWS from "./workstations/SettingsWS";
 
 const pageVariants = {
   initial: { opacity: 0, x: 16 },
@@ -16,14 +15,13 @@ const pageVariants = {
   exit: { opacity: 0, x: -16, transition: { duration: 0.15, ease: "easeIn" as const } },
 };
 
-const WORKSTATION_MAP: Record<WorkstationId, React.FC> = {
+const WORKSTATION_MAP: Partial<Record<WorkstationId, React.FC>> = {
   axiom: AXIOMWS,
-  bleval: BLEVALWS,
+  bleval: BLEVALINCWorkstation,
   valta: VALTAWS,
   personal: PERSONALWS,
   boardroom: BoardroomWS,
   system: SystemWS,
-  settings: SettingsWS,
 };
 
 export default function WorkstationRouter() {
