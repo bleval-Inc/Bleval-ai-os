@@ -121,8 +121,6 @@ function selectBestVoice(voices: SpeechSynthesisVoice[]): SpeechSynthesisVoice |
 
 // State
 
-let currentUtterance: SpeechSynthesisUtterance | null = null;
-
 // Global callbacks for UI state
 let _onSpeakingStarted: (() => void) | null = null;
 let _onSpeakingEnded: (() => void) | null = null;
@@ -136,8 +134,7 @@ export function setSpeakingCallbacks(
 }
 
 export function isAxiomSpeaking(): boolean {
-  if (typeof window !== "undefined" && window.speechSynthesis.speaking) return true;
-  return false;
+  return typeof window !== "undefined" && window.speechSynthesis.speaking;
 }
 
 // Speak
@@ -162,12 +159,13 @@ export async function speak(
   // Try ElevenLabs if configured (purely optional upgrade)
   if (getElevenLabsKey()) {
     try {
-      const { generateSpeech, playAudio } = await import("./elevenlabs");
+      const elevenLabsModule = await import("./elevenlabs");
+      const { generateSpeech, playAudio } = elevenLabsModule;
       const audioData = await generateSpeech(text);
       if (audioData) {
         const audio = playAudio(audioData, options?.onStart, options?.onEnd, options?.onError);
         if (audio) {
-          (await import("./elevenlabs")).setCurrentAudio(audio);
+          elevenLabsModule.setCurrentAudio(audio);
           return;
         }
       }
@@ -207,21 +205,19 @@ export async function speak(
     options?.onError?.();
   };
 
-  currentUtterance = utterance;
   window.speechSynthesis.speak(utterance);
 }
 
 // Stop
 
-export function stopSpeaking(): void {
+export async function stopSpeaking(): Promise<void> {
   if (typeof window !== "undefined") {
     window.speechSynthesis.cancel();
   }
-  currentUtterance = null;
 
   // Also stop ElevenLabs if running
   try {
-    const { stopElevenLabs } = require("./elevenlabs");
+    const { stopElevenLabs } = await import("./elevenlabs");
     stopElevenLabs();
   } catch {
     // ElevenLabs not available — fine
@@ -232,10 +228,11 @@ export function stopSpeaking(): void {
 
 let _elevenLabsKey: string | null = null;
 
-export function setElevenLabsKey(key: string) {
+export async function setElevenLabsKey(key: string): Promise<void> {
   _elevenLabsKey = key;
   try {
-    require("./elevenlabs").setElevenLabsKey(key);
+    const { setElevenLabsKey: setElevenLabsKeyFn } = await import("./elevenlabs");
+    setElevenLabsKeyFn(key);
   } catch {
     // Module not loaded yet
   }

@@ -116,8 +116,8 @@ class MarketIntelligenceEngine:
         self.integration_layer = integration_layer
         # Support both parameter names for backward compatibility
         self.repository = repository or market_repo
-        self.config = config or IntelligenceConfig()
-        self.logger = logger or RuntimeLogger()
+        self.config = config if config is not None else IntelligenceConfig()
+        self.logger = logger if logger is not None else RuntimeLogger()
 
         # Initialize components
         self._setup_providers()

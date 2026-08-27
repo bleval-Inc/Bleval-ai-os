@@ -96,15 +96,19 @@ const AVAILABILITY_CONFIG: Record<FounderAvailability, { label: string; color: s
 // Holographic Weather Icons
 function HolographicWeatherIcon({ condition, temp }: { condition: string; temp: string }) {
   const [time, setTime] = useState(0);
+  const requestIdRef = useRef<number | null>(null);
 
   useEffect(() => {
-    const requestIdRef = useRef<number>();
     const animate = (t: number) => {
       setTime(t / 1000);
       requestIdRef.current = requestAnimationFrame(animate);
     };
     requestIdRef.current = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(requestIdRef.current);
+    return () => {
+      if (requestIdRef.current !== null) {
+        cancelAnimationFrame(requestIdRef.current);
+      }
+    };
   }, []);
 
   const c = condition.toLowerCase();
@@ -256,15 +260,19 @@ function HolographicWeatherIcon({ condition, temp }: { condition: string; temp: 
 // Holographic Date/Time
 function HolographicDateTime({ date, time }: { date: string; time: string }) {
   const [t, setT] = useState(0);
+  const requestIdRef = useRef<number | null>(null);
 
   useEffect(() => {
-    const requestIdRef = useRef<number>();
     const animate = (ts: number) => {
       setT(ts / 1000);
       requestIdRef.current = requestAnimationFrame(animate);
     };
     requestIdRef.current = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(requestIdRef.current);
+    return () => {
+      if (requestIdRef.current !== null) {
+        cancelAnimationFrame(requestIdRef.current);
+      }
+    };
   }, []);
 
   const pulse = Math.sin(t * 1.5) * 0.08 + 1;
