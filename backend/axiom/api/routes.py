@@ -12,6 +12,8 @@ from pydantic import BaseModel
 from axiom.models.workflows import ApprovalStatus, WorkflowStatus
 from axiom.models.executive import MeetingType
 from axiom.runtime.communication import UrgencyLevel, FounderAvailability
+from axiom.api.routes_intelligence import router as intelligence_router
+from axiom.api.routes_fundamental_reporting import router as fundamental_reporting_router
 
 # Router — mounted in main.py
 router = APIRouter(prefix="/api/v1")
@@ -2308,3 +2310,8 @@ async def list_capability_mappings():
             for m in capability_mappings
         ]
     return {"mappings": result, "total_capabilities": len(result)}
+
+
+# Include intelligence routes
+router.include_router(intelligence_router)
+router.include_router(fundamental_reporting_router)

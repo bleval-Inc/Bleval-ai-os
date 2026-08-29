@@ -188,7 +188,7 @@ interface AxiomState {
   // Speaker actions
   setActiveSpeaker: (speaker: import("../api-types").SpeakerId | null) => void;
 
-  addNotification: (n: Notification) => void;
+  addNotification: (n: Notification | EnhancedNotification) => void;
   dismissNotification: (id: string) => void;
   setNotificationPanelOpen: (open: boolean) => void;
   toggleNotificationPanel: () => void;

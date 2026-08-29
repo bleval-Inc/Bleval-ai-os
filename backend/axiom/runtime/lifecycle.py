@@ -29,9 +29,11 @@ from axiom.engine.event import EventEngine
 from axiom.engine.executive import ExecutiveEngine
 from axiom.engine.intelligence import IntelligenceEngine
 from axiom.engine.learning import LearningEngine
+from axiom.engine.market_intelligence import MarketIntelligenceEngine
 from axiom.engine.memory import MemoryEngine
 from axiom.engine.tool import ToolEngine
 from axiom.engine.workflow import WorkflowEngine
+from axiom.executive.fundamental_reporting import FundamentalReportingEngine
 from axiom.runtime.approval import ApprovalManager
 from axiom.runtime.board_room import BoardRoom
 from axiom.runtime.communication import CommunicationCoordinator
@@ -109,6 +111,9 @@ class AxiomRuntime:
         self.workflow: Optional[WorkflowEngine] = None
         self.executive: Optional[ExecutiveEngine] = None
         self.intelligence: Optional[IntelligenceEngine] = None
+        self.market_intelligence: Optional[MarketIntelligenceEngine] = None
+        self.fundamental_reporting: Optional[FundamentalReportingEngine] = None
+        self.data_manager = DatabaseManager()
         self.learning: Optional[LearningEngine] = None
 
         # Runtime subsystems
@@ -187,6 +192,17 @@ class AxiomRuntime:
         self.intelligence = IntelligenceEngine(
             memory=self.memory,
             tool=self.tool,
+        )
+        # Market intelligence engine
+        self.market_intelligence = MarketIntelligenceEngine(
+            data_manager=self.data_manager,
+            runtime=self,
+        )
+        # Fundamental reporting engine
+        self.fundamental_reporting = FundamentalReportingEngine(
+            data_manager=self.data_manager,
+            market_intelligence=self.market_intelligence,
+            executive_intelligence=self.intelligence,  # Temporary, will be updated after executive intelligence is created
         )
 
         # ── PHASE H: Provider Registry — Platform Integrations ─────────────
@@ -343,6 +359,10 @@ class AxiomRuntime:
             learning_engine=self.learning,
             runtime=self,
         )
+
+        # Update fundamental reporting engine with the correct executive intelligence reference
+        if self.fundamental_reporting:
+            self.fundamental_reporting.executive_intelligence = self.executive_intelligence
 
         self.executive_greeter = ExecutiveGreeter(runtime=self)
 
@@ -539,8 +559,17 @@ class AxiomRuntime:
 
         # ── PHASE 8: Initialize Executive Integration ────────────────────────
 
-        # Initialize database manager
-        database_manager = DatabaseManager()
+        # Market intelligence engine
+        self.market_intelligence = MarketIntelligenceEngine(
+            data_manager=self.data_manager,
+            runtime=self,
+        )
+        # Fundamental reporting engine
+        self.fundamental_reporting = FundamentalReportingEngine(
+            data_manager=self.data_manager,
+            market_intelligence=self.market_intelligence,
+            executive_intelligence=self.intelligence,  # Temporary, will be updated after executive intelligence is created
+        )
 
         # Initialize Executive Integration with all system components
         self.executive_integration = ExecutiveIntegration(
@@ -553,7 +582,7 @@ class AxiomRuntime:
             axiom_core=self.axiom,
             resource_orchestrator=self.runtime_orchestrator,
             integration_layer=self.integration_layer,
-            database_manager=database_manager,
+            database_manager=self.data_manager,
             intelligence_engine=self.intelligence,
         )
 
@@ -986,6 +1015,8 @@ class AxiomRuntime:
                 "workflow": self.workflow is not None,
                 "executive": self.executive is not None,
                 "intelligence": self.intelligence is not None,
+                "market_intelligence": self.market_intelligence is not None,
+                "fundamental_reporting": self.fundamental_reporting is not None,
                 "scheduler": self.scheduler is not None,
                 "dispatcher": self.dispatcher is not None,
                 "monitor": self.monitor is not None,
@@ -1038,6 +1069,24 @@ class AxiomRuntime:
         authority_status = self.founder_authority.get_status() if self.founder_authority else {}
         gateway_summary = self.founder_gateway.get_summary() if self.founder_gateway else {}
 
+        # Fundamental Reporting summaries
+        fund_report_status = {}
+        if self.fundamental_reporting:
+            fund_report_status = {
+                "engine": "operational",
+                "cached_reports": len(self.fundamental_reporting._reports_cache),
+                "last_report_times": {
+                    session.value: time.isoformat()
+                    for session, time in self.fundamental_reporting._last_report_times.items()
+                }
+            }
+
+        # Market Intelligence summaries
+        market_intel_status = {}
+        if self.market_intelligence:
+            # Can add market intelligence status here
+            pass
+
         # PHASE E summaries
         ei_status = {}
         if self.executive_intelligence:
@@ -1079,6 +1128,14 @@ class AxiomRuntime:
                 "qc_manager": qc_summary,
                 "founder_authority": authority_status,
                 "founder_gateway": gateway_summary,
+            },
+            # Fundamental Reporting Status
+            "fundamental_reporting": {
+                "engine": fund_report_status,
+            },
+            # Market Intelligence Status
+            "market_intelligence": {
+                "engine": market_intel_status,
             },
             # PHASE E Status
             "phase_e": {

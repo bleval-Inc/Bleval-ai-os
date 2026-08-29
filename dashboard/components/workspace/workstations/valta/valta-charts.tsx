@@ -57,6 +57,27 @@ function formatMoney(n: number) {
 // ── Primary equity / profit-growth chart ────────────────────────────────────
 export function EquityChart({ series, height = 260 }: { series: EquityPoint[]; height?: number }) {
   const width = 760;
+  if (series.length === 0) {
+    return (
+      <svg
+        viewBox={`0 0 ${width} ${height}`}
+        preserveAspectRatio="none"
+        className="w-full h-full"
+        role="img"
+        aria-label="No equity data available"
+      >
+        <text x={width / 2} y={height / 2} textAnchor="middle" fill="rgba(240,241,243,0.45)" fontSize="12" fontFamily="var(--axiom-font-mono)">
+          No equity data available
+        </text>
+      </svg>
+    );
+  }
+
+  return <EquityChartWithData series={series} height={height} />;
+}
+
+function EquityChartWithData({ series, height = 260 }: { series: EquityPoint[]; height?: number }) {
+  const width = 760;
   const values = series.map((p) => p.equity);
   const min = Math.min(...values);
   const max = Math.max(...values);

@@ -693,7 +693,7 @@ export default function VoiceEngine() {
     };
 
     ptt.onend = () => {
-      setPttActive(false);
+      // When recognizer ends we just clear the timer; we keep pttActive as‑is
       if (silenceTimer) clearTimeout(silenceTimer);
       if (!isAwakeRef.current && voiceActiveRef.current) startWakeListener();
     };
@@ -882,13 +882,25 @@ export default function VoiceEngine() {
         {/* Microphone button */}
         <button
           onClick={() => {
-            if (pttActive || isAwake) return;
+            // If we are already talking, stop everything and reset state
+            if (pttActive) {
+              // Stop any running recognizer
+              if (wakeRecognitionRef.current) {
+                try { wakeRecognitionRef.current.stop(); } catch {}
+              }
+              // Reset all active flags
+              setPttActive(false);
+              setIsListening(false);
+              setIsAwake(false);
+              isAwakeRef.current = false;
+              if (silenceTimer) clearTimeout(silenceTimer);
+              return;
+            }
+            // Otherwise start a new push‑to‑talk session
             if (!voiceActive) {
               setVoiceActive(true);
-              setTimeout(() => startPushToTalk(), 500);
-            } else {
-              startPushToTalk();
             }
+            startPushToTalk();
           }}
           onMouseEnter={() => setShowTooltip(true)}
           onMouseLeave={() => setShowTooltip(false)}

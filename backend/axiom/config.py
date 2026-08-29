@@ -26,6 +26,9 @@ class AxiomSettings:
         self.openai_api_key: Optional[str] = os.getenv("OPENAI_API_KEY")
         self.anthropic_api_key: Optional[str] = os.getenv("ANTHROPIC_API_KEY")
 
+        # Neon Postgres (source of truth for MT5 trading data)
+        self.neon_database_url: Optional[str] = os.getenv("NEON_DATABASE_URL")
+
         self.state_dir: Path = Path(
             os.getenv("AXIOM_STATE_DIR", str(REPO_ROOT / "backend" / "runtime" / "state"))
         )
