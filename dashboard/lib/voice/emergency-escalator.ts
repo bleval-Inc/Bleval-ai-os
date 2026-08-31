@@ -12,6 +12,7 @@
 import { useAxiomStore } from "../store/axiom-store";
 import { requestSpeak, type SpeechUrgency } from "./speech-arbiter";
 import type { SpeakerId } from "../api-types";
+import { system } from "@/lib/api";  // Fixed import path
 
 // Types
 
@@ -181,7 +182,6 @@ export function startSystemHealthPolling(intervalMs = 30000): () => void {
 
   _systemPolling = setInterval(async () => {
     try {
-      const { system } = await import("../api");
       const health = await system.health();
       if (health && health.overall === "unhealthy" && health.unhealthy > 0) {
         // Only raise if not already active for the same symptom

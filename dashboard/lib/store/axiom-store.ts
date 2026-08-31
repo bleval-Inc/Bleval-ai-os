@@ -99,15 +99,16 @@ interface AxiomState {
   currentSpeaker: string | null;
 
   // Voice
-  voiceActive: boolean;
-  isListening: boolean;
-  isSpeaking: boolean;
-  isAwake: boolean;
-  pendingVoiceCommand: string | null;
-  voiceWakeTimeout: number | null;
-  listeningExecutive: string | null;  // "axiom" | "jenson" | "valta_prime" | "yamako" | null
+    voiceActive: boolean;
+    isListening: boolean;
+    isSpeaking: boolean;
+    isAwake: boolean;
+    pendingVoiceCommand: string | null;
+    voiceWakeTimeout: number | null;
+    listeningExecutive: string | null;  // "axiom" | "jenson" | "valta_prime" | "yamako" | null
+    _pushToTalkCallback?: () => void;
 
-  // Notifications
+    // Notifications
   notifications: EnhancedNotification[];
   notificationPanelOpen: boolean;
 
@@ -167,14 +168,16 @@ interface AxiomState {
   setExecutiveMeetingActive: (active: boolean) => void;
   setCurrentSpeaker: (speaker: string | null) => void;
   setVoiceActive: (active: boolean) => void;
-  setIsListening: (listening: boolean) => void;
-  setIsSpeaking: (speaking: boolean) => void;
-  setIsAwake: (awake: boolean) => void;
-  setPendingVoiceCommand: (cmd: string | null) => void;
-  setVoiceWakeTimeout: (id: number | null) => void;
-  setListeningExecutive: (exec: string | null) => void;
+    setIsListening: (listening: boolean) => void;
+    setIsSpeaking: (speaking: boolean) => void;
+    setIsAwake: (awake: boolean) => void;
+    setPendingVoiceCommand: (cmd: string | null) => void;
+    setVoiceWakeTimeout: (id: number | null) => void;
+    setListeningExecutive: (exec: string | null) => void;
+    triggerPushToTalk: () => void;
+    _registerPushToTalkCallback: (callback: () => void) => void;
 
-  // Founder availability actions
+    // Founder availability actions
   setFounderAvailability: (availability: FounderAvailability) => void;
   setFounderManualOverride: (override: string | null) => void;
   setFounderLastActive: (timestamp: number) => void;
@@ -327,15 +330,26 @@ export const useAxiomStore = create<AxiomState>((set) => ({
   setSelectedExecutive: (id) => set({ selectedExecutive: id }),
   setExecutiveMeetingActive: (active) => set({ executiveMeetingActive: active }),
   setCurrentSpeaker: (speaker) => set({ currentSpeaker: speaker }),
-  setVoiceActive: (active) => set({ voiceActive: active }),
-  setIsListening: (listening) => set({ isListening: listening }),
-  setIsSpeaking: (speaking) => set({ isSpeaking: speaking }),
-  setIsAwake: (awake) => set({ isAwake: awake }),
-  setPendingVoiceCommand: (cmd) => set({ pendingVoiceCommand: cmd }),
-  setVoiceWakeTimeout: (id) => set({ voiceWakeTimeout: id }),
-  setListeningExecutive: (exec) => set({ listeningExecutive: exec }),
+    setVoiceActive: (active) => set({ voiceActive: active }),
+    setIsListening: (listening) => set({ isListening: listening }),
+    setIsSpeaking: (speaking) => set({ isSpeaking: speaking }),
+    setIsAwake: (awake) => set({ isAwake: awake }),
+    setPendingVoiceCommand: (cmd) => set({ pendingVoiceCommand: cmd }),
+    setVoiceWakeTimeout: (id) => set({ voiceWakeTimeout: id }),
+    setListeningExecutive: (exec) => set({ listeningExecutive: exec }),
+    triggerPushToTalk: () => {
+      // Get the current state and call any registered callback
+      const state = useAxiomStore.getState();
+      state._pushToTalkCallback?.();
+    },
+    _registerPushToTalkCallback: (callback: () => void) => {
+      // Store the callback in the state (using a non-persisted property)
+      // This is a workaround since we can't directly call component methods from the store
+      const state = useAxiomStore.getState();
+      (state as any)._pushToTalkCallback = callback;
+    },
 
-  // Founder availability actions
+    // Founder availability actions
   setFounderAvailability: (availability) => set({ founderAvailability: availability }),
   setFounderManualOverride: (override) => set({ founderManualOverride: override }),
   setFounderLastActive: (timestamp) => set({ founderLastActive: timestamp }),

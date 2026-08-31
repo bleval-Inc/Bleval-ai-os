@@ -133,7 +133,7 @@ class ApprovalResponse(BaseModel):
 async def get_status():
     """Return runtime status."""
     rt = _get_runtime()
-    return rt.get_summary()
+    return rt.get_status()
 
 
 @router.get("/health")
@@ -1588,6 +1588,7 @@ class VoiceCommandRequest(BaseModel):
     wake_word: str
     confidence: float = 1.0
     timestamp: int = 0
+    conversation_history: List[Dict[str, str]] = []  # For contextual follow-up
 
 
 class VoiceCommandResponse(BaseModel):
@@ -1638,10 +1639,10 @@ async def _process_axiom_command(rt: Any, request: VoiceCommandRequest) -> Voice
             action_taken="error",
         )
 
-    # Use AXIOM to process the command
+    # Use AXIOM to process the command with conversation history
     result = await rt.axiom.chat(
         message=request.transcript,
-        conversation_history=[],
+        conversation_history=request.conversation_history,
     )
 
     return VoiceCommandResponse(
@@ -1977,9 +1978,9 @@ async def voice_websocket_endpoint(websocket: WebSocket, client_id: str):
     try:
         # Send welcome message
         await websocket.send_text(json.dumps({
-            "type": "status",
-            "message": f"Connected as {client_id}",
-            "is_listening": False,
+            "event": "connected",
+            "client_id": client_id,
+            "message": "Connected to Axiom Voice Relay",
         }))
 
         while True:
@@ -2002,8 +2003,9 @@ async def voice_websocket_endpoint(websocket: WebSocket, client_id: str):
 
                     if exec_id not in valid_executives:
                         await websocket.send_text(json.dumps({
-                            "type": "error",
-                            "message": f"Invalid executive: {exec_id}",
+                            "event": "error",
+                            "entity": exec_id,
+                            "data": {"message": f"Invalid executive: {exec_id}"},
                         }))
                         continue
 
@@ -2026,18 +2028,22 @@ async def voice_websocket_endpoint(websocket: WebSocket, client_id: str):
 
                         # Send response back
                         await websocket.send_text(json.dumps({
-                            "type": "response",
-                            "executive": exec_id,
-                            "response": result.response,
-                            "action_taken": result.action_taken,
-                            "workflow_triggered": result.workflow_triggered,
-                            "requires_approval": result.requires_approval,
-                            "approval_id": result.approval_id,
+                            "event": "executive_speaking",
+                            "entity": exec_id,
+                            "data": {
+                                "spoken_text": result.response,
+                                "action_taken": result.action_taken,
+                                "workflow_triggered": result.workflow_triggered,
+                                "requires_approval": result.requires_approval,
+                                "approval_id": result.approval_id,
+                                "target_workstation": "os",  # Will be determined by router
+                            },
                         }))
                     except Exception as e:
                         await websocket.send_text(json.dumps({
-                            "type": "error",
-                            "message": f"Command processing failed: {str(e)}",
+                            "event": "error",
+                            "entity": exec_id,
+                            "data": {"message": f"Command processing failed: {str(e)}"},
                         }))
 
                 elif message_type == "ping":
@@ -2049,10 +2055,12 @@ async def voice_websocket_endpoint(websocket: WebSocket, client_id: str):
                     text = message.get("text", "")
                     urgency = message.get("urgency", "normal")
                     await voice_connection_manager.broadcast({
-                        "type": "speak",
-                        "executive": exec_name,
-                        "text": text,
-                        "urgency": urgency,
+                        "event": "executive_speaking",
+                        "entity": exec_name,
+                        "data": {
+                            "spoken_text": text,
+                            "urgency": urgency,
+                        },
                     })
 
                 elif message_type == "status":
@@ -2060,15 +2068,24 @@ async def voice_websocket_endpoint(websocket: WebSocket, client_id: str):
                     exec_name = message.get("executive", "")
                     is_listening = message.get("is_listening", False)
                     await voice_connection_manager.broadcast({
-                        "type": "status",
-                        "executive": exec_name,
-                        "is_listening": is_listening,
+                        "event": "status",
+                        "entity": exec_name,
+                        "data": {"is_listening": is_listening},
+                    })
+
+                elif message_type == "push_to_talk":
+                    # Handle push-to-talk trigger from frontend
+                    exec_name = message.get("entity", "axiom")
+                    await voice_connection_manager.broadcast({
+                        "event": "listening_started",
+                        "entity": exec_name,
+                        "data": {"source": "push_to_talk"},
                     })
 
             except json.JSONDecodeError:
                 await websocket.send_text(json.dumps({
-                    "type": "error",
-                    "message": "Invalid JSON",
+                    "event": "error",
+                    "data": {"message": "Invalid JSON"},
                 }))
 
     except WebSocketDisconnect:

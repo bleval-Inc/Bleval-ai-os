@@ -23,6 +23,10 @@ function buildSmooth(
   padY: number,
   padBottom: number,
 ): { d: string; pts: Pt[]; min: number; max: number } {
+  // Handle empty array
+  if (series.length === 0) {
+    return { d: "", pts: [], min: 0, max: 0 };
+  }
   const n = series.length;
   const max = Math.max(...series);
   const min = Math.min(...series);

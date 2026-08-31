@@ -94,37 +94,7 @@ const SPEAKER_CONFIG: Record<SpeakerId, { label: string; color: string; avatar: 
   yamako: { label: "Yamako", color: "bg-violet-400", avatar: "Y" },
 };
 
-// Helper to detect which executive is being addressed
-function detectExecutive(transcript: string): ExecutiveId | null {
-  const lower = transcript.toLowerCase();
-  for (const [execId, config] of Object.entries(EXECUTIVE_CONFIG)) {
-    for (const wakeWord of config.wakeWords) {
-      if (lower.includes(wakeWord.toLowerCase())) {
-        return execId as ExecutiveId;
-      }
-    }
-  }
-  return null;
-}
-
-// Wake an executive by name
-async function wakeExecutive(execId: ExecutiveId) {
-  const config = EXECUTIVE_CONFIG[execId];
-  console.log(`[Voice] Waking ${config.label} (${execId})`);
-
-  // Use the speech arbiter to have the executive respond
-  const greetings: Record<ExecutiveId, string> = {
-    axiom: "Axiom online. How can I help?",
-    jenson: "Jenson here. Operations standing by.",
-    valta_prime: "Valta Prime active. Markets monitored.",
-    yamako: "Yamako ready. Personal ops at your service.",
-  };
-
-  await requestSpeak(execId, greetings[execId] || `${config.shortName} online.`, "normal");
-}
-
-// VoiceEngine
-
+// VoiceEngine - Pure reactive frontend driven by backend WebSocket events
 export default function VoiceEngine() {
   const store = useAxiomStore();
 
@@ -148,6 +118,8 @@ export default function VoiceEngine() {
     emergencyLevel,
     clearEmergency,
     listeningExecutive,
+    triggerPushToTalk,
+    _registerPushToTalkCallback,
   } = store;
 
   // Keep refs synced for callbacks
@@ -158,11 +130,10 @@ export default function VoiceEngine() {
 
   // Refs for timeouts and cleanup
   const wakeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const wakeRecognitionRef = useRef<any>(null); // SpeechRecognition (webkit/standard)
-  const wakeRestartTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const cleanupActivityRef = useRef<() => void | null>(null);
   const cleanupHealthPollRef = useRef<() => void | null>(null);
   const hasGreeted = useRef(false);
+  const silenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // State
   const [voicesReady, setVoicesReady] = useState(false);
@@ -172,8 +143,9 @@ export default function VoiceEngine() {
   const [activeMic, setActiveMic] = useState<string>("default");
   const [deviceCount, setDeviceCount] = useState(0);
   const [queueLength, setQueueLength] = useState(0);
+  const [backendConnected, setBackendConnected] = useState(false);
 
-  // WebSocket for real-time voice communication
+  // Client ID for WebSocket
   const [clientId] = useState<string>(() => {
     if (typeof window !== "undefined") {
       let id = sessionStorage.getItem("voice-client-id");
@@ -186,6 +158,7 @@ export default function VoiceEngine() {
     return `voice-${Date.now()}-${Math.random().toString(36).slice(2)}`;
   });
 
+  // WebSocket for real-time voice communication
   const voiceWs = useVoiceWebSocket({
     clientId,
     autoConnect: false, // We'll connect manually when backend is ready
@@ -265,11 +238,14 @@ export default function VoiceEngine() {
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/v1/health`);
         if (res.ok) {
           voiceWs.setShouldConnect(true);
+          setBackendConnected(true);
         } else {
           voiceWs.setShouldConnect(false);
+          setBackendConnected(false);
         }
       } catch {
         voiceWs.setShouldConnect(false);
+        setBackendConnected(false);
       }
     };
 
@@ -303,7 +279,7 @@ export default function VoiceEngine() {
       cleanupHealthPollRef.current?.();
       voiceWs.setShouldConnect(false);
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Audio Device Enumeration
@@ -345,113 +321,6 @@ export default function VoiceEngine() {
     navigator.mediaDevices?.addEventListener("devicechange", handler);
     return () => navigator.mediaDevices?.removeEventListener("devicechange", handler);
   }, [enumerateAudioDevices]);
-
-  // Process Command
-  const processCommand = useCallback(
-    async (command: string) => {
-      if (wakeTimeoutRef.current) clearTimeout(wakeTimeoutRef.current);
-      setIsListening(false);
-      setIsAwake(false);
-      isAwakeRef.current = false;
-      setPttActive(false);
-
-      if (!command.trim()) return;
-
-      // Interruption keywords — stop any current speech
-      const lower = command.trim().toLowerCase();
-      if (lower === "stop" || lower === "quiet" || lower === "silence" || lower === "enough") {
-        interruptCurrentSpeaker();
-        return;
-      }
-
-      // Acknowledge emergency keywords
-      if (lower.includes("acknowledge") || lower.includes("got it") || lower.includes("understood")) {
-        if (emergencyActive) {
-          acknowledgeAllEscalations();
-          clearEmergency();
-        }
-      }
-
-      setPendingVoiceCommand(command.trim());
-
-      // Simulate a POI alert for demo purposes if keyword is said
-      if (lower.includes("test alert") || lower.includes("test poi")) {
-        raisePoiAlert("Test POI", "Gold support level breached at $2,345. Monitor closely.");
-      }
-
-      addNotification({
-        id: `cmd-${Date.now()}`,
-        type: "info",
-        title: "Voice command",
-        message: `"${command.trim()}"`,
-        timestamp: Date.now(),
-        read: false,
-      });
-
-      // Use WebSocket if connected, otherwise fall back to HTTP
-      const listeningExec = (listeningExecutive || "axiom") as ExecutiveId;
-      const wakeWord = EXECUTIVE_CONFIG[listeningExec]?.wakeWords[0] || "";
-
-      if (voiceWs.isConnected) {
-        // Send via WebSocket for real-time streaming
-        voiceWs.sendCommand(command.trim(), listeningExec as "axiom" | "jenson" | "valta_prime" | "yamako", wakeWord, 1.0);
-      } else {
-        // Fallback to HTTP
-        try {
-          const response = await voice.command({
-            transcript: command.trim(),
-            executive: listeningExec,
-            wake_word: wakeWord,
-            confidence: 1.0,
-            timestamp: Date.now(),
-          });
-
-          // Speak the executive's response via speech arbiter
-          if (response.response) {
-            await requestSpeak(listeningExec as SpeakerId, response.response, "normal");
-          }
-
-          // If workflow was triggered, notify user
-          if (response.workflow_triggered) {
-            addNotification({
-              id: `wf-${Date.now()}`,
-              type: "success",
-              title: "Workflow Launched",
-              message: `${response.workflow_triggered} has been triggered by ${listeningExec}`,
-              timestamp: Date.now(),
-              read: false,
-            });
-          }
-
-          // If approval required
-          if (response.requires_approval && response.approval_id) {
-            addNotification({
-              id: `appr-${Date.now()}`,
-              type: "warning",
-              title: "Approval Required",
-              message: `Founder approval needed for ${response.action_taken || "action"}`,
-              timestamp: Date.now(),
-              read: false,
-            });
-          }
-        } catch (error) {
-          console.error("[Voice] Command processing failed:", error);
-          // Fallback to local response
-          await requestSpeak("axiom", "Command received, but I couldn't reach the backend.", "normal");
-        }
-      }
-    },
-    [
-      setPendingVoiceCommand,
-      addNotification,
-      setIsListening,
-      setIsAwake,
-      emergencyActive,
-      clearEmergency,
-      listeningExecutive,
-      voiceWs,
-    ],
-  );
 
   // Wake Timeout
   const clearWakeTimeout = useCallback(() => {
@@ -551,160 +420,21 @@ export default function VoiceEngine() {
     return () => clearTimeout(t);
   }, [voiceActive, voicesReady]);
 
-  // Continuous Wake-Word Listener
-  const startWakeListener = useCallback(() => {
-    if (typeof window === "undefined") return;
-    const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SR) return;
-
-    if (wakeRecognitionRef.current) {
-      try { wakeRecognitionRef.current.stop(); } catch {}
-    }
-
-    const r = new SR();
-    r.lang = "en-US";
-    r.continuous = true;
-    r.interimResults = true;
-    r.maxAlternatives = 3;
-
-    r.onresult = (event: any) => {
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        const res = event.results[i];
-        const t = res[0].transcript.toLowerCase().trim();
-
-        // Check for executive wake words in interim results
-        if (!res.isFinal) {
-          const execId = detectExecutive(t);
-          if (execId && !isAwakeRef.current) {
-            wakeExecutiveByName(execId);
-            const config = EXECUTIVE_CONFIG[execId];
-            for (const ww of config.wakeWords) {
-              const index = t.indexOf(ww.toLowerCase());
-              if (index !== -1) {
-                const rest = t.substring(index + ww.length).trim();
-                if (rest.length > 2) {
-                  processCommand(rest);
-                }
-              }
-            }
-          }
-          continue;
-        }
-
-        // Final result - check for wake words
-        const execId = detectExecutive(t);
-        if (execId && !isAwakeRef.current) {
-          wakeExecutiveByName(execId);
-          const config = EXECUTIVE_CONFIG[execId];
-          for (const ww of config.wakeWords) {
-            const index = t.indexOf(ww.toLowerCase());
-            if (index !== -1) {
-              const rest = t.substring(index + ww.length).trim();
-              if (rest.length >= 2 || rest.match(/thank|stop|quit|exit|bye|sleep|goodbye/i)) {
-                processCommand(rest);
-              }
-            }
-          }
-          continue;
-        }
-
-        // Already awake - process as normal command
-        if (isAwakeRef.current) {
-          if (t.length >= 2 || t.match(/thank|stop|quit|exit|bye|sleep|goodbye/i)) {
-            processCommand(t);
-          }
-        }
-      }
-    };
-
-    r.onerror = () => {
-      if (voiceActiveRef.current) {
-        if (wakeRestartTimeout.current) clearTimeout(wakeRestartTimeout.current);
-        wakeRestartTimeout.current = setTimeout(startWakeListener, 1000);
-      }
-    };
-
-    r.onend = () => {
-      if (voiceActiveRef.current) {
-        if (wakeRestartTimeout.current) clearTimeout(wakeRestartTimeout.current);
-        // Increased from 300ms to 2000ms to prevent CPU thrashing
-        wakeRestartTimeout.current = setTimeout(startWakeListener, 2000);
-      }
-    };
-
-    wakeRecognitionRef.current = r;
-    try { r.start(); } catch {}
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => {
-    if (voiceActive) startWakeListener();
-    return () => {
-      if (wakeRecognitionRef.current) {
-        try { wakeRecognitionRef.current.stop(); } catch {}
-        wakeRecognitionRef.current = null;
-      }
-      if (wakeRestartTimeout.current) clearTimeout(wakeRestartTimeout.current);
-    };
-  }, [voiceActive, startWakeListener]);
-
-  // Push-to-Talk
+  // Push-to-Talk - now triggers backend via WebSocket
   const startPushToTalk = useCallback(() => {
-    const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SR) return;
-
-    if (wakeRecognitionRef.current) {
-      try { wakeRecognitionRef.current.stop(); } catch {}
-    }
-
     setPttActive(true);
     setIsListening(true);
     setIsAwake(true);
     isAwakeRef.current = true;
 
-    let silenceTimer: ReturnType<typeof setTimeout> | null = null;
-
-    const ptt = new SR();
-    ptt.lang = "en-US";
-    ptt.continuous = true;
-    ptt.interimResults = true;
-    ptt.maxAlternatives = 3;
-
-    ptt.onresult = (event: any) => {
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        const res = event.results[i];
-        if (res.isFinal) {
-          const transcript = res[0].transcript.trim();
-          if (silenceTimer) clearTimeout(silenceTimer);
-          silenceTimer = setTimeout(() => {
-            ptt.stop();
-            if (transcript) processCommand(transcript);
-          }, 1500);
-        }
-      }
-    };
-
-    ptt.onerror = () => {
-      setPttActive(false);
-      setIsListening(false);
-      setIsAwake(false);
-      isAwakeRef.current = false;
-      if (voiceActiveRef.current) startWakeListener();
-    };
-
-    ptt.onend = () => {
-      // When recognizer ends we just clear the timer; we keep pttActive as‑is
-      if (silenceTimer) clearTimeout(silenceTimer);
-      if (!isAwakeRef.current && voiceActiveRef.current) startWakeListener();
-    };
-
-    try { ptt.start(); } catch {
-      setPttActive(false);
-      setIsListening(false);
-      setIsAwake(false);
-      isAwakeRef.current = false;
+    // Send push-to-talk command to backend via WebSocket
+    if (voiceWs.isConnected) {
+      voiceWs.sendCommand("", "axiom", "push_to_talk", 1.0);
     }
-  }, [processCommand, setIsListening, setIsAwake, startWakeListener]);
+
+    // The backend will handle the actual audio capture and processing
+    // Frontend just shows the listening state
+  }, [voiceWs]);
 
   // Keyboard Shortcut
   useEffect(() => {
@@ -720,17 +450,20 @@ export default function VoiceEngine() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [voiceActive, setVoiceActive, startPushToTalk]);
 
-  // Cleanup on Unmount
+  // Register push-to-talk callback after startPushToTalk is defined
   useEffect(() => {
-    return () => {
-      if (wakeRecognitionRef.current) {
-        try { wakeRecognitionRef.current.stop(); } catch {}
-      }
-      if (wakeRestartTimeout.current) clearTimeout(wakeRestartTimeout.current);
-      clearWakeTimeout();
-      stopSpeaking();
-    };
-  }, [clearWakeTimeout]);
+    _registerPushToTalkCallback(() => {
+      startPushToTalk();
+    });
+  }, [startPushToTalk, _registerPushToTalkCallback]);
+
+  // Cleanup on Unmount
+    useEffect(() => {
+      return () => {
+        clearWakeTimeout();
+        stopSpeaking();
+      };
+    }, [clearWakeTimeout]);
 
   // Derived
   const currentSpeakerConfig = activeSpeaker ? SPEAKER_CONFIG[activeSpeaker] : null;
@@ -837,7 +570,7 @@ export default function VoiceEngine() {
               </span>
               <div>
                 <span className="text-[10px] font-medium text-[var(--axiom-text-secondary)]">
-                  Listening for &ldquo;AXIOM ON&rdquo;
+                  Backend voice engine: {backendConnected ? "Connected" : "Connecting..."}
                 </span>
                 <span className="block text-[8px] text-[var(--axiom-text-tertiary)]">
                   {deviceCount} device{deviceCount !== 1 ? "s" : ""}
@@ -863,7 +596,7 @@ export default function VoiceEngine() {
               </span>
               <div>
                 <span className="text-[10px] font-medium text-[var(--axiom-text-secondary)]">
-                  AXIOM ON
+                  {listeningExecutive ? EXECUTIVE_CONFIG[listeningExecutive].label : "AXIOM"} ON
                 </span>
                 <span className="text-[9px] text-[var(--axiom-text-tertiary)] block">
                   {pttActive ? "Push-to-Talk active — speak now" : "Listening for command..."}
@@ -884,19 +617,20 @@ export default function VoiceEngine() {
           onClick={() => {
             // If we are already talking, stop everything and reset state
             if (pttActive) {
-              // Stop any running recognizer
-              if (wakeRecognitionRef.current) {
-                try { wakeRecognitionRef.current.stop(); } catch {}
-              }
               // Reset all active flags
               setPttActive(false);
               setIsListening(false);
               setIsAwake(false);
               isAwakeRef.current = false;
-              if (silenceTimer) clearTimeout(silenceTimer);
+              if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+              
+              // Send stop to backend
+              if (voiceWs.isConnected) {
+                // Could send a stop command here if needed
+              }
               return;
             }
-            // Otherwise start a new push‑to‑talk session
+            // Otherwise start a new push-to-talk session
             if (!voiceActive) {
               setVoiceActive(true);
             }
@@ -935,11 +669,11 @@ export default function VoiceEngine() {
             >
               <p className="text-[11px] font-medium text-[var(--axiom-text-primary)] flex items-center gap-2">
                 <span className="w-1.5 h-1.5 rounded-full bg-green-400" />
-                Voice controls — always listening
+                Voice controls — backend-driven
               </p>
               <p className="text-[9px] text-[var(--axiom-text-tertiary)] mt-1">
                 Say <span className="text-[var(--axiom-accent)] font-mono">&ldquo;AXIOM ON&rdquo;</span>{" "}
-                to wake, or click the mic to speak now
+                to wake, or click the mic for push-to-talk
               </p>
               <div className="flex items-center justify-between mt-1.5 text-[8px] text-[var(--axiom-text-tertiary)] font-mono">
                 <span>⌘⇧V</span>
@@ -950,6 +684,9 @@ export default function VoiceEngine() {
               </div>
               <div className="text-[8px] text-[var(--axiom-text-tertiary)] font-mono mt-1">
                 Voice: {voiceInfo}
+              </div>
+              <div className="text-[8px] text-[var(--axiom-text-tertiary)] font-mono mt-1">
+                Backend: {backendConnected ? "🟢 Connected" : "🔴 Disconnected"}
               </div>
             </motion.div>
           )}

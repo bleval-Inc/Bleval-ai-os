@@ -47,14 +47,19 @@ class ProviderRouter:
         self._register_available()
 
     def _register_available(self) -> None:
-        """Register all providers that have their API keys configured."""
-        # NVIDIA providers only
-        self._providers.update(create_nvidia_providers())
+            """Register all providers that have their API keys configured."""
+            # NVIDIA providers only
+            self._providers.update(create_nvidia_providers())
 
-        # Register mock as last resort only if not in production mode
-        mock = MockProvider()
-        if mock.available:
-            self._providers["mock"] = mock
+            # Register mock ONLY in development mode - NEVER in production
+            mock = MockProvider()
+            if mock.available and settings.debug and not settings.real_providers_only:
+                self._providers["mock"] = mock
+                if self._logger:
+                    self._logger.warning("intelligence", "Mock provider registered - DEVELOPMENT MODE ONLY")
+            elif settings.real_providers_only or not settings.debug:
+                if self._logger:
+                    self._logger.info("intelligence", "Production mode: Mock provider disabled (REAL_PROVIDERS_ONLY=true or DEBUG=false)")
 
     def select_provider(
         self,
@@ -173,10 +178,12 @@ class ContextBuilder:
         memory: MemoryEngine,
         tool: ToolEngine,
         agent_loader: AgentRegistryLoader,
+        market_intelligence: Any = None,
     ) -> None:
         self._memory = memory
         self._tool = tool
         self._agent_loader = agent_loader
+        self._market_intelligence = market_intelligence
 
     def assemble_prompt(
         self,
@@ -216,17 +223,23 @@ class ContextBuilder:
             if tool_context:
                 parts.append("## AVAILABLE TOOLS\n" + tool_context)
 
-        # 5. Task description
+        # 5. Market intelligence context (for Valta Prime and trading-related agents)
+        if self._market_intelligence and agent_id in ("valta_prime", "valta", "trader"):
+            market_context = self._build_market_context(agent_id, org_id, task_description)
+            if market_context:
+                parts.append("## MARKET INTELLIGENCE CONTEXT\n" + market_context)
+
+        # 6. Task description
         parts.append("## TASK\n" + task_description)
 
-        # 6. Additional context
+        # 7. Additional context
         if additional_context:
             context_lines = "\n".join(
                 f"{k}: {v}" for k, v in additional_context.items()
             )
             parts.append("## ADDITIONAL CONTEXT\n" + context_lines)
 
-        # 7. Execution constraints
+        # 8. Execution constraints
         parts.append(
             "## EXECUTION CONSTRAINTS\n"
             "- You are an AI executive/specialist in the Axiom OS platform.\n"
@@ -260,6 +273,23 @@ class ContextBuilder:
             lines.append(f"\nYour permitted actions: {', '.join(can_actions)}")
 
         return "\n".join(lines) if lines else ""
+
+    def _build_market_context(self, agent_id: str, org_id: str, task_description: str) -> str:
+        """Build market intelligence context for trading executives."""
+        try:
+            # Get recent market news and indicators
+            lines = []
+
+            # This would fetch from the market intelligence engine
+            # For now, return a placeholder that indicates the capability exists
+            lines.append("Market intelligence tools available:")
+            lines.append("  - web_search: Search the web for current market information")
+            lines.append("  - market_data.get_price: Get current price for any symbol")
+            lines.append("  - market_data.get_news: Get recent market news for symbols/topics")
+
+            return "\n".join(lines)
+        except Exception:
+            return ""
 
     def build_system_prompt(self, agent_id: str, org_id: str = "") -> str:
         """Build the system prompt that defines the agent's role and constraints.
@@ -325,21 +355,23 @@ class IntelligenceEngine:
     """
 
     def __init__(
-        self,
-        memory: Optional[MemoryEngine] = None,
-        tool: Optional[ToolEngine] = None,
-    ) -> None:
-        self._memory = memory or MemoryEngine()
-        self._tool = tool or ToolEngine()
-        self._agent_loader = AgentRegistryLoader()
-        self._context_builder = ContextBuilder(
-            memory=self._memory,
-            tool=self._tool,
-            agent_loader=self._agent_loader,
-        )
+            self,
+            memory: Optional[MemoryEngine] = None,
+            tool: Optional[ToolEngine] = None,
+            market_intelligence: Any = None,
+        ) -> None:
+            self._memory = memory or MemoryEngine()
+            self._tool = tool or ToolEngine()
+            self._agent_loader = AgentRegistryLoader()
+            self._context_builder = ContextBuilder(
+                memory=self._memory,
+                tool=self._tool,
+                agent_loader=self._agent_loader,
+                market_intelligence=market_intelligence,
+            )
 
-        # ── Smart Router with Multi-Model Support ──────────────────
-        self._smart_router = self._build_smart_router()
+            # ── Smart Router with Multi-Model Support ──────────────────
+            self._smart_router = self._build_smart_router()
 
     def _build_smart_router(self) -> Any:
         """Build the smart router with all available providers.

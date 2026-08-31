@@ -23,6 +23,10 @@ interface BuildPathOpts {
 }
 
 function buildPath(values: number[], { width, height, padX = 4, padY = 10 }: BuildPathOpts) {
+  // Handle empty array
+  if (values.length === 0) {
+    return { d: "", pts: [], areaStartY: height - padY };
+  }
   const n = values.length;
   const max = Math.max(...values);
   const min = Math.min(...values);
