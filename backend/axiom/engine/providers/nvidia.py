@@ -111,16 +111,39 @@ class NVIDIAProvider(ModelProvider):
             messages.append({"role": "system", "content": system_prompt})
         messages.append({"role": "user", "content": prompt})
 
-        try:
-            response = await client.chat.completions.create(
-                model=self._config.model_id,
-                messages=messages,
-                max_tokens=max_tokens,
-                temperature=temperature,
-            )
-            return response.choices[0].message.content or ""
-        except Exception as exc:
-            return f"[{self.name} Error] {exc}"
+        # Try up to 2 times for transient errors
+        max_retries = 2
+        for attempt in range(max_retries + 1):
+            try:
+                response = await client.chat.completions.create(
+                    model=self._config.model_id,
+                    messages=messages,
+                    max_tokens=max_tokens,
+                    temperature=temperature,
+                )
+                return response.choices[0].message.content or ""
+            except Exception as exc:
+                # Check if this is a transient error we should retry
+                error_str = str(exc).lower()
+                is_transient = (
+                    "503" in error_str or
+                    "service unavailable" in error_str or
+                    "timeout" in error_str or
+                    "overloaded" in error_str or
+                    "rate limit" in error_str or
+                    "429" in error_str
+                )
+
+                # If it's not transient or we've used all retries, return the error
+                if not is_transient or attempt == max_retries:
+                    return f"[{self.name} Error] {exc}"
+
+                # If transient and we have retries left, continue to next attempt
+                if attempt < max_retries:
+                    continue
+
+        # This shouldn't be reached, but just in case
+        return f"[{self.name} Error] Max retries exceeded"
 
     def to_dict(self) -> Dict[str, Any]:
         """Return a serialisable description of this provider."""
@@ -143,6 +166,13 @@ def create_nvidia_providers() -> List[NVIDIAProvider]:
     for every model that has both a key and a model ID configured.
     """
     configs = [
+        NVIDIAModelConfig(
+            env_key="NVIDIA_NEMOTRON_ULTRA_KEY",
+            env_model="NVIDIA_NEMOTRON_ULTRA_MODEL",
+            env_provider="NVIDIA_NEMOTRON_ULTRA_PROVIDER",
+            label="NVIDIA Nemotron 3 Ultra",
+            role="FLAGSHIP — strategic reasoning, executive decisions, long-horizon planning",
+        ),
         NVIDIAModelConfig(
             env_key="NVIDIA_GLM52_KEY",
             env_model="NVIDIA_GLM52_MODEL",

@@ -7,12 +7,8 @@ import VoiceEngine from "../components/axiom/VoiceEngine";
 import { ShellLayout } from "../components/shell/ShellLayout";
 
 function getInitialBootState(): { bootComplete: boolean; hasBooted: boolean } {
-  if (typeof window !== "undefined") {
-    const booted = sessionStorage.getItem("axiom-booted");
-    if (booted) {
-      return { bootComplete: true, hasBooted: true };
-    }
-  }
+  // Always return false,false for SSR safety to prevent hydration mismatch
+  // Client-side useEffect will check sessionStorage and update state accordingly
   return { bootComplete: false, hasBooted: false };
 }
 
@@ -21,8 +17,19 @@ export default function AppShell({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const [bootComplete, setBootComplete] = useState(() => getInitialBootState().bootComplete);
-  const [hasBooted, setHasBooted] = useState(() => getInitialBootState().hasBooted);
+  const [bootComplete, setBootComplete] = useState(false);
+  const [hasBooted, setHasBooted] = useState(false);
+
+  // Check sessionStorage on client to optimize for returning users
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const booted = sessionStorage.getItem("axiom-booted");
+      if (booted) {
+        setBootComplete(true);
+        setHasBooted(true);
+      }
+    }
+  }, []);
 
   const handleBootComplete = () => {
     setBootComplete(true);

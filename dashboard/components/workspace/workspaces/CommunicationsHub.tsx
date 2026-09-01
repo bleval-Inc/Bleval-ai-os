@@ -10,7 +10,7 @@ import type {
   Attachment,
 } from "../../../lib/phase8c-types";
 
-/* ── Source Config ────────────────────────────────────────────────── */
+/* Source Config */
 
 const SOURCE_COLORS: Record<ConversationSource, string> = {
   founder: "bg-indigo-500",
@@ -48,7 +48,7 @@ const SOURCE_FILTERS: { key: ConversationSource | "all"; label: string }[] = [
   { key: "notification", label: "Notifications" },
 ];
 
-/* ── Mock Data ────────────────────────────────────────────────────── */
+/* Mock Data */
 
 const MOCK_CONVERSATIONS: Conversation[] = [
   {
@@ -156,7 +156,7 @@ const MOCK_MESSAGES: Record<string, Message[]> = {
   ],
 };
 
-/* ── Helpers ──────────────────────────────────────────────────────── */
+/* Helpers */
 
 function formatTime(iso: string): string {
   const d = new Date(iso);
@@ -168,7 +168,7 @@ function formatTime(iso: string): string {
   return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
-/* ── Sub-Components ───────────────────────────────────────────────── */
+/* Sub-Components */
 
 function AvatarCircle({ name, source, size = "md" }: { name: string; source: ConversationSource; size?: "sm" | "md" | "lg" }) {
   const sizeClass = size === "sm" ? "w-6 h-6 text-[9px]" : size === "lg" ? "w-10 h-10 text-sm" : "w-8 h-8 text-xs";
@@ -243,7 +243,7 @@ function MessageBubble({ msg }: { msg: Message }) {
   );
 }
 
-/* ── Main Component ───────────────────────────────────────────────── */
+/* Main Component */
 
 export default function CommunicationsHub() {
   const [conversations] = useState(MOCK_CONVERSATIONS);

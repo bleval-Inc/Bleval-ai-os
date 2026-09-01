@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 
-/* ── Stat tile ────────────────────────────────────────────────────── */
+/* Stat tile */
 
 interface BriefingStatProps {
   label: string;
@@ -33,7 +33,7 @@ function BriefingStat({ label, value, icon, color = "var(--axiom-text-secondary)
   );
 }
 
-/* ── Briefing card ────────────────────────────────────────────────── */
+/* Briefing card */
 
 interface CommandCenterBriefingProps {
   version: string;

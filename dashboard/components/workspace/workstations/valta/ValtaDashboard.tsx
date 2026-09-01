@@ -180,9 +180,9 @@ function TradingActivity() {
 
 // ── Main dashboard ─────────────────────────────────────────────────────────
 export default function ValtaDashboard() {
-  const lastEquity = equitySeries[equitySeries.length - 1].equity;
-  const startEquity = equitySeries[0].equity;
-  const equityDelta = ((lastEquity - startEquity) / startEquity) * 100;
+  const startEquity = equitySeries[0]?.equity ?? 0;
+  const lastEquity = equitySeries[equitySeries.length - 1]?.equity ?? startEquity;
+  const equityDelta = startEquity === 0 ? 0 : ((lastEquity - startEquity) / startEquity) * 100;
 
   return (
     <div className="flex flex-col gap-5 p-6 md:p-8 pb-32 min-w-0">

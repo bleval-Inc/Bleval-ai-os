@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { system } from "../../../lib/api";
 import type { Capability, PerformanceScore } from "../../../lib/api-types";
 
-/* ── Content categories ────────────────────────────────────────────── */
+/* Content categories */
 
 const CATEGORIES = [
   { key: "all", label: "All", icon: "grid" },
@@ -17,7 +17,7 @@ const CATEGORIES = [
 
 type CategoryKey = (typeof CATEGORIES)[number]["key"];
 
-/* ── SVG Icons ─────────────────────────────────────────────────────── */
+/* SVG Icons */
 
 function Icon({ name, size = 16 }: { name: string; size?: number }) {
   const paths: Record<string, string> = {

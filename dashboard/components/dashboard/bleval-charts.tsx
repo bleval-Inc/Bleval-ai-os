@@ -17,6 +17,10 @@ interface BuildPathOpts {
 
 /** Build a smooth cubic path + point coordinates for an area chart. */
 function buildPath(series: number[], { width, height, padX = 4, padY = 8 }: BuildPathOpts) {
+  // Handle empty or single-element arrays
+  if (series.length === 0) {
+    return { d: "", pts: [], areaStartY: height - padY };
+  }
   const n = series.length;
   const max = Math.max(...series);
   const min = Math.min(...series);

@@ -93,16 +93,22 @@ const AVAILABILITY_CONFIG: Record<FounderAvailability, { label: string; color: s
   unknown: { label: "Offline", color: "text-zinc-500", dot: "bg-zinc-500" },
 };
 
-// ── Holographic Weather Icons ────────────────────────────────────────────
+// Holographic Weather Icons
 function HolographicWeatherIcon({ condition, temp }: { condition: string; temp: string }) {
   const [time, setTime] = useState(0);
+  const requestIdRef = useRef<number | null>(null);
 
   useEffect(() => {
-    const id = requestAnimationFrame(function animate(t) {
+    const animate = (t: number) => {
       setTime(t / 1000);
-      requestAnimationFrame(animate);
-    });
-    return () => cancelAnimationFrame(id);
+      requestIdRef.current = requestAnimationFrame(animate);
+    };
+    requestIdRef.current = requestAnimationFrame(animate);
+    return () => {
+      if (requestIdRef.current !== null) {
+        cancelAnimationFrame(requestIdRef.current);
+      }
+    };
   }, []);
 
   const c = condition.toLowerCase();
@@ -251,16 +257,22 @@ function HolographicWeatherIcon({ condition, temp }: { condition: string; temp: 
   );
 }
 
-// ── Holographic Date/Time ────────────────────────────────────────────────
+// Holographic Date/Time
 function HolographicDateTime({ date, time }: { date: string; time: string }) {
   const [t, setT] = useState(0);
+  const requestIdRef = useRef<number | null>(null);
 
   useEffect(() => {
-    const id = requestAnimationFrame(function animate(ts) {
+    const animate = (ts: number) => {
       setT(ts / 1000);
-      requestAnimationFrame(animate);
-    });
-    return () => cancelAnimationFrame(id);
+      requestIdRef.current = requestAnimationFrame(animate);
+    };
+    requestIdRef.current = requestAnimationFrame(animate);
+    return () => {
+      if (requestIdRef.current !== null) {
+        cancelAnimationFrame(requestIdRef.current);
+      }
+    };
   }, []);
 
   const pulse = Math.sin(t * 1.5) * 0.08 + 1;
@@ -315,7 +327,6 @@ export function GlobalTopNavigation() {
 
   const [currentTime, setCurrentTime] = useState<Date | null>(null);
   const [weather, setWeather] = useState({ condition: "Partly Cloudy", temp: "22°C" });
-  const [mounted, setMounted] = useState(false);
   const notificationRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
   const [notificationMenuOpen, setNotificationMenuOpen] = useState(false);
@@ -323,7 +334,6 @@ export function GlobalTopNavigation() {
 
   // Update time every second - client side only
   useEffect(() => {
-    setMounted(true);
     const now = new Date();
     setCurrentTime(now);
     const interval = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -371,9 +381,11 @@ export function GlobalTopNavigation() {
 
   const voiceStatus = getVoiceStatus();
 
-  // SSR-safe date/time that matches client after hydration
-  const ssrSafeDate = mounted && currentTime ? formatDate(currentTime) : "--";
-  const ssrSafeTime = mounted && currentTime ? formatTime(currentTime) : "--:--";
+  // SSR-safe date/time - use client time if available, otherwise fallback values
+  // This prevents hydration mismatch by ensuring consistent rendering
+  const displayTime = currentTime ?? new Date();
+  const ssrSafeDate = formatDate(displayTime);
+  const ssrSafeTime = formatTime(displayTime);
 
   return (
     <div>

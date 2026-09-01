@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import type { TelemetrySnapshot } from "../../lib/axiom/telemetry-types";
 import { getTelemetry } from "../../lib/axiom/system-monitor";
 
-// ── Gauge Component ──────────────────────────────────────────────────────
+// Gauge Component
 
 function Gauge({
   value,
@@ -79,7 +79,7 @@ function Gauge({
   );
 }
 
-// ── Metric Bar ────────────────────────────────────────────────────────────
+// Metric Bar
 
 function MetricBar({
   value,

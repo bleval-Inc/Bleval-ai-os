@@ -168,3 +168,140 @@ pip install -e .
 ## License
 
 MIT
+
+
+<!-- 
+PS C:\Users\byagi> & ([scriptblock]::Create((irm "https://raw.githubusercontent.com/Alishahryar1/free-claude-code/main/scripts/install.ps1")))
+
+==> Checking for running Free Claude Code processes
+
+==> Choosing coding agents
+Install or verify Claude Code for fcc-claude? [Y/n]: y
+Install or verify Codex for fcc-codex? [Y/n]: y
+Install or verify Pi for fcc-pi? [Y/n]: y
+Install or verify OpenCode for fcc-opencode? [Y/n]: y
+Install or verify Cline CLI for fcc-cline? [Y/n]: y
+Install or verify Hermes Agent for fcc-hermes? [Y/n]: y
+Install or verify DeepSeek Harness for fcc-dsh? [Y/n]: y
+Install or verify Grok Build for fcc-grok? [Y/n]: y
+Install or verify Muse Code for fcc-muse? [Y/n]: y
+Enable RTK token optimization globally for the selected coding agents? [y/N]: y
+
+==> Ensuring Claude Code is installed
++ irm https://claude.ai/install.ps1 -OutFile C:\Users\byagi\AppData\Local\Temp\fcc-install-12745a16243a40b58e807818109a69d3.ps1
++ C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -NoProfile -ExecutionPolicy Bypass -File C:\Users\byagi\AppData\Local\Temp\fcc-install-12745a16243a40b58e807818109a69d3.ps1
+Setting up Claude Code...
+
+✔ Claude Code successfully installed!
+
+  Version: 2.1.246
+
+  Location: C:\Users\byagi\.local\bin\claude.exe
+
+
+  Next: Run claude --help to get started
+
+✅ Installation complete!
+
++ C:\Users\byagi\.local\bin\claude.exe --version
+2.1.246 (Claude Code)
+
+==> Ensuring Codex is installed
++ irm https://chatgpt.com/codex/install.ps1 -OutFile C:\Users\byagi\AppData\Local\Temp\fcc-install-9b78a118b4584ef981c303c553d169a5.ps1
++ C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -NoProfile -ExecutionPolicy Bypass -File C:\Users\byagi\AppData\Local\Temp\fcc-install-9b78a118b4584ef981c303c553d169a5.ps1
+==> Installing Codex CLI
+==> Detected platform: Windows (x64)
+==> Resolved version: 0.149.1
+==> Downloading Codex CLI
+==> PATH updated for future PowerShell sessions.
+==> Current PowerShell session: codex
+==> Future PowerShell windows: open a new PowerShell window and run: codex
+Codex CLI 0.149.1 installed successfully.
++ C:\Users\byagi\AppData\Local\Programs\OpenAI\Codex\bin\codex.exe --version
+codex-cli 0.149.1
+
+==> Checking or installing Pi
++ irm https://pi.dev/install.ps1 -OutFile C:\Users\byagi\AppData\Local\Temp\fcc-install-66bc45effe884d48b64d1dbfed83cf5a.ps1
++ C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -NoProfile -ExecutionPolicy Bypass -File C:\Users\byagi\AppData\Local\Temp\fcc-install-66bc45effe884d48b64d1dbfed83cf5a.ps1
+
+
+
+  ██████
+  ██  ██
+  ████  ██
+  ██    ██
+
+
+
+  Pi Installer
+  There are many coding agents, but this one is mine.
+
+Install command:
+
+  npm.cmd install -g --ignore-scripts --min-release-age=0 @earendil-works/pi-coding-agent
+
+Choose an action:
+
+  y    Install Pi (default)
+  n    Do nothing
+
+
+Will install Pi.
+This will take a while. We're sorry.
+
+  ok npm install complete
+
+Pi was installed successfully.
+
+Run it with: pi
++ C:\Users\byagi\AppData\Roaming\npm\pi.cmd --version
+0.84.3
+
+==> Ensuring OpenCode is installed
++ irm https://github.com/anomalyco/opencode/releases/latest/download/opencode-windows-x64-baseline.zip -OutFile C:\Users\byagi\AppData\Local\Temp\fcc-opencode-0034ab4af433411d9fb70c79c43cce7a\opencode-windows-x64-baseline.zip
++ C:\Users\byagi\.opencode\bin\opencode.exe --version
+1.18.23
+
+==> Ensuring Cline CLI is installed
++ 'C:\Program Files\nodejs\npm.cmd' install -g cline
+npm warn deprecated node-domexception@1.0.0: Use your platform's native DOMException instead
+
+added 328 packages in 3m
+
+46 packages are looking for funding
+  run `npm fund` for details
++ C:\Users\byagi\AppData\Roaming\npm\cline.cmd --version
+3.0.60
+
+==> Ensuring Hermes Agent is installed
++ irm https://hermes-agent.nousresearch.com/install.ps1 -OutFile C:\Users\byagi\AppData\Local\Temp\fcc-install-68f7e2bbdcbc423d9a50d87add5cac4f.ps1
++ C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -NoProfile -ExecutionPolicy Bypass -File C:\Users\byagi\AppData\Local\Temp\fcc-install-68f7e2bbdcbc423d9a50d87add5cac4f.ps1 -NonInteractive -SkipSetup
+[hermes] long profile root: C:\Users\byagi
+
++---------------------------------------------------------+
+|             * Hermes Agent Installer                    |
++---------------------------------------------------------+
+|  An open source AI agent by Nous Research.              |
++---------------------------------------------------------+
+
+-> Installing managed uv into C:\Users\byagi\AppData\Local\hermes\bin ...
+-> uv installer succeeded via astral.sh
+[OK] Managed uv installed (uv 0.12.5 (210d1f678 2026-08-14 x86_64-pc-windows-msvc)) -->
+
+
+ 
+==> Checking for running Free Claude Code processes
+
+==> Choosing coding agents
+Install or verify Claude Code for fcc-claude? [Y/n]: y
+Install or verify Codex for fcc-codex? [Y/n]: u
+Please answer Y or N.
+Install or verify Codex for fcc-codex? [Y/n]: y
+Install or verify Pi for fcc-pi? [Y/n]: y
+Install or verify OpenCode for fcc-opencode? [Y/n]: y
+Install or verify Cline CLI for fcc-cline? [Y/n]: y
+Install or verify Hermes Agent for fcc-hermes? [Y/n]: y
+Install or verify DeepSeek Harness for fcc-dsh? [Y/n]: y
+Install or verify Grok Build for fcc-grok? [Y/n]: y
+Install or verify Muse Code for fcc-muse? [Y/n]: y
+Enable RTK token optimization globally for the selected coding agents? [y/N]: y

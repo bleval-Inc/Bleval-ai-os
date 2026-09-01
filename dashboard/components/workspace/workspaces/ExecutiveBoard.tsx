@@ -6,7 +6,7 @@ import { useAxiomStore } from "../../../lib/store/axiom-store";
 import { executives } from "../../../lib/api";
 import type { ExecutiveBoardStatus } from "../../../lib/api-types";
 
-/* ── Constants ───────────────────────────────────────────────────────── */
+/* Constants */
 
 const EXEC_META: Record<string, { name: string; icon: React.ReactNode }> = {
   jenson: {
@@ -35,7 +35,7 @@ function fmt(iso?: string) {
   catch { return iso; }
 }
 
-/* ── Executive Card ──────────────────────────────────────────────────── */
+/* Executive Card */
 
 const cardVariants = {
   hidden: { opacity: 0, y: 16 },
@@ -100,7 +100,7 @@ function ExecCard({ id, data, onToggle, toggling }: {
   );
 }
 
-/* ── Stateful screens ────────────────────────────────────────────────── */
+/* Stateful screens */
 
 function LoadingState() {
   return (
@@ -152,7 +152,7 @@ function EmptyState() {
   );
 }
 
-/* ── Main Export ──────────────────────────────────────────────────────── */
+/* Main Export */
 
 export default function ExecutiveBoard() {
   const { executiveBoard, setExecutiveBoard } = useAxiomStore();

@@ -4,14 +4,14 @@ import { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAxiomStore } from "../../lib/store/axiom-store";
 
-// ── FounderModelPanel ──────────────────────────────────────────────────
+// FounderModelPanel
 // In-memory preference model. Never modifies authority or safety rules.
 
 export default function FounderModelPanel() {
   const { founderModel, setFounderModel } = useAxiomStore();
   const [showResetConfirm, setShowResetConfirm] = useState(false);
 
-  // ── Simulate learning a decision ──────────────────────────────────────
+  // Simulate learning a decision
 
   const recordDecision = useCallback(
     (outcome: string) => {
@@ -29,7 +29,7 @@ export default function FounderModelPanel() {
     [founderModel.decisionPatterns, setFounderModel],
   );
 
-  // ── Reset ────────────────────────────────────────────────────────────
+  // Reset
 
   const resetModel = useCallback(() => {
     setFounderModel({

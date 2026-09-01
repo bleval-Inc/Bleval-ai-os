@@ -1,4 +1,4 @@
-/* ── Reusable skeleton loaders for Phase 8D ────────────────────────── */
+/* Reusable skeleton loaders for Phase 8D */
 
 export function SkeletonCard({ className = "" }: { className?: string }) {
   return (

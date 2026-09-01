@@ -52,7 +52,10 @@ class MarketPipeline:
         intel_config.tracked_symbols = tracked_symbols
 
         self.engine = MarketIntelligenceEngine(
-            integration_layer, repository, intel_config, self.logger
+            integration_layer=integration_layer,
+            repository=repository,
+            config=intel_config,
+            logger=self.logger
         )
 
     async def start(self):

@@ -1,36 +1,49 @@
-// ── Voice WebSocket Hook ──────────────────────────────────────────────
+// Voice WebSocket Hook
 // Real-time bidirectional voice communication with executives
 
 import { useEffect, useRef, useState, useCallback } from "react";
 
-export type VoiceWSMessageType =
-  | "command"
-  | "response"
-  | "speak"
-  | "status"
+export type VoiceWSEventType =
+  | "connected"
+  | "wake_detected"
+  | "listening_started"
+  | "transcription_started"
+  | "transcription_complete"
+  | "processing"
+  | "synthesizing"
+  | "executive_speaking"
+  | "display_result"
+  | "idle"
   | "error"
+  | "status"
   | "ping"
   | "pong";
 
 export type SpeechUrgency = "silent" | "low" | "normal" | "high" | "critical" | "escalation";
 
 export interface VoiceWSMessage {
-  type: VoiceWSMessageType;
-  executive?: string;
-  transcript?: string;
-  response?: string;
-  action_taken?: string;
-  workflow_triggered?: string | null;
-  requires_approval?: boolean;
-  approval_id?: string | null;
-  text?: string;
-  urgency?: SpeechUrgency;
-  wake_word?: string;
-  confidence?: number;
-  is_listening?: boolean;
-  listening_executive?: string;
+  event: VoiceWSEventType;
+  entity?: string;
+  client_id?: string;
   message?: string;
-  data?: VoiceWSCommandData;
+  timestamp?: string;
+  data?: {
+    wake_word?: string;
+    confidence?: number;
+    text?: string;
+    spoken_text?: string;
+    audio_base64?: string;
+    action_taken?: string;
+    workflow_triggered?: string | null;
+    requires_approval?: boolean;
+    approval_id?: string | null;
+    target_workstation?: string;
+    transcript?: string;
+    is_listening?: boolean;
+    urgency?: SpeechUrgency;
+    source?: string;
+    [key: string]: any;
+  };
 }
 
 export interface VoiceWSCommandData {
@@ -42,7 +55,7 @@ export interface VoiceWSCommandData {
 
 export interface UseVoiceWebSocketOptions {
   clientId: string;
-  onResponse?: (response: VoiceWSMessage) => void;
+  onEvent?: (message: VoiceWSMessage) => void;
   onSpeak?: (speak: VoiceWSMessage) => void;
   onStatus?: (status: VoiceWSMessage) => void;
   onError?: (error: string) => void;
@@ -56,6 +69,7 @@ export interface UseVoiceWebSocketReturn {
   connect: () => void;
   disconnect: () => void;
   sendCommand: (transcript: string, executive: "axiom" | "jenson" | "valta_prime" | "yamako", wakeWord: string, confidence: number) => void;
+  sendPushToTalk: (entity: "axiom" | "jenson" | "valta_prime" | "yamako") => void;
   sendPing: () => void;
   lastMessage: VoiceWSMessage | null;
   connectionError: string | null;
@@ -67,7 +81,7 @@ export function useVoiceWebSocket(
 ): UseVoiceWebSocketReturn {
   const {
     clientId,
-    onResponse,
+    onEvent,
     onSpeak,
     onStatus,
     onError,
@@ -77,7 +91,7 @@ export function useVoiceWebSocket(
   } = options;
 
   // Use refs for callbacks to avoid recreating connect/disconnect
-  const onResponseRef = useRef(onResponse);
+  const onEventRef = useRef(onEvent);
   const onSpeakRef = useRef(onSpeak);
   const onStatusRef = useRef(onStatus);
   const onErrorRef = useRef(onError);
@@ -87,7 +101,7 @@ export function useVoiceWebSocket(
   const clientIdRef = useRef(clientId);
 
   // Update refs when props change
-  onResponseRef.current = onResponse;
+  onEventRef.current = onEvent;
   onSpeakRef.current = onSpeak;
   onStatusRef.current = onStatus;
   onErrorRef.current = onError;
@@ -134,23 +148,24 @@ export function useVoiceWebSocket(
           const message: VoiceWSMessage = JSON.parse(event.data);
           setLastMessage(message);
 
-          switch (message.type) {
-            case "response":
-              onResponseRef.current?.(message);
-              break;
-            case "speak":
+          // Call appropriate callback based on event type
+          switch (message.event) {
+            case "executive_speaking":
               onSpeakRef.current?.(message);
               break;
             case "status":
               onStatusRef.current?.(message);
               break;
             case "error":
-              onErrorRef.current?.(message.message || "Unknown error");
-              setConnectionError(message.message || "Unknown error");
+              onErrorRef.current?.(message.data?.message || "Unknown error");
+              setConnectionError(message.data?.message || "Unknown error");
               break;
             case "pong":
               break;
           }
+
+          // Also call generic onEvent for all events
+          onEventRef.current?.(message);
         } catch (err) {
           console.error("Failed to parse WebSocket message:", err);
         }
@@ -230,6 +245,20 @@ export function useVoiceWebSocket(
     []
   );
 
+  const sendPushToTalk = useCallback(
+    (entity: "axiom" | "jenson" | "valta_prime" | "yamako") => {
+      if (wsRef.current?.readyState === WebSocket.OPEN) {
+        wsRef.current.send(
+          JSON.stringify({
+            type: "push_to_talk",
+            entity,
+          })
+        );
+      }
+    },
+    []
+  );
+
   const sendPing = useCallback(() => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify({ type: "ping" }));
@@ -269,6 +298,7 @@ export function useVoiceWebSocket(
     connect,
     disconnect,
     sendCommand,
+    sendPushToTalk,
     sendPing,
     lastMessage,
     connectionError,
@@ -276,9 +306,10 @@ export function useVoiceWebSocket(
   };
 }
 
-// ── Broadcast WebSocket for multi-client voice notifications ──────────
+// Broadcast WebSocket for multi-client voice notifications
 
 export interface UseVoiceBroadcastOptions {
+  onEvent?: (message: VoiceWSMessage) => void;
   onSpeak?: (speak: VoiceWSMessage) => void;
   onStatus?: (status: VoiceWSMessage) => void;
   autoConnect?: boolean;
@@ -295,14 +326,16 @@ export interface UseVoiceBroadcastReturn {
 export function useVoiceBroadcast(
   options: UseVoiceBroadcastOptions
 ): UseVoiceBroadcastReturn {
-  const { onSpeak, onStatus, autoConnect = true } = options;
+  const { onEvent, onSpeak, onStatus, autoConnect = true } = options;
 
   // Use refs for callbacks to avoid recreating connect/disconnect
+  const onEventRef = useRef(onEvent);
   const onSpeakRef = useRef(onSpeak);
   const onStatusRef = useRef(onStatus);
   const autoConnectRef = useRef(autoConnect);
 
   // Update refs when props change
+  onEventRef.current = onEvent;
   onSpeakRef.current = onSpeak;
   onStatusRef.current = onStatus;
   autoConnectRef.current = autoConnect;
@@ -339,11 +372,17 @@ export function useVoiceBroadcast(
         if (!mountedRef.current) return;
         try {
           const message: VoiceWSMessage = JSON.parse(event.data);
-          if (message.type === "speak") {
-            onSpeakRef.current?.(message);
-          } else if (message.type === "status") {
-            onStatusRef.current?.(message);
+          
+          switch (message.event) {
+            case "executive_speaking":
+              onSpeakRef.current?.(message);
+              break;
+            case "status":
+              onStatusRef.current?.(message);
+              break;
           }
+          
+          onEventRef.current?.(message);
         } catch (err) {
           console.error("Failed to parse broadcast message:", err);
         }

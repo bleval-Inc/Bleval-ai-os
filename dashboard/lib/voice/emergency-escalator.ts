@@ -1,4 +1,4 @@
-// ── Emergency Escalator ────────────────────────────────────────────────
+// Emergency Escalator
 // Graduated urgency system for executive alerts:
 //
 //   Valta Prime POI alerts    → HIGH → CRITICAL (escalates after 60s)
@@ -12,8 +12,9 @@
 import { useAxiomStore } from "../store/axiom-store";
 import { requestSpeak, type SpeechUrgency } from "./speech-arbiter";
 import type { SpeakerId } from "../api-types";
+import { system } from "@/lib/api";  // Fixed import path
 
-// ── Types ──────────────────────────────────────────────────────────────
+// Types
 
 export interface EscalationEvent {
   id: string;
@@ -26,13 +27,13 @@ export interface EscalationEvent {
   acknowledged: boolean;
 }
 
-// ── State ──────────────────────────────────────────────────────────────
+// State
 
 let _activeEscalations: EscalationEvent[] = [];
 let _poiTimers: Map<string, ReturnType<typeof setTimeout>> = new Map();
 let _systemPolling: ReturnType<typeof setInterval> | null = null;
 
-// ── Callbacks ──────────────────────────────────────────────────────────
+// Callbacks
 
 type EscalationCallback = (event: EscalationEvent) => void;
 let _onEscalation: EscalationCallback | null = null;
@@ -46,7 +47,7 @@ export function setEscalationCallbacks(callbacks: {
   if (callbacks.onEscalationCleared) _onEscalationCleared = callbacks.onEscalationCleared;
 }
 
-// ── Raising Escalations ───────────────────────────────────────────────
+// Raising Escalations
 
 /** Raise a POI alert from Valta Prime. Starts at HIGH, escalates to CRITICAL after 60s. */
 export function raisePoiAlert(subject: string, message: string): string {
@@ -128,7 +129,7 @@ export function raiseRoutineReminder(subject: string, message: string): string {
   return id;
 }
 
-// ── Acknowledging ──────────────────────────────────────────────────────
+// Acknowledging
 
 /** Acknowledge an escalation event. Clears the emergency state. */
 export function acknowledgeEscalation(eventId: string): void {
@@ -173,7 +174,7 @@ export function hasCriticalEscalation(): boolean {
   return _activeEscalations.some((e) => e.level === "critical");
 }
 
-// ── Polling (System Monitor) ───────────────────────────────────────────
+// Polling (System Monitor)
 
 /** Start polling for system health escalations (call once during app init). */
 export function startSystemHealthPolling(intervalMs = 30000): () => void {
@@ -181,7 +182,6 @@ export function startSystemHealthPolling(intervalMs = 30000): () => void {
 
   _systemPolling = setInterval(async () => {
     try {
-      const { system } = await import("../api");
       const health = await system.health();
       if (health && health.overall === "unhealthy" && health.unhealthy > 0) {
         // Only raise if not already active for the same symptom
@@ -208,7 +208,7 @@ export function startSystemHealthPolling(intervalMs = 30000): () => void {
   };
 }
 
-// ── Internal ───────────────────────────────────────────────────────────
+// Internal
 
 function escalateToCritical(eventId: string): void {
   const event = _activeEscalations.find((e) => e.id === eventId);

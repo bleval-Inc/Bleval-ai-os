@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-/* ── Types ────────────────────────────────────────────────────────── */
+/* Types */
 
 type SessionStatus = "active" | "scheduled" | "completed";
 type ParticipantRole = "owner" | "editor" | "viewer";
@@ -29,7 +29,7 @@ interface CollaborationSession {
   branch?: string;
 }
 
-/* ── Mock Data ────────────────────────────────────────────────────── */
+/* Mock Data */
 
 const AVATARS = [
   "https://api.dicebear.com/7.x/avataaars/svg?seed",
@@ -83,7 +83,7 @@ const SESSION_ICONS: Record<string, string> = {
   code: "code2", brainstorm: "lightbulb", review: "search", design: "palette",
 };
 
-/* ── Sub-Components ───────────────────────────────────────────────── */
+/* Sub-Components */
 
 function OnlineDot({ status }: { status: string }) {
   const colors: Record<string, string> = { online: "bg-emerald-400", idle: "bg-amber-400", offline: "bg-zinc-500" };
@@ -299,7 +299,7 @@ function SessionDetail({ session, onClose }: { session: CollaborationSession; on
   );
 }
 
-/* ── Main Component ───────────────────────────────────────────────── */
+/* Main Component */
 
 export default function CollaborationWorkspace() {
   const [sessions] = useState(MOCK_SESSIONS);
