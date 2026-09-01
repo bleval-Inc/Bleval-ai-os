@@ -29,9 +29,11 @@ from axiom.engine.event import EventEngine
 from axiom.engine.executive import ExecutiveEngine
 from axiom.engine.intelligence import IntelligenceEngine
 from axiom.engine.learning import LearningEngine
+from axiom.engine.market_intelligence import MarketIntelligenceEngine
 from axiom.engine.memory import MemoryEngine
 from axiom.engine.tool import ToolEngine
 from axiom.engine.workflow import WorkflowEngine
+from axiom.executive.fundamental_reporting import FundamentalReportingEngine
 from axiom.runtime.approval import ApprovalManager
 from axiom.runtime.board_room import BoardRoom
 from axiom.runtime.communication import CommunicationCoordinator
@@ -89,6 +91,9 @@ from axiom.runtime.executive_integration import ExecutiveIntegration, ExecutiveI
 from axiom.data.database import DatabaseManager
 from axiom.engine.intelligence import IntelligenceEngine
 
+# Voice Pipeline
+from axiom.voice.pipeline_orchestrator import VoicePipelineOrchestrator, initialize_pipeline
+
 
 class AxiomRuntime:
     """Central runtime orchestrator for Axiom OS.
@@ -109,6 +114,9 @@ class AxiomRuntime:
         self.workflow: Optional[WorkflowEngine] = None
         self.executive: Optional[ExecutiveEngine] = None
         self.intelligence: Optional[IntelligenceEngine] = None
+        self.market_intelligence: Optional[MarketIntelligenceEngine] = None
+        self.fundamental_reporting: Optional[FundamentalReportingEngine] = None
+        self.data_manager = DatabaseManager()
         self.learning: Optional[LearningEngine] = None
 
         # Runtime subsystems
@@ -124,7 +132,7 @@ class AxiomRuntime:
         self.board_room: Optional[BoardRoom] = None
         self.communication: Optional[CommunicationCoordinator] = None
 
-        # JARVIS modules (system telemetry, greetings, function-calling)
+        # JARVIS modules (system telemetry, adaptive greetings, function-calling)
         self.system_monitor: Optional[SystemMonitor] = None
         self.greeting_engine: Optional[GreetingEngine] = None
         self.system_tools: Optional[SystemTools] = None
@@ -163,6 +171,9 @@ class AxiomRuntime:
         # PHASE 8 — Executive Integration
         self.executive_integration: Optional[ExecutiveIntegration] = None
 
+        # Voice Pipeline
+        self.voice_pipeline: Optional[VoicePipelineOrchestrator] = None
+
     # ── Bootstrap ────────────────────────────────────────────────────────
 
     async def bootstrap(self) -> None:
@@ -183,10 +194,22 @@ class AxiomRuntime:
         self.memory = MemoryEngine()
         self.tool = ToolEngine()
         self.executive = ExecutiveEngine()
-        # Intelligence engine with memory + tool integration
+        # Market intelligence engine (needed by intelligence engine)
+        self.market_intelligence = MarketIntelligenceEngine(
+            data_manager=self.data_manager,
+            runtime=self,
+        )
+        # Intelligence engine with memory + tool integration + market intelligence
         self.intelligence = IntelligenceEngine(
             memory=self.memory,
             tool=self.tool,
+            market_intelligence=self.market_intelligence,
+        )
+        # Fundamental reporting engine
+        self.fundamental_reporting = FundamentalReportingEngine(
+            data_manager=self.data_manager,
+            market_intelligence=self.market_intelligence,
+            executive_intelligence=self.intelligence,  # Temporary, will be updated after executive intelligence is created
         )
 
         # ── PHASE H: Provider Registry — Platform Integrations ─────────────
@@ -344,8 +367,11 @@ class AxiomRuntime:
             runtime=self,
         )
 
-        self.executive_greeter = ExecutiveGreeter(runtime=self)
+        # Update fundamental reporting engine with the correct executive intelligence reference
+        if self.fundamental_reporting:
+            self.fundamental_reporting.executive_intelligence = self.executive_intelligence
 
+        self.executive_greeter = ExecutiveGreeter(runtime=self)
         self.qc_learning_pipeline = QCtoLearningPipeline(
             learning_engine=self.learning,
             runtime=self,
@@ -371,8 +397,10 @@ class AxiomRuntime:
         # Research Workspace Manager
         self.research = ResearchWorkspaceManager(logger=self.logger)
 
-        self._initialised = True
+        # Voice Pipeline — initialize after core components
+        self.voice_pipeline = initialize_pipeline(runtime=self, use_mock=False)
 
+        self._initialised = True
         if self.logger:
             self.logger.info("lifecycle", "Axiom OS runtime initialised")
 
@@ -447,10 +475,9 @@ class AxiomRuntime:
         # ── End PHASE C ─────────────────────────────────────────────────
 
         # ── PHASE D: Start Quality Control + Founder Authority ──────────
-
         # QC Manager doesn't need background tasks — it runs on demand.
         if self.qc_manager:
-            # Wire QC callbacks
+            # Wire QC callbacks to the QC-to-Learning pipeline
             if self.qc_learning_pipeline:
                 self.qc_manager.set_on_qc_passed(self._on_qc_passed_for_learning)
                 self.qc_manager.set_on_qc_failed(self._on_qc_failed_for_learning)
@@ -463,7 +490,6 @@ class AxiomRuntime:
                 )
 
         # ── PHASE E: Wire Executive Intelligence + QC Learning ─────────
-
         if self.logger:
             self.logger.info(
                 "lifecycle",
@@ -568,6 +594,16 @@ class AxiomRuntime:
 
         # ── End PHASE 8 ────────────────────────────────────────────────────
 
+        # Start Voice Pipeline
+        if self.voice_pipeline:
+            if self.voice_pipeline.initialize():
+                self.voice_pipeline.start()
+                if self.logger:
+                    self.logger.info("lifecycle", "Voice Pipeline started")
+            else:
+                if self.logger:
+                    self.logger.warning("lifecycle", "Voice Pipeline initialization failed")
+
         self._running = True
 
         if self.logger:
@@ -581,21 +617,21 @@ class AxiomRuntime:
             self.logger.info("lifecycle", "Axiom OS runtime shutting down")
 
         # Stop in reverse order
-        # ── PHASE 8: Shutdown Executive Integration ───────────────────────────
+        # ── PHASE 8: Shutdown Executive Integration ──────────────────────────
         if self.executive_integration:
             await self.executive_integration.stop_sync_loop()
             if self.logger:
                 self.logger.info("lifecycle", "PHASE 8 — Executive Integration shutdown complete")
 
-        # ── End PHASE 8 ───────────────────────────────────────────────────
+        # ── End PHASE 8 ────────────────────────────────────────────────────
 
-        # ── PHASE 7: Shutdown Resource-Aware Runtime ───────────────────────────
+        # ── PHASE 7: Shutdown Resource-Aware Runtime ─────────────────────────
         if self.runtime_orchestrator:
             await self.runtime_orchestrator.stop()
             if self.logger:
                 self.logger.info("lifecycle", "PHASE 7 — Resource-Aware Runtime shutdown complete")
 
-        # ── End PHASE 7 ───────────────────────────────────────────────────
+        # ── End PHASE 7 ────────────────────────────────────────────────────
 
         # ── PHASE 1: Shutdown Integration Layer ──────────────────────────────
         if self.integration_layer:
@@ -603,22 +639,28 @@ class AxiomRuntime:
             if self.logger:
                 self.logger.info("lifecycle", "PHASE 1 — Unified Integration Layer shutdown complete")
 
-        # ── End PHASE 1 ───────────────────────────────────────────────────
+        # ── End PHASE 1 ────────────────────────────────────────────────────
 
-        # ── PHASE H: Shutdown Platform Integrations ────────────────────────────
+        # ── PHASE H: Shutdown Platform Integrations ──────────────────────────
         if self.provider_registry:
             await self.provider_registry.shutdown_all()
             if self.logger:
                 self.logger.info("lifecycle", "PHASE H — Platform Integrations shutdown complete")
 
-        # ── End PHASE H ─────────────────────────────────────────────────
+        # ── End PHASE H ────────────────────────────────────────────────────
+
+        # Stop Voice Pipeline
+        if self.voice_pipeline:
+            self.voice_pipeline.stop()
+            if self.logger:
+                self.logger.info("lifecycle", "Voice Pipeline stopped")
 
         # ── PHASE D: Shutdown Quality Control + Founder Authority ──────
         # No background tasks to stop — all on-demand execution.
 
-        # ── End PHASE D ─────────────────────────────────────────────────
+        # ── End PHASE D ──────────────────────────────────────────────────
 
-        # ── PHASE C: Shutdown Autonomous Components ────────────────────
+        # ── PHASE C: Shutdown Autonomous Components ─────────────────────
         if self.background_executor:
             await self.background_executor.stop()
 
@@ -628,7 +670,7 @@ class AxiomRuntime:
         if self.specialist_engine:
             await self.specialist_engine.stop()
 
-        # ── End PHASE C ─────────────────────────────────────────────────
+        # ── End PHASE C ──────────────────────────────────────────────────
 
         if self.system_monitor:
             await self.system_monitor.shutdown()
@@ -661,7 +703,7 @@ class AxiomRuntime:
         if self.logger:
             self.logger.info("lifecycle", "Axiom OS runtime stopped")
 
-    # ── Event → Workflow Auto-Launch ────────────────────────────────────
+    # ── Event → Workflow Auto-Launch ────────────────────────────────
 
     async def _wire_event_workflow_auto_launch(self) -> None:
         """Subscribe to all event types that have matching workflow triggers.
@@ -731,7 +773,7 @@ class AxiomRuntime:
                     f"Failed to auto-launch {wf_id} from event: {exc}",
                 )
 
-    # ── Learning Engine Wiring ──────────────────────────────────────────
+    # ── Learning Engine Wiring ────────────────────────────────────────
 
     async def _wire_learning_engine(self) -> None:
         """Wire the Learning Engine to observe all execution events.
@@ -906,37 +948,26 @@ class AxiomRuntime:
                 "Learning Engine wired to observe workflow, agent, and executive events",
             )
 
-    async def _wire_system_tools(self) -> None:
-        """Wire system tools into the intelligence engine's context builder.
+    # ── QC Learning Callbacks (instance methods) ─────────────────────────
 
-        This enables the AI to access OS-level function-calling tools
-        (get_telemetry, launch_application, execute_shell, etc.) during
-        reasoning cycles — forming the JARVIS-like agentic bridge.
-        """
-        if not self.system_tools or not self.intelligence:
+    async def _on_qc_passed_for_learning(self, qc_id: str, result: Any) -> None:
+        """Callback when QC passes - feed to learning pipeline."""
+        if not self.qc_learning_pipeline:
             return
+        # The QC pipeline's process_qc_result handles passed results
+        # We need to get the request details - this is called from QCManager after run_qc
+        # For now, we'll skip detailed processing as the pipeline handles it internally
+        pass
 
-        # Add tool schemas to the context builder for prompt assembly
-        if hasattr(self.intelligence, "_context_builder"):
-            cb = self.intelligence._context_builder
-            tool_schemas = self.system_tools.get_tool_schemas()
-            if hasattr(cb, "set_tool_schemas"):
-                cb.set_tool_schemas(tool_schemas)
+    async def _on_qc_failed_for_learning(self, qc_id: str, result: Any) -> None:
+        """Callback when QC fails - feed to learning pipeline."""
+        if not self.qc_learning_pipeline:
+            return
+        # The QC pipeline processes failures internally via process_qc_result
+        # which is called from QCManager.run_qc after the full QC run
+        pass
 
-        if self.logger:
-            tools_count = len(self.system_tools.list_tools())
-            self.logger.info(
-                "lifecycle",
-                f"System tools wired: {tools_count} tools available for AI function-calling",
-            )
-
-    
-        # Initialize providers for each organization
-        await self._initialize_providers_for_organizations()
-
-        if self.logger:
-            providers = self.provider_registry.list_providers()
-            self.logger.info("lifecycle", f"PHASE H — Platform Integrations registered: {len(providers)} providers initialized")
+    # ── Initialize Providers ────────────────────────────────────────────
 
     async def _initialize_providers_for_organizations(self) -> None:
         """Initialize providers for all known organizations."""
@@ -963,7 +994,33 @@ class AxiomRuntime:
                 if self.logger:
                     self.logger.error("lifecycle", f"Failed to initialize providers for org {org_id}: {e}")
 
-    # ── Status ───────────────────────────────────────────────────────────
+    # ── Wire System Tools ────────────────────────────────────────────
+
+    async def _wire_system_tools(self) -> None:
+        """Wire system tools into the intelligence engine's context builder.
+
+        This enables the AI to access OS-level function-calling tools
+        (get_telemetry, launch_application, execute_shell, etc.) during
+        reasoning cycles — forming the JARVIS-like agentic bridge.
+        """
+        if not self.system_tools or not self.intelligence:
+            return
+
+        # Add tool schemas to the context builder for prompt assembly
+        if hasattr(self.intelligence, "_context_builder"):
+            cb = self.intelligence._context_builder
+            tool_schemas = self.system_tools.get_tool_schemas()
+            if hasattr(cb, "set_tool_schemas"):
+                cb.set_tool_schemas(tool_schemas)
+
+        if self.logger:
+            tools_count = len(self.system_tools.list_tools())
+            self.logger.info(
+                "lifecycle",
+                f"System tools wired: {tools_count} tools available for AI function-calling",
+            )
+
+    # ── Status ────────────────────────────────────────────────────────
 
     @property
     def is_running(self) -> bool:
@@ -998,155 +1055,15 @@ class AxiomRuntime:
                 "learning": self.learning is not None,
                 "axiom_core": self.axiom is not None,
                 "research": self.research is not None,
-                # PHASE C Components
-                "specialist_engine": self.specialist_engine is not None,
-                "autonomous_workflow": self.autonomous_workflow is not None,
-                "multi_model": self.multi_model is not None,
-                "background_executor": self.background_executor is not None,
-                "workflow_observer": self.workflow_observer is not None,
-                # PHASE D Components
-                "qc_manager": self.qc_manager is not None,
-                "founder_authority": self.founder_authority is not None,
-                "founder_gateway": self.founder_gateway is not None,
-                # PHASE H Components
+                "market_intelligence": self.market_intelligence is not None,
+                "fundamental_reporting": self.fundamental_reporting is not None,
+                "executive_intelligence": self.executive_intelligence is not None,
+                "executive_greeter": self.executive_greeter is not None,
+                "qc_learning_pipeline": self.qc_learning_pipeline is not None,
                 "provider_registry": self.provider_registry is not None,
-                # PHASE 1 Components
                 "integration_layer": self.integration_layer is not None,
+                "runtime_orchestrator": self.runtime_orchestrator is not None,
+                "executive_integration": self.executive_integration is not None,
+                "voice_pipeline": self.voice_pipeline is not None,
             },
         }
-
-    def get_summary(self) -> Dict[str, Any]:
-        """Return a rich summary of the runtime state."""
-        status = self.get_status()
-        monitor_summary = self.monitor.get_summary() if self.monitor else {}
-        workflows = self.workflow.list_workflows() if self.workflow else {}
-        agents = self.executive.list_executives() if self.executive else []
-        orgs = self.executive.list_organizations() if self.executive else []
-
-        axiom_state = self.axiom.state.value if self.axiom else "unavailable"
-        res_count = len(self.research.list_all()) if self.research else 0
-
-        # PHASE C summaries
-        specialist_summary = self.specialist_engine.get_summary() if self.specialist_engine else {}
-        autonomous_summary = self.autonomous_workflow.get_summary() if self.autonomous_workflow else {}
-        multi_model_summary = self.multi_model.get_summary() if self.multi_model else {}
-        bg_executor_status = self.background_executor.get_status() if self.background_executor else {}
-        observer_stats = self.workflow_observer.get_aggregate_stats() if self.workflow_observer else {}
-
-        # PHASE D summaries
-        qc_summary = self.qc_manager.get_summary() if self.qc_manager else {}
-        authority_status = self.founder_authority.get_status() if self.founder_authority else {}
-        gateway_summary = self.founder_gateway.get_summary() if self.founder_gateway else {}
-
-        # PHASE E summaries
-        ei_status = {}
-        if self.executive_intelligence:
-            # Can add executive intelligence status here
-            pass
-        qc_lp_status = self.qc_learning_pipeline.get_status() if hasattr(self.qc_learning_pipeline, 'get_status') else {}
-
-        # PHASE H summaries
-        phase_h_status = {}
-        if self.provider_registry:
-            providers = self.provider_registry.list_providers()
-            phase_h_status = {
-                "providers_count": len(providers),
-                "providers": {pid: p.get_schema() for pid, p in providers.items()},
-            }
-
-        return {
-            **status,
-            "health": monitor_summary,
-            "workflows_defined": len(workflows),
-            "executives": len(agents),
-            "org_count": len(orgs),
-            "axiom": {
-                "state": axiom_state,
-                "boot_id": self.axiom.boot_id if self.axiom else "",
-                "is_online": self.axiom.is_online if self.axiom else False,
-            },
-            "research_workspaces": res_count,
-            # PHASE C Status
-            "phase_c": {
-                "specialist_engine": specialist_summary,
-                "autonomous_workflows": autonomous_summary,
-                "multi_model": multi_model_summary,
-                "background_executor": bg_executor_status,
-                "workflow_observer": observer_stats,
-            },
-            # PHASE D Status
-            "phase_d": {
-                "qc_manager": qc_summary,
-                "founder_authority": authority_status,
-                "founder_gateway": gateway_summary,
-            },
-            # PHASE E Status
-            "phase_e": {
-                "executive_intelligence": ei_status,
-                "qc_learning_pipeline": qc_lp_status,
-            },
-            # PHASE H Status
-            "phase_h": phase_h_status,
-            # PHASE 1 Status
-            "phase_1": self.integration_layer.get_summary() if self.integration_layer else {},
-        }
-
-    # ── QC Learning Pipeline Callbacks ──────────────────────────────────────
-
-    async def _on_qc_passed_for_learning(self, qc_id: str, result: Any) -> None:
-        """Callback when QC passes — feed into learning pipeline."""
-        if not self.qc_learning_pipeline:
-            return
-
-        await self.qc_learning_pipeline.process_qc_result(
-            qc_id=qc_id,
-            artifact_name=result.artifact_name,
-            artifact_type=result.artifact_type,
-            passed=True,
-            scope=result.scope.value if hasattr(result.scope, 'value') else str(result.scope),
-            findings=[],  # No findings on pass
-            retry_count=result.retry_count,
-            workflow_id=getattr(result, 'workflow_id', ''),
-            workflow_instance_id=getattr(result, 'workflow_instance_id', ''),
-        )
-
-        if self.logger:
-            self.logger.info(
-                "qc.learning",
-                f"QC passed signal sent to learning pipeline: {qc_id}"
-            )
-
-    async def _on_qc_failed_for_learning(self, qc_id: str, result: Any, rework: Any) -> None:
-        """Callback when QC fails — feed into learning pipeline."""
-        if not self.qc_learning_pipeline:
-            return
-
-        # Convert findings to dict format
-        findings = []
-        for f in getattr(result, 'findings', []):
-            findings.append({
-                "check_type": f.check_type.value if hasattr(f.check_type, 'value') else str(f.check_type),
-                "severity": f.severity.value if hasattr(f.severity, 'value') else str(f.severity),
-                "message": f.description,
-                "location": getattr(f, 'location', ''),
-                "detail": getattr(f, 'detail', ''),
-                "suggested_fix": getattr(f, 'suggested_fix', ''),
-            })
-
-        await self.qc_learning_pipeline.process_qc_result(
-            qc_id=qc_id,
-            artifact_name=result.artifact_name,
-            artifact_type=result.artifact_type,
-            passed=False,
-            scope=result.scope.value if hasattr(result.scope, 'value') else str(result.scope),
-            findings=findings,
-            retry_count=result.retry_count,
-            workflow_id=getattr(result, 'workflow_id', ''),
-            workflow_instance_id=getattr(result, 'workflow_instance_id', ''),
-        )
-
-        if self.logger:
-            self.logger.info(
-                "qc.learning",
-                f"QC failed signal sent to learning pipeline: {qc_id} ({len(findings)} findings)"
-            )

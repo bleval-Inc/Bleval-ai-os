@@ -13,11 +13,11 @@ import type {
   PerformanceScore,
 } from "../../lib/api-types";
 
-// ── Types ──────────────────────────────────────────────────────────────
+// Types
 
 type LearningTab = "overview" | "patterns" | "recommendations" | "knowledge" | "cycles";
 
-// ── Severity config ─────────────────────────────────────────────────────
+// Severity config
 
 const SEVERITY_CONFIG: Record<string, { color: string; bg: string }> = {
   info: { color: "text-blue-400", bg: "bg-blue-400/10" },
@@ -32,7 +32,7 @@ const SCORE_COLORS: Record<string, string> = {
   stable: "text-blue-400",
 };
 
-// ── LearningPanel ──────────────────────────────────────────────────────
+// LearningPanel
 
 export default function LearningPanel() {
   const {
@@ -186,7 +186,7 @@ export default function LearningPanel() {
   );
 }
 
-// ── Overview Tab ────────────────────────────────────────────────────────
+// Overview Tab
 
 function OverviewTab({
   status,
@@ -277,7 +277,7 @@ function OverviewTab({
   );
 }
 
-// ── Patterns Tab ────────────────────────────────────────────────────────
+// Patterns Tab
 
 function PatternsTab({ patterns }: { patterns: LearningPattern[] }) {
   const [expanded, setExpanded] = useState<string | null>(null);
@@ -359,7 +359,7 @@ function PatternsTab({ patterns }: { patterns: LearningPattern[] }) {
   );
 }
 
-// ── Recommendations Tab ────────────────────────────────────────────────
+// Recommendations Tab
 
 function RecommendationsTab({
   recommendations,
@@ -428,7 +428,7 @@ function RecommendationsTab({
   );
 }
 
-// ── Knowledge Tab ──────────────────────────────────────────────────────
+// Knowledge Tab
 
 function KnowledgeTab({ entries }: { entries: KnowledgeEntry[] }) {
   const [search, setSearch] = useState("");
@@ -488,7 +488,7 @@ function KnowledgeTab({ entries }: { entries: KnowledgeEntry[] }) {
   );
 }
 
-// ── Cycles Tab ─────────────────────────────────────────────────────────
+// Cycles Tab
 
 function CyclesTab({ cycles }: { cycles: LearningCycle[] }) {
   if (cycles.length === 0) {

@@ -23,9 +23,10 @@ os.environ["DEBUG"] = "false"
 os.environ["AXIOM_ENV"] = "production"
 
 from axiom.engine.providers.nvidia import create_nvidia_providers, NVIDIAProvider
-from axiom.engine.intelligence import AnthropicProvider, OpenAIProvider, ProviderRouter
+from axiom.engine.intelligence import ProviderRouter
 from axiom.engine.smart_router import SmartRouter, TaskClassifier, TaskCategory
 from axiom.config import settings
+from axiom.engine.base import MockProvider
 
 
 async def test_nvidia_provider(provider: NVIDIAProvider, test_name: str) -> Dict[str, Any]:
@@ -54,7 +55,7 @@ async def test_nvidia_provider(provider: NVIDIAProvider, test_name: str) -> Dict
             temperature=0.0,
         )
 
-        # Check if we got a real response (not an error string)
+        # Check if we got an error string from the provider
         if response.startswith(f"[{provider.name} Error]"):
             return {
                 "provider": provider.name,
@@ -64,125 +65,31 @@ async def test_nvidia_provider(provider: NVIDIAProvider, test_name: str) -> Dict
                 "error": response
             }
 
-        print(f"  ✓ Response received ({len(response)} chars)")
-        print(f"  Response: {response[:200]}...")
+        # Consider any non-empty response as success for connectivity test
+        if response and len(response.strip()) > 0:
+            print(f"  ✓ Response received ({len(response)} chars)")
+            print(f"  Response: {response[:200]}...")
 
+            return {
+                "provider": provider.name,
+                "model": provider.model_id,
+                "status": "OK",
+                "reason": "Connected and responding",
+                "error": None
+            }
+        else:
+            return {
+                "provider": provider.name,
+                "model": provider.model_id,
+                "status": "FAILED",
+                "reason": "Empty response from API",
+                "error": None
+            }
+
+    except Exception as e:
         return {
             "provider": provider.name,
             "model": provider.model_id,
-            "status": "OK",
-            "reason": "Connected and responding",
-            "error": None
-        }
-
-    except Exception as e:
-        return {
-            "provider": provider.name,
-            "model": provider.model_id,
-            "status": "FAILED",
-            "reason": f"Exception: {type(e).__name__}",
-            "error": str(e)
-        }
-
-
-async def test_anthropic_provider(key: str = None) -> Dict[str, Any]:
-    """Test Anthropic provider connectivity."""
-    print(f"\n{'='*60}")
-    print(f"Testing Anthropic (Claude)")
-
-    provider = AnthropicProvider(api_key=key or settings.anthropic_api_key)
-
-    if not provider.available:
-        return {
-            "provider": "anthropic",
-            "model": "claude-sonnet-4-20250514",
-            "status": "SKIPPED",
-            "reason": "No API key configured",
-            "error": None
-        }
-
-    try:
-        response = await provider.generate(
-            prompt="Respond with exactly: OK",
-            system_prompt="You are a connectivity test. Reply only with OK.",
-            max_tokens=10,
-            temperature=0.0,
-        )
-
-        if response.startswith("[AnthropicProvider Error]"):
-            return {
-                "provider": "anthropic",
-                "model": "claude-sonnet-4-20250514",
-                "status": "FAILED",
-                "reason": "API returned error",
-                "error": response
-            }
-
-        print(f"  ✓ Response received ({len(response)} chars)")
-        return {
-            "provider": "anthropic",
-            "model": "claude-sonnet-4-20250514",
-            "status": "OK",
-            "reason": "Connected and responding",
-            "error": None
-        }
-
-    except Exception as e:
-        return {
-            "provider": "anthropic",
-            "model": "claude-sonnet-4-20250514",
-            "status": "FAILED",
-            "reason": f"Exception: {type(e).__name__}",
-            "error": str(e)
-        }
-
-
-async def test_openai_provider(key: str = None) -> Dict[str, Any]:
-    """Test OpenAI provider connectivity."""
-    print(f"\n{'='*60}")
-    print(f"Testing OpenAI (GPT)")
-
-    provider = OpenAIProvider(api_key=key or settings.openai_api_key)
-
-    if not provider.available:
-        return {
-            "provider": "openai",
-            "model": "gpt-4o",
-            "status": "SKIPPED",
-            "reason": "No API key configured",
-            "error": None
-        }
-
-    try:
-        response = await provider.generate(
-            prompt="Respond with exactly: OK",
-            system_prompt="You are a connectivity test. Reply only with OK.",
-            max_tokens=10,
-            temperature=0.0,
-        )
-
-        if response.startswith("[OpenAIProvider Error]"):
-            return {
-                "provider": "openai",
-                "model": "gpt-4o",
-                "status": "FAILED",
-                "reason": "API returned error",
-                "error": response
-            }
-
-        print(f"  ✓ Response received ({len(response)} chars)")
-        return {
-            "provider": "openai",
-            "model": "gpt-4o",
-            "status": "OK",
-            "reason": "Connected and responding",
-            "error": None
-        }
-
-    except Exception as e:
-        return {
-            "provider": "openai",
-            "model": "gpt-4o",
             "status": "FAILED",
             "reason": f"Exception: {type(e).__name__}",
             "error": str(e)
@@ -200,15 +107,6 @@ async def test_smart_router() -> Dict[str, Any]:
     nvidia_providers = create_nvidia_providers()
     for nvp in nvidia_providers:
         router.register_nvidia_provider(nvp)
-
-    # Register Anthropic and OpenAI if configured
-    anthro = AnthropicProvider()
-    if anthro.available:
-        router.register_provider("anthropic", anthro)
-
-    openai = OpenAIProvider()
-    if openai.available:
-        router.register_provider("openai", openai)
 
     available = router.get_available_providers()
     real_providers = [p for p in available if p["available"] and p["type"] != "MockProvider"]
@@ -252,7 +150,7 @@ async def test_smart_router() -> Dict[str, Any]:
         routing_results.append({
             "category": cat.value,
             "selected_provider": provider.name if hasattr(provider, "name") else type(provider).__name__,
-            "is_real": not isinstance(provider, type(router._mock_provider))
+            "is_real": not isinstance(provider, MockProvider)
         })
 
     return {
@@ -321,9 +219,9 @@ async def test_intelligence_engine() -> Dict[str, Any]:
 
 async def run_all_tests() -> Dict[str, Any]:
     """Run all validation tests and return summary."""
-    print("═══════════════════════════════════════════════════════════════")
-    print("  AXIOM BRAIN — MODEL PROVIDER CONNECTIVITY VALIDATION")
-    print("═══════════════════════════════════════════════════════════════")
+    print("============================================================")
+    print("  AXIOM BRAIN - MODEL PROVIDER CONNECTIVITY VALIDATION")
+    print("============================================================")
     print(f"\nEnvironment: {settings.env}")
     print(f"Real Providers Only: {settings.real_providers_only}")
     print(f"Debug Mode: {settings.debug}")
@@ -334,12 +232,6 @@ async def run_all_tests() -> Dict[str, Any]:
     nvidia_providers = create_nvidia_providers()
     for nvp in nvidia_providers:
         results.append(await test_nvidia_provider(nvp, nvp.label))
-
-    # Test Anthropic
-    results.append(await test_anthropic_provider())
-
-    # Test OpenAI
-    results.append(await test_openai_provider())
 
     # Test Smart Router
     results.append(await test_smart_router())

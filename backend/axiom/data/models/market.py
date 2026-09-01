@@ -480,3 +480,98 @@ class TradeSignal(MarketBase):
 
     def __repr__(self) -> str:
         return f"<TradeSignal(symbol_id={self.symbol_id}, type={self.signal_type.value}, source={self.source.value})>"
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# SIMPLIFIED TABLES FOR DASHBOARD & ANALYTICS (MetaApi Optimized)
+# ──────────────────────────────────────────────────────────────────────────────
+
+
+class AccountSnapshotSimple(MarketBase):
+    """Simplified account snapshot for equity curve and dashboard metrics."""
+
+    __tablename__ = "account_snapshots_simple"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+
+    # Core metrics for dashboard
+    timestamp: Mapped[datetime] = mapped_column(DateTime, nullable=False, index=True)
+    balance: Mapped[Decimal] = mapped_column(Numeric(15, 2), nullable=False)
+    equity: Mapped[Decimal] = mapped_column(Numeric(15, 2), nullable=False)
+    margin: Mapped[Decimal] = mapped_column(Numeric(15, 2), nullable=False)
+    free_margin: Mapped[Decimal] = mapped_column(Numeric(15, 2), nullable=False)
+    open_pnl: Mapped[Decimal] = mapped_column(Numeric(15, 2), nullable=False)
+
+    # Source tracking
+    source: Mapped[str] = mapped_column(String(50), default="metaapi", nullable=False)
+    received_at: Mapped[datetime] = mapped_column(DateTime, default=func.now(), nullable=False)
+
+    __table_args__ = (
+        Index("ix_account_snapshots_simple_timestamp", "timestamp"),
+    )
+
+
+class TradesHistory(MarketBase):
+    """Comprehensive trade history for analytics and reporting."""
+
+    __tablename__ = "trades_history"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+
+    # Trade identifiers
+    deal_id: Mapped[BigInteger] = mapped_column(BigInteger, unique=True, nullable=False, index=True)
+    order_id: Mapped[Optional[BigInteger]] = mapped_column(BigInteger, nullable=True, index=True)
+
+    # Trade details
+    symbol: Mapped[String(20)] = mapped_column(String(20), nullable=False, index=True)
+    type: Mapped[String(10)] = mapped_column(String(10), nullable=False)  # buy/sell
+    volume: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=False)
+    entry_price: Mapped[Decimal] = mapped_column(Numeric(12, 5), nullable=False)
+    exit_price: Mapped[Decimal] = mapped_column(Numeric(12, 5), nullable=False)
+
+    # Financials
+    profit: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
+    commission: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
+    swap: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
+    net_pnl: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
+
+    # Timing
+    close_time: Mapped[DateTime] = mapped_column(DateTime, nullable=False, index=True)
+
+    # Source tracking
+    source: Mapped[String(50)] = mapped_column(String(50), default="metaapi", nullable=False)
+    received_at: Mapped[DateTime] = mapped_column(DateTime, default=func.now(), nullable=False)
+
+    __table_args__ = (
+        Index("ix_trades_history_symbol", "symbol"),
+        Index("ix_trades_history_close_time", "close_time"),
+        Index("ix_trades_history_source", "source"),
+    )
+
+
+class DailySummaries(MarketBase):
+    """Pre-aggregated daily summaries for fast trading calendar rendering."""
+
+    __tablename__ = "daily_summaries"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+
+    # Date key
+    trade_date: Mapped[DateTime] = mapped_column(DateTime, nullable=False, index=True)
+
+    # Daily aggregates
+    total_trades: Mapped[Integer] = mapped_column(Integer, default=0, nullable=False)
+    wins: Mapped[Integer] = mapped_column(Integer, default=0, nullable=False)
+    losses: Mapped[Integer] = mapped_column(Integer, default=0, nullable=False)
+    net_pnl: Mapped[Decimal] = mapped_column(Numeric(15, 2), default=0, nullable=False)
+    win_rate: Mapped[Decimal] = mapped_column(Numeric(5, 2), default=0, nullable=False)
+
+    # Source tracking
+    source: Mapped[String(50)] = mapped_column(String(50), default="metaapi", nullable=False)
+    received_at: Mapped[DateTime] = mapped_column(DateTime, default=func.now(), nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint("trade_date", "source", name="uq_daily_summaries_date_source"),
+        Index("ix_daily_summaries_trade_date", "trade_date"),
+        Index("ix_daily_summaries_source", "source"),
+    )

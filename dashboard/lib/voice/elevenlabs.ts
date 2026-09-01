@@ -1,4 +1,4 @@
-// ── ElevenLabs TTS Integration ──────────────────────────────────────
+// ElevenLabs TTS Integration
 // Premium AI voice for AXIOM — warm, articulate, confident British female
 // Falls back to browser SpeechSynthesis if no API key is configured
 

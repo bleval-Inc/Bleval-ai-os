@@ -34,6 +34,29 @@ from .market import (
     SignalSource,
 )
 
+from .journal import (
+    JournalBase,
+    APlusClassification,
+    JournalAnalytics,
+    JournalEntry,
+    JournalEntryType,
+    JournalTemplate,
+    TradingSession,
+    TradeResult,
+)
+
+from .intelligence import (
+    IntelligenceBase,
+    NewsCategory,
+    NewsSourceType,
+    RelevanceLevel,
+    MarketNews,
+    EconomicIndicator,
+    GeopoliticalEvent,
+    InstitutionalInfo,
+    IntelligenceCache,
+)
+
 from .research import (
     ResearchBase,
     ResearchReport,
@@ -93,6 +116,25 @@ __all__ = [
     "OrderStatus",
     "SignalType",
     "SignalSource",
+    # INTELLIGENCE
+    "IntelligenceBase",
+    "NewsCategory",
+    "NewsSourceType",
+    "RelevanceLevel",
+    "MarketNews",
+    "EconomicIndicator",
+    "GeopoliticalEvent",
+    "InstitutionalInfo",
+    "IntelligenceCache",
+    # JOURNAL
+    "JournalBase",
+    "APlusClassification",
+    "JournalAnalytics",
+    "JournalEntry",
+    "JournalEntryType",
+    "JournalTemplate",
+    "TradingSession",
+    "TradeResult",
     # RESEARCH
     "ResearchBase",
     "ResearchReport",

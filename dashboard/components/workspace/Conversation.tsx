@@ -79,7 +79,7 @@ export default function Conversation() {
     inputRef.current?.focus();
   }, []);
 
-  // ── Watch for voice commands from VoiceEngine ────────────────────
+  // Watch for voice commands from VoiceEngine
 
   useEffect(() => {
     if (pendingVoiceCommand) {

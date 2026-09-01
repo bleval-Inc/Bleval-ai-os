@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { useAxiomStore } from "../../lib/store/axiom-store";
+import { motion } from "framer-motion";
 import { board as boardApi } from "../../lib/api";
 import type {
   BoardMeeting,
@@ -10,7 +9,7 @@ import type {
   BoardDashboard,
 } from "../../lib/api-types";
 
-// ── Types ──────────────────────────────────────────────────────────────
+// Types
 
 type PanelTab = "meetings" | "kpis" | "actions";
 
@@ -21,7 +20,7 @@ interface KpiCard {
   label: string;
 }
 
-// ── Color helpers ───────────────────────────────────────────────────────
+// Color helpers
 
 const STATUS_COLORS: Record<string, string> = {
   scheduled: "text-amber-400 border-amber-400/30 bg-amber-400/10",
@@ -47,7 +46,7 @@ const PRIORITY_COLORS: Record<string, string> = {
   low: "text-blue-400 border-blue-400/30 bg-blue-400/10",
 };
 
-// ── BoardRoomPanel ──────────────────────────────────────────────────────
+// BoardRoomPanel
 
 export default function BoardRoomPanel() {
   const [activeTab, setActiveTab] = useState<PanelTab>("meetings");
@@ -56,9 +55,15 @@ export default function BoardRoomPanel() {
   const [kpiData, setKpiData] = useState<KpiCard[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [pollingInterval, setPollingInterval] = useState<ReturnType<typeof setInterval> | null>(null);
 
-  // ── Data Fetching ─────────────────────────────────────────────────────
+  // Helpers
+  function formatMetricLabel(key: string): string {
+    return key
+      .replace(/_/g, " ")
+      .replace(/\b\w/g, (c) => c.toUpperCase());
+  }
+
+  // Data Fetching
   const fetchData = useCallback(async () => {
     try {
       const [dash, mList, kpiRes] = await Promise.all([
@@ -95,27 +100,22 @@ export default function BoardRoomPanel() {
       }
 
       setError(null);
-    } catch (e) {
+    } catch {
       setError("Failed to load Board Room data");
     } finally {
       setLoading(false);
     }
   }, []);
 
-  // ── Polling ───────────────────────────────────────────────────────────
+  // Polling
   useEffect(() => {
+    // Initial data fetch
     fetchData();
+
+    // Set up polling interval for subsequent updates
     const interval = setInterval(fetchData, 15000);
-    setPollingInterval(interval);
     return () => clearInterval(interval);
   }, [fetchData]);
-
-  // ── Helpers ───────────────────────────────────────────────────────────
-  function formatMetricLabel(key: string): string {
-    return key
-      .replace(/_/g, " ")
-      .replace(/\b\w/g, (c) => c.toUpperCase());
-  }
 
   function formatTimestamp(ts: string | number | undefined): string {
     if (!ts) return "—";
@@ -138,7 +138,7 @@ export default function BoardRoomPanel() {
     return colors[exec.toLowerCase()] ?? "text-gray-400";
   }
 
-  // ── RENDER ────────────────────────────────────────────────────────────
+  // RENDER
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -216,34 +216,31 @@ export default function BoardRoomPanel() {
             activeMeeting={activeMeeting}
             getExecutiveColor={getExecutiveColor}
             formatTimestamp={formatTimestamp}
-            onRefresh={fetchData}
           />
         )}
         {activeTab === "kpis" && (
           <KpisTab kpiData={kpiData} getExecutiveColor={getExecutiveColor} />
         )}
         {activeTab === "actions" && (
-          <ActionsTab onRefresh={fetchData} />
+          <ActionsTab />
         )}
       </div>
     </div>
   );
 }
 
-// ── Meetings Tab ────────────────────────────────────────────────────────
+// Meetings Tab
 
 function MeetingsTab({
   meetings,
   activeMeeting,
   getExecutiveColor,
   formatTimestamp,
-  onRefresh,
 }: {
   meetings: BoardMeeting[];
   activeMeeting: BoardMeetingDetail | null;
   getExecutiveColor: (exec: string) => string;
   formatTimestamp: (ts: string | number | undefined) => string;
-  onRefresh: () => void;
 }) {
   // Show active meeting first
   const sortedMeetings = [...meetings].sort((a, b) => {
@@ -388,7 +385,7 @@ function MeetingCard({
   );
 }
 
-// ── KPIs Tab ────────────────────────────────────────────────────────────
+// KPIs Tab
 
 function KpisTab({
   kpiData,
@@ -444,15 +441,11 @@ function KpisTab({
   );
 }
 
-// ── Actions Tab ─────────────────────────────────────────────────────────
+// Actions Tab
 
 import type { BoardActionItemsResponse } from "../../lib/api-types";
 
-function ActionsTab({
-  onRefresh,
-}: {
-  onRefresh: () => void;
-}) {
+function ActionsTab() {
   const [actions, setActions] = useState<BoardActionItemsResponse | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -522,7 +515,7 @@ function ActionsTab({
   );
 }
 
-function ActionItemCard({ item }: { item: any }) {
+function ActionItemCard({ item }: { item: BoardActionItemsResponse["open"][0] | BoardActionItemsResponse["overdue"][0] }) {
   const priorityColor = PRIORITY_COLORS[item.priority || "medium"];
 
   return (
@@ -533,7 +526,7 @@ function ActionItemCard({ item }: { item: any }) {
         "bg-blue-400"
       }`} />
       <div className="flex-1 min-w-0">
-        <p className="text-[10px] text-[var(--axiom-text-primary)]">{item.title || item.description}</p>
+        <p className="text-[10px] text-[var(--axiom-text-primary)]">{item.title}</p>
         <div className="flex items-center gap-2 mt-1">
           <span className={`px-1.5 py-0.5 text-[8px] font-medium border rounded-full ${priorityColor}`}>
             {item.priority || "medium"}

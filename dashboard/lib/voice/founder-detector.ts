@@ -1,4 +1,4 @@
-// ── Founder Detector ──────────────────────────────────────────────────
+// Founder Detector
 // Detects the Founder's availability across multiple signals:
 //   - Schedule (from Yamako's ScheduleCoordinator)
 //   - Workstation activity (keyboard/mouse)
@@ -13,12 +13,12 @@ import { useAxiomStore } from "../store/axiom-store";
 import { executives as execApi } from "../api";
 import type { FounderAvailability } from "../api-types";
 
-// ── Working Hours ──────────────────────────────────────────────────────
+// Working Hours
 
 const WORKING_HOURS_START = 5;  // 05:00
 const WORKING_HOURS_END = 21;   // 21:00
 
-// ── Schedule-based resolution ──────────────────────────────────────────
+// Schedule-based resolution
 
 interface ScheduleBlock {
   category?: string;
@@ -53,7 +53,7 @@ function availabilityFromSchedule(block: ScheduleBlock | null): FounderAvailabil
   return "available";
 }
 
-// ── Activity tracking ─────────────────────────────────────────────────
+// Activity tracking
 
 let _lastActivityTime = Date.now();
 
@@ -79,7 +79,7 @@ export function installActivityTracking(): () => void {
   };
 }
 
-// ── Detection Logic ───────────────────────────────────────────────────
+// Detection Logic
 
 const INACTIVITY_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
 
@@ -133,7 +133,7 @@ async function detectAvailability(): Promise<FounderAvailability> {
   return "available";
 }
 
-// ── Hook ───────────────────────────────────────────────────────────────
+// Hook
 
 /** Zustand-compatible hook that polls founder availability every 30s. */
 export function useFounderState() {
@@ -152,7 +152,7 @@ export function useFounderState() {
   }, [setFounderAvailability]);
 }
 
-// ── One-shot check ─────────────────────────────────────────────────────
+// One-shot check
 
 export async function checkFounderAvailability(): Promise<FounderAvailability> {
   return detectAvailability();

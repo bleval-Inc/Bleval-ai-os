@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { system } from "../../../lib/api";
 import type { WorkflowAnalytics, HealthSummary } from "../../../lib/api-types";
 
-/* ── SVG icon helpers ──────────────────────────────────────────────── */
+/* SVG icon helpers */
 
 function IconArrow() {
   return (
@@ -29,7 +29,7 @@ function SuccessBadge({ rate }: { rate: number }) {
   return <span className={`px-2 py-0.5 rounded text-[10px] font-medium ${color}`}>{(rate * 100).toFixed(0)}%</span>;
 }
 
-/* ── Trading Terminal ──────────────────────────────────────────────── */
+/* Trading Terminal */
 
 export default function TradingTerminal() {
   const [analytics, setAnalytics] = useState<WorkflowAnalytics[]>([]);
@@ -56,7 +56,7 @@ export default function TradingTerminal() {
 
   useEffect(() => { fetch(); }, []);
 
-  /* ── Metrics summary ───────────────────────────────────────────── */
+  /* Metrics summary */
   const totalRuns = analytics.reduce((s, a) => s + a.total_runs, 0);
   const avgSuccess = analytics.length
     ? analytics.reduce((s, a) => s + a.success_rate, 0) / analytics.length
@@ -72,7 +72,7 @@ export default function TradingTerminal() {
     { label: "Avg Duration", value: `${avgDuration.toFixed(1)}s`, accent: "from-amber-500/20 to-orange-500/20" },
   ];
 
-  /* ── Loading ────────────────────────────────────────────────────── */
+  /* Loading */
   if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center">
@@ -86,7 +86,7 @@ export default function TradingTerminal() {
     );
   }
 
-  /* ── Error ──────────────────────────────────────────────────────── */
+  /* Error */
   if (error) {
     return (
       <div className="flex-1 flex items-center justify-center">

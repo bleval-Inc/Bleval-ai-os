@@ -1,10 +1,10 @@
 @import "tailwindcss";
 
-/* ── AXIOM OS Design System ──────────────────────────────────────────
+/* AXIOM OS Design System
  * Apple-quality. Clean. Confident. Premium executive command system.
  * Dark-first: near-black / charcoal / midnight blue
  * Subtle blue/purple atmospheric lighting, restrained glass effects
- * ──────────────────────────────────────────────────────────────────── */
+ */
 
 :root {
   /* Core backgrounds — dark, premium, near-black with subtle depth */

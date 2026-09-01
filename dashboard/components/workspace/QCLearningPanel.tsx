@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { qc as qcApi } from "../../lib/api";
 import type { QCResultSummary } from "../../lib/api-types";
 
-// ── QC Learning Panel ──────────────────────────────────────────────────
+// QC Learning Panel
 // Visualizes QC failures as learning signals — connects QC to Learning.
 
 interface FailureTypeCount {
@@ -13,7 +13,7 @@ interface FailureTypeCount {
   workflows: Record<string, number>;
 }
 
-// ── Severity colors ─────────────────────────────────────────────────────
+// Severity colors
 
 const SEVERITY_COLORS: Record<string, string> = {
   critical: "text-red-400 bg-red-400/10 border-red-400/20",
@@ -23,7 +23,7 @@ const SEVERITY_COLORS: Record<string, string> = {
   info: "text-gray-400 bg-gray-400/10 border-gray-400/20",
 };
 
-// ── QCLearningPanel ────────────────────────────────────────────────────
+// QCLearningPanel
 
 export default function QCLearningPanel() {
   const [results, setResults] = useState<QCResultSummary[]>([]);

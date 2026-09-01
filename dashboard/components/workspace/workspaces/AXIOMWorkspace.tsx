@@ -10,7 +10,7 @@ import type {
   AxiomChatResponse,
 } from "../../../lib/api-types";
 
-/* ── Sub-components ───────────────────────────────────────────────── */
+/* Sub-components */
 
 function StateBadge({ state }: { state: string }) {
   const colorMap: Record<string, string> = {
@@ -82,7 +82,7 @@ function QuickAction({
   );
 }
 
-/* ── Main Component ────────────────────────────────────────────────── */
+/* Main Component */
 
 export default function AXIOMWorkspace() {
   const [awareness, setAwareness] = useState<SystemAwareness | null>(null);

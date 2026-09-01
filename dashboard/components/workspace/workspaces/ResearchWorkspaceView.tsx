@@ -10,7 +10,7 @@ import type {
   ConversationEntry,
 } from "../../../lib/api-types";
 
-/* ── Sub-components ───────────────────────────────────────────────── */
+/* Sub-components */
 
 function WorkspaceCard({
   ws,
@@ -151,7 +151,7 @@ function CreateForm({
   );
 }
 
-/* ── Main Component ────────────────────────────────────────────────── */
+/* Main Component */
 
 export default function ResearchWorkspaceView() {
   const [workspaces, setWorkspaces] = useState<ResearchWorkspaceSummary[]>([]);
@@ -364,7 +364,7 @@ export default function ResearchWorkspaceView() {
     );
   }
 
-  // ── List view ─────────────────────────────────────────────────────
+  // List view
 
   return (
     <div className="flex-1 flex flex-col min-w-0 h-full">

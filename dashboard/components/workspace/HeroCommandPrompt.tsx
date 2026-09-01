@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAxiomStore } from "../../lib/store/axiom-store";
 import { useVoiceBroadcast } from "../../lib/voice/voice-websocket";
+import { useVoiceWebSocket } from "../../lib/voice/voice-websocket";
 import { cn } from "../../lib/utils";
 
 interface HeroCommandPromptProps {
@@ -25,43 +26,44 @@ export function HeroCommandPrompt({
   const containerRef = useRef<HTMLDivElement>(null);
 
   const {
-    isAwake,
-    isListening,
-    listeningExecutive,
-    voiceActive,
-    setVoiceActive,
-    addNotification,
-  } = useAxiomStore();
+      isAwake,
+      isListening,
+      listeningExecutive,
+      voiceActive,
+      setVoiceActive,
+      addNotification,
+      triggerPushToTalk,
+    } = useAxiomStore();
 
   // Voice broadcast for real-time waveform
-  const [voiceSpeaking, setVoiceSpeaking] = useState(false);
-  const [voiceExecutive, setVoiceExecutive] = useState<string | null>(null);
-  const { isConnected: voiceConnected } = useVoiceBroadcast({
-    onSpeak: (msg) => {
-      if (msg.executive && msg.text) {
-        setVoiceSpeaking(true);
-        setVoiceExecutive(msg.executive);
-        // Auto-hide after speech ends
-        const timeout = setTimeout(() => {
+    const [voiceSpeaking, setVoiceSpeaking] = useState(false);
+    const [voiceExecutive, setVoiceExecutive] = useState<string | null>(null);
+    const { isConnected: voiceConnected } = useVoiceBroadcast({
+      onSpeak: (msg) => {
+        if (msg.executive && msg.text) {
+          setVoiceSpeaking(true);
+          setVoiceExecutive(msg.executive);
+          // Auto-hide after speech ends
+          const timeout = setTimeout(() => {
+            setVoiceSpeaking(false);
+            setVoiceExecutive(null);
+          }, 3000);
+          return () => clearTimeout(timeout);
+        }
+      },
+      onStatus: (msg) => {
+        // Update store based on voice status if needed
+        console.log("Voice status:", msg);
+        // Check if message has the listening state (status messages from broadcast)
+        if (msg.type === "status" && "is_listening" in msg && msg.is_listening === false) {
           setVoiceSpeaking(false);
           setVoiceExecutive(null);
-        }, 3000);
-        return () => clearTimeout(timeout);
-      }
-    },
-    onStatus: (msg) => {
-      // Update store based on voice status if needed
-      console.log("Voice status:", msg);
-      // Check if message has the listening state (status messages from broadcast)
-      if (msg.type === "status" && "is_listening" in msg && msg.is_listening === false) {
-        setVoiceSpeaking(false);
-        setVoiceExecutive(null);
-      }
-    },
-    autoConnect: true,
-  });
+        }
+      },
+      autoConnect: true,
+    });
 
-  // Command suggestions based on context
+    // Command suggestions based on context
   const commandSuggestions = [
     "Show system status",
     "Deploy to production",
@@ -322,20 +324,21 @@ export function HeroCommandPrompt({
 
           <div className="flex items-center gap-2">
             <button
-              type="button"
-              onClick={() => {
-                if (!voiceActive) setVoiceActive(true);
-                // Trigger push-to-talk would go here
-              }}
-              className={cn(
-                "p-2 rounded-lg transition-all duration-150",
-                "flex items-center justify-center",
-                voiceActive
-                  ? "bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 hover:bg-indigo-500/30"
-                  : "bg-white/5 text-slate-500 border border-white/10 hover:bg-white/10 hover:text-slate-300"
-              )}
-              title="Voice Command (⌘⇧V)"
-            >
+                          type="button"
+                          onClick={() => {
+                            if (!voiceActive) setVoiceActive(true);
+                            // Trigger push-to-talk via store callback
+                            triggerPushToTalk();
+                          }}
+                          className={cn(
+                            "p-2 rounded-lg transition-all duration-150",
+                            "flex items-center justify-center",
+                            voiceActive
+                              ? "bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 hover:bg-indigo-500/30"
+                              : "bg-white/5 text-slate-500 border border-white/10 hover:bg-white/10 hover:text-slate-300"
+                          )}
+                          title="Voice Command (⌘⇧V)"
+                        >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
                 <path d="M19 10v2a7 7 0 0 1-14 0v-2" />

@@ -17,13 +17,7 @@ dependencies = [
     "croniter>=3.0.0",
     "email-normalize>=1.0.0",
     "fastapi>=0.115.0",
-    "feedparser>=6.0.0",
-    "GPUtil>=1.4.0",
-    "google-api-python-client>=2.150.0",
-    "icalendar>=6.0.0",
-    "jsonschema>=4.0.0",
-    "MetaTrader5>=5.0.0",
-    "numpy>=2.0.0",
+    "faster-whisper>=1.1.0",
     "openai>=1.55.0",
     "phonenumbers>=8.13.0",
     "psutil>=7.0.0",
@@ -37,7 +31,7 @@ dependencies = [
     "SQLAlchemy>=2.0.0",
     "typer>=0.12.0",
     "uvicorn[standard]>=0.32.0",
-    "vaderSentiment>=3.3.0",
+    "vosk>=0.3.45",
 ]
 
 [project.optional-dependencies]

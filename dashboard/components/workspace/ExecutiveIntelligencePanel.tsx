@@ -365,7 +365,7 @@ export default function ExecutiveIntelligencePanel() {
   );
 }
 
-// ────────────────────────────────────────────────────────────────────────
+// ------------------------------------------------------------------------
 // Sub-components
 
 function StatCard({ label, value, icon, color }: { label: string; value: number; icon: React.ReactNode; color: string }) {

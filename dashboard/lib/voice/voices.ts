@@ -1,4 +1,4 @@
-// ── Executive Voice Registry ───────────────────────────────────────────
+// Executive Voice Registry
 // Maps each executive to distinct browser voice profiles for natural TTS.
 //
 // Each profile has ordered voice preferences so the system picks the
@@ -12,7 +12,7 @@
 
 import type { SpeakerId } from "../api-types";
 
-// ── Voice Profile ──────────────────────────────────────────────────────
+// Voice Profile
 
 export interface VoiceProfile {
   speakerId: SpeakerId;
@@ -23,7 +23,7 @@ export interface VoiceProfile {
   description: string;
 }
 
-// ── Voice Profiles ─────────────────────────────────────────────────────
+// Voice Profiles
 
 const VOICE_PROFILES: Record<SpeakerId, VoiceProfile> = {
   axiom: {
@@ -65,7 +65,7 @@ const VOICE_PROFILES: Record<SpeakerId, VoiceProfile> = {
   },
 };
 
-// ── State ──────────────────────────────────────────────────────────────
+// State
 
 let _resolvedVoices: Record<SpeakerId, SpeechSynthesisVoice | null> = {
   axiom: null,
@@ -76,7 +76,7 @@ let _resolvedVoices: Record<SpeakerId, SpeechSynthesisVoice | null> = {
 
 let _voicesLoaded = false;
 
-// ── Public API ─────────────────────────────────────────────────────────
+// Public API
 
 /** Get the voice profile for a speaker. */
 export function getVoiceProfile(speaker: SpeakerId): VoiceProfile {
@@ -136,7 +136,7 @@ export function getVoiceInfo(): Record<SpeakerId, { name: string; description: s
   return info as Record<SpeakerId, { name: string; description: string }>;
 }
 
-// ── Internal ───────────────────────────────────────────────────────────
+// Internal
 
 function resolveAllVoices(voices: SpeechSynthesisVoice[]): void {
   for (const [id, profile] of Object.entries(VOICE_PROFILES)) {

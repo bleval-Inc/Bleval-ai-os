@@ -13,6 +13,8 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from axiom import __version__
 from axiom.api.routes import router as api_router, set_runtime
+from axiom.api.routes_journal import router as journal_router
+from axiom.api.routes_intelligence import router as intelligence_router, set_runtime as set_intelligence_runtime
 from axiom.runtime.lifecycle import AxiomRuntime
 
 # Global runtime instance
@@ -25,6 +27,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
     # Startup
     await runtime.start()
     set_runtime(runtime)
+    set_intelligence_runtime(runtime)
     yield
     # Shutdown
     await runtime.shutdown()
@@ -48,6 +51,8 @@ app.add_middleware(
 
 # Mount API routes
 app.include_router(api_router)
+app.include_router(journal_router)
+app.include_router(intelligence_router)
 
 
 @app.get("/")

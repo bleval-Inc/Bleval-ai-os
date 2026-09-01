@@ -11,14 +11,17 @@ active_workflows: 472
 completed_work_this_cycle: 5
 
 --- Priorities ---
-1. Compile daily summary of completed work
-2. Identify items needing founder attention
-3. Prepare recommendations for next cycle
+1. **Agent Assignment for Departments**
+2. **Workload Balance Review**
+3. **Goal Alignment Check**
+4. Launch `assign_agents` workflow for productivity and knowledge departments
+5. Launch `workload_analysis` workflow to review task distribution
 
 --- Workflows ---
 Launched: 1
 Completed this cycle: 5
   - sales/prospect-research: unknown
+  - development/feature-development: unknown
   - sales/prospect-research: unknown
   - sales/prospect-research: unknown
   - sales/prospect-research: unknown
@@ -28,4 +31,4 @@ Completed this cycle: 5
 Summary: yamako completed daily_report cycle.
 Workflows launched: 1
 Workflows completed: 5
-Top priority: Compile daily summary of completed work
+Top priority: **Agent Assignment for Departments**

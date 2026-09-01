@@ -55,7 +55,7 @@ class MarketPipeline:
             integration_layer=integration_layer,
             repository=repository,
             config=intel_config,
-            logger=self.logger,
+            logger=self.logger
         )
 
     async def start(self):

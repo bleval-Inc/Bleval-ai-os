@@ -1,7 +1,7 @@
-// ── AXIOM OS API Types ───────────────────────────────────────────────
+// AXIOM OS API Types
 // Generated from backend routes.py — consumes existing runtime APIs
 
-// ── Runtime & System ─────────────────────────────────────────────────
+// Runtime & System
 
 export interface SystemStatus {
   service: string;
@@ -30,7 +30,7 @@ export interface HealthSummary {
   last_check: string;
 }
 
-// ── Organisations ────────────────────────────────────────────────────
+// Organisations
 
 export interface Organisation {
   id: string;
@@ -44,7 +44,7 @@ export interface OrganisationDetail extends Organisation {
   boundaries?: Record<string, unknown>;
 }
 
-// ── Executives ───────────────────────────────────────────────────────
+// Executives
 
 export interface Executive {
   id: string;
@@ -78,7 +78,7 @@ export interface ExecutiveLoopStatus {
   schedules: Record<string, string>;
 }
 
-// ── Agents ───────────────────────────────────────────────────────────
+// Agents
 
 export interface Agent {
   id: string;
@@ -93,7 +93,7 @@ export interface AgentDetail extends Agent {
   memory_config?: Record<string, unknown>;
 }
 
-// ── Workflows ────────────────────────────────────────────────────────
+// Workflows
 
 export interface Workflow {
   id: string;
@@ -123,7 +123,7 @@ export interface WorkflowInstance {
   total_steps: number;
 }
 
-// ── Events ───────────────────────────────────────────────────────────
+// Events
 
 export interface EventType {
   name: string;
@@ -131,7 +131,7 @@ export interface EventType {
   description: string;
 }
 
-// ── Capabilities ─────────────────────────────────────────────────────
+// Capabilities
 
 export interface Capability {
   id: string;
@@ -149,7 +149,7 @@ export interface AgentMemory {
   content: Record<string, string>;
 }
 
-// ── Approvals ────────────────────────────────────────────────────────
+// Approvals
 
 export interface Approval {
   approval_id: string;
@@ -167,7 +167,7 @@ export interface ApprovalResponse {
   notes?: string;
 }
 
-// ── Learning Engine ──────────────────────────────────────────────────
+// Learning Engine
 
 export interface LearningStatus {
   total_learning_cycles: number;
@@ -179,7 +179,7 @@ export interface LearningStatus {
   last_cycle?: string;
 }
 
-// ── Intelligence Providers ───────────────────────────────────────────
+// Intelligence Providers
 
 export interface IntelligenceProvider {
   name: string;

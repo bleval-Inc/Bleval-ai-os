@@ -20,196 +20,6 @@ from axiom.engine.providers.nvidia import create_nvidia_providers, NVIDIAProvide
 from axiom.registry.agent import AgentRegistryLoader
 
 
-# =========================================================================
-# Anthropic Provider
-# =========================================================================
-
-
-class AnthropicProvider(ModelProvider):
-    """Anthropic Claude provider via the Anthropic SDK.
-
-    Requires ANTHROPIC_API_KEY to be set in the environment or .env file.
-    """
-
-    def __init__(self, api_key: Optional[str] = None) -> None:
-        self._api_key = api_key or settings.anthropic_api_key
-        self._client: Optional[Any] = None
-
-    @property
-    def name(self) -> str:
-        return "anthropic"
-
-    @property
-    def available(self) -> bool:
-        return bool(self._api_key)
-
-    async def _get_client(self) -> Any:
-        """Lazy-init the Anthropic client."""
-        if self._client is None and self._api_key:
-            try:
-                import anthropic
-
-                self._client = anthropic.AsyncAnthropic(api_key=self._api_key)
-            except ImportError:
-                raise RuntimeError(
-                    "Anthropic SDK not installed. Run: pip install anthropic"
-                )
-        return self._client
-
-    async def generate(
-        self,
-        prompt: str,
-        system_prompt: Optional[str] = None,
-        max_tokens: int = 4096,
-        temperature: float = 0.7,
-    ) -> str:
-        client = await self._get_client()
-        if not client:
-            return "[AnthropicProvider] No API key configured"
-
-        kwargs: Dict[str, Any] = {
-            "model": "claude-sonnet-4-20250514",
-            "max_tokens": max_tokens,
-            "temperature": temperature,
-            "messages": [{"role": "user", "content": prompt}],
-        }
-        if system_prompt:
-            kwargs["system"] = system_prompt
-
-        try:
-            response = await client.messages.create(**kwargs)
-            return response.content[0].text if response.content else ""
-        except Exception as exc:
-            return f"[AnthropicProvider Error] {exc}"
-
-
-class AnthropicFastProvider(AnthropicProvider):
-    """Anthropic Claude Haiku — faster, cheaper for simple tasks."""
-
-    async def generate(
-        self,
-        prompt: str,
-        system_prompt: Optional[str] = None,
-        max_tokens: int = 2048,
-        temperature: float = 0.5,
-    ) -> str:
-        client = await self._get_client()
-        if not client:
-            return "[AnthropicFastProvider] No API key configured"
-
-        kwargs: Dict[str, Any] = {
-            "model": "claude-haiku-4-20250514",
-            "max_tokens": max_tokens,
-            "temperature": temperature,
-            "messages": [{"role": "user", "content": prompt}],
-        }
-        if system_prompt:
-            kwargs["system"] = system_prompt
-
-        try:
-            response = await client.messages.create(**kwargs)
-            return response.content[0].text if response.content else ""
-        except Exception as exc:
-            return f"[AnthropicFastProvider Error] {exc}"
-
-
-# =========================================================================
-# OpenAI Provider
-# =========================================================================
-
-
-class OpenAIProvider(ModelProvider):
-    """OpenAI GPT provider via the OpenAI SDK.
-
-    Requires OPENAI_API_KEY to be set in the environment or .env file.
-    """
-
-    FAST_MODEL = "gpt-4o-mini"
-    POWER_MODEL = "gpt-4o"
-
-    def __init__(self, api_key: Optional[str] = None) -> None:
-        self._api_key = api_key or settings.openai_api_key
-        self._client: Optional[Any] = None
-
-    @property
-    def name(self) -> str:
-        return "openai"
-
-    @property
-    def available(self) -> bool:
-        return bool(self._api_key)
-
-    async def _get_client(self) -> Any:
-        if self._client is None and self._api_key:
-            try:
-                from openai import AsyncOpenAI
-
-                self._client = AsyncOpenAI(api_key=self._api_key)
-            except ImportError:
-                raise RuntimeError(
-                    "OpenAI SDK not installed. Run: pip install openai"
-                )
-        return self._client
-
-    async def generate(
-        self,
-        prompt: str,
-        system_prompt: Optional[str] = None,
-        max_tokens: int = 4096,
-        temperature: float = 0.7,
-    ) -> str:
-        client = await self._get_client()
-        if not client:
-            return "[OpenAIProvider] No API key configured"
-
-        messages: List[Dict[str, str]] = []
-        if system_prompt:
-            messages.append({"role": "system", "content": system_prompt})
-        messages.append({"role": "user", "content": prompt})
-
-        try:
-            response = await client.chat.completions.create(
-                model=self.POWER_MODEL,
-                messages=messages,
-                max_tokens=max_tokens,
-                temperature=temperature,
-            )
-            return response.choices[0].message.content or ""
-        except Exception as exc:
-            return f"[OpenAIProvider Error] {exc}"
-
-
-class OpenAIFastProvider(OpenAIProvider):
-    """OpenAI GPT-4o-mini — faster, cheaper for simple tasks."""
-
-    POWER_MODEL = "gpt-4o-mini"  # Override to use fast model for everything
-
-    async def generate(
-        self,
-        prompt: str,
-        system_prompt: Optional[str] = None,
-        max_tokens: int = 2048,
-        temperature: float = 0.5,
-    ) -> str:
-        client = await self._get_client()
-        if not client:
-            return "[OpenAIFastProvider] No API key configured"
-
-        messages: List[Dict[str, str]] = []
-        if system_prompt:
-            messages.append({"role": "system", "content": system_prompt})
-        messages.append({"role": "user", "content": prompt})
-
-        try:
-            response = await client.chat.completions.create(
-                model=self.FAST_MODEL,
-                messages=messages,
-                max_tokens=max_tokens,
-                temperature=temperature,
-            )
-            return response.choices[0].message.content or ""
-        except Exception as exc:
-            return f"[OpenAIFastProvider Error] {exc}"
 
 
 # =========================================================================
@@ -237,23 +47,19 @@ class ProviderRouter:
         self._register_available()
 
     def _register_available(self) -> None:
-        """Register all providers that have their API keys configured."""
-        # Anthropic providers
-        anthro = AnthropicProvider()
-        if anthro.available:
-            self._providers["anthropic"] = anthro
-            self._providers["anthropic-fast"] = AnthropicFastProvider()
+            """Register all providers that have their API keys configured."""
+            # NVIDIA providers only
+            self._providers.update(create_nvidia_providers())
 
-        # OpenAI providers (fallback if Anthropic not available)
-        openai = OpenAIProvider()
-        if openai.available and "anthropic" not in self._providers:
-            self._providers["openai"] = openai
-            self._providers["openai-fast"] = OpenAIFastProvider()
-
-        # Register mock as last resort only if not in production mode
-        mock = MockProvider()
-        if mock.available:
-            self._providers["mock"] = mock
+            # Register mock ONLY in development mode - NEVER in production
+            mock = MockProvider()
+            if mock.available and settings.debug and not settings.real_providers_only:
+                self._providers["mock"] = mock
+                if self._logger:
+                    self._logger.warning("intelligence", "Mock provider registered - DEVELOPMENT MODE ONLY")
+            elif settings.real_providers_only or not settings.debug:
+                if self._logger:
+                    self._logger.info("intelligence", "Production mode: Mock provider disabled (REAL_PROVIDERS_ONLY=true or DEBUG=false)")
 
     def select_provider(
         self,
@@ -276,27 +82,39 @@ class ProviderRouter:
         if preferred_provider and preferred_provider in self._providers:
             return self._providers[preferred_provider]
 
-        # Route by complexity
+        # Route by complexity - all complexities use NVIDIA providers now
         if complexity == COMPLEXITY_STRATEGIC:
-            # Strategic tasks get the most powerful model
-            for name in ("anthropic", "openai"):
-                if name in self._providers:
-                    return self._providers[name]
+            # Strategic tasks get the most powerful NVIDIA model
+            nvidia_models = [name for name in self._providers.keys() if name.startswith("nvidia-")]
+            if nvidia_models:
+                # Return the first available NVIDIA provider (they're ordered by capability)
+                for name in nvidia_models:
+                    if name in self._providers:
+                        return self._providers[name]
         elif complexity == COMPLEXITY_COMPLEX:
-            # Complex tasks get the powerful model
-            for name in ("anthropic", "openai"):
-                if name in self._providers:
-                    return self._providers[name]
+            # Complex tasks get powerful NVIDIA model
+            nvidia_models = [name for name in self._providers.keys() if name.startswith("nvidia-")]
+            if nvidia_models:
+                # Return the first available NVIDIA provider
+                for name in nvidia_models:
+                    if name in self._providers:
+                        return self._providers[name]
         elif complexity == COMPLEXITY_SIMPLE:
-            # Simple tasks get the fast/cheap model
-            for name in ("anthropic-fast", "openai-fast"):
-                if name in self._providers:
-                    return self._providers[name]
+            # Simple tasks get fast/cheap NVIDIA model
+            nvidia_models = [name for name in self._providers.keys() if name.startswith("nvidia-")]
+            if nvidia_models:
+                # Return the first available NVIDIA provider
+                for name in nvidia_models:
+                    if name in self._providers:
+                        return self._providers[name]
         else:
-            # Normal tasks get the standard model (prefer Anthropic)
-            for name in ("anthropic", "openai"):
-                if name in self._providers:
-                    return self._providers[name]
+            # Normal tasks get standard NVIDIA model
+            nvidia_models = [name for name in self._providers.keys() if name.startswith("nvidia-")]
+            if nvidia_models:
+                # Return the first available NVIDIA provider
+                for name in nvidia_models:
+                    if name in self._providers:
+                        return self._providers[name]
 
         # Fallback to any registered provider
         for provider in self._providers.values():
@@ -306,7 +124,7 @@ class ProviderRouter:
         if settings.real_providers_only or not settings.debug:
             raise RuntimeError(
                 "No real AI provider available. "
-                "Configure at least one provider API key (Anthropic or OpenAI) "
+                "Configure at least one NVIDIA provider API key "
                 "or set REAL_PROVIDERS_ONLY=false for development."
             )
 
@@ -360,10 +178,12 @@ class ContextBuilder:
         memory: MemoryEngine,
         tool: ToolEngine,
         agent_loader: AgentRegistryLoader,
+        market_intelligence: Any = None,
     ) -> None:
         self._memory = memory
         self._tool = tool
         self._agent_loader = agent_loader
+        self._market_intelligence = market_intelligence
 
     def assemble_prompt(
         self,
@@ -403,17 +223,23 @@ class ContextBuilder:
             if tool_context:
                 parts.append("## AVAILABLE TOOLS\n" + tool_context)
 
-        # 5. Task description
+        # 5. Market intelligence context (for Valta Prime and trading-related agents)
+        if self._market_intelligence and agent_id in ("valta_prime", "valta", "trader"):
+            market_context = self._build_market_context(agent_id, org_id, task_description)
+            if market_context:
+                parts.append("## MARKET INTELLIGENCE CONTEXT\n" + market_context)
+
+        # 6. Task description
         parts.append("## TASK\n" + task_description)
 
-        # 6. Additional context
+        # 7. Additional context
         if additional_context:
             context_lines = "\n".join(
                 f"{k}: {v}" for k, v in additional_context.items()
             )
             parts.append("## ADDITIONAL CONTEXT\n" + context_lines)
 
-        # 7. Execution constraints
+        # 8. Execution constraints
         parts.append(
             "## EXECUTION CONSTRAINTS\n"
             "- You are an AI executive/specialist in the Axiom OS platform.\n"
@@ -447,6 +273,23 @@ class ContextBuilder:
             lines.append(f"\nYour permitted actions: {', '.join(can_actions)}")
 
         return "\n".join(lines) if lines else ""
+
+    def _build_market_context(self, agent_id: str, org_id: str, task_description: str) -> str:
+        """Build market intelligence context for trading executives."""
+        try:
+            # Get recent market news and indicators
+            lines = []
+
+            # This would fetch from the market intelligence engine
+            # For now, return a placeholder that indicates the capability exists
+            lines.append("Market intelligence tools available:")
+            lines.append("  - web_search: Search the web for current market information")
+            lines.append("  - market_data.get_price: Get current price for any symbol")
+            lines.append("  - market_data.get_news: Get recent market news for symbols/topics")
+
+            return "\n".join(lines)
+        except Exception:
+            return ""
 
     def build_system_prompt(self, agent_id: str, org_id: str = "") -> str:
         """Build the system prompt that defines the agent's role and constraints.
@@ -512,46 +355,38 @@ class IntelligenceEngine:
     """
 
     def __init__(
-        self,
-        memory: Optional[MemoryEngine] = None,
-        tool: Optional[ToolEngine] = None,
-    ) -> None:
-        self._memory = memory or MemoryEngine()
-        self._tool = tool or ToolEngine()
-        self._agent_loader = AgentRegistryLoader()
-        self._context_builder = ContextBuilder(
-            memory=self._memory,
-            tool=self._tool,
-            agent_loader=self._agent_loader,
-        )
+            self,
+            memory: Optional[MemoryEngine] = None,
+            tool: Optional[ToolEngine] = None,
+            market_intelligence: Any = None,
+        ) -> None:
+            self._memory = memory or MemoryEngine()
+            self._tool = tool or ToolEngine()
+            self._agent_loader = AgentRegistryLoader()
+            self._context_builder = ContextBuilder(
+                memory=self._memory,
+                tool=self._tool,
+                agent_loader=self._agent_loader,
+                market_intelligence=market_intelligence,
+            )
 
-        # ── Smart Router with Multi-Model Support ──────────────────
-        self._smart_router = self._build_smart_router()
+            # ── Smart Router with Multi-Model Support ──────────────────
+            self._smart_router = self._build_smart_router()
 
     def _build_smart_router(self) -> Any:
         """Build the smart router with all available providers.
 
-        Registers NVIDIA models (up to 4), Anthropic, OpenAI, and fallback.
+        Registers NVIDIA models only.
         """
         # Lazy import to avoid circular dependency at module level
         from axiom.engine.smart_router import SmartRouter
 
         router = SmartRouter()
 
-        # 1. Register NVIDIA providers (up to 4 models)
+        # 1. Register NVIDIA providers only
         nvidia_providers = create_nvidia_providers()
         for nvp in nvidia_providers:
             router.register_nvidia_provider(nvp)
-
-        # 2. Register Anthropic provider (if configured)
-        anthro = AnthropicProvider()
-        if anthro.available:
-            router.register_provider("anthropic", anthro)
-
-        # 3. Register OpenAI provider (fallback)
-        openai = OpenAIProvider()
-        if openai.available:
-            router.register_provider("openai", openai)
 
         return router
 

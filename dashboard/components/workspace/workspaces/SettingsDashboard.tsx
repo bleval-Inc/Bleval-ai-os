@@ -967,7 +967,7 @@ export default function SettingsDashboard() {
   );
 }
 
-// ── Reusable UI Components ────────────────────────────────────────────────
+// Reusable UI Components
 
 function Slider({ label, description, value, min, max, step, onChange, unit = "", category }: SliderConfig) {
   return (

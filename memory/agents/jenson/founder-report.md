@@ -20,8 +20,6 @@ Launched: 1
 Completed this cycle: 5
   - sales/prospect-research: unknown
   - sales/prospect-research: unknown
-  - sales/prospect-research: unknown
-  - sales/prospect-research: unknown
   - development/code-review: unknown
 
 === REPORT TO FOUNDER ===

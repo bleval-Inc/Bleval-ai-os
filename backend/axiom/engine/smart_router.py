@@ -348,30 +348,30 @@ class SmartRouter:
         # ── Priority Chains by Category ──────────────────────────────
         category_chains: Dict[TaskCategory, List[str]] = {
             TaskCategory.STRATEGIC: [
-                glm52, mistral, stepfun, general, "anthropic", "openai",
+                glm52, mistral, stepfun, general,
             ],
             TaskCategory.CODING: [
-                mistral, glm52, stepfun, general, "anthropic", "openai",
+                mistral, glm52, stepfun, general,
             ],
             TaskCategory.LONG_CONTEXT: [
-                mistral, glm52, stepfun, general, "anthropic", "openai",
+                mistral, glm52, stepfun, general,
             ],
             TaskCategory.AGENTIC: [
-                glm52, stepfun, mistral, general, "anthropic", "openai",
+                glm52, stepfun, mistral, general,
             ],
             TaskCategory.CREATIVE: [
-                general, stepfun, glm52, "openai", "anthropic", mistral,
+                general, stepfun, glm52,
             ],
             TaskCategory.ANALYSIS: [
-                glm52, mistral, stepfun, "anthropic", "openai", general,
+                glm52, mistral, stepfun, general,
             ],
             TaskCategory.GENERAL: [
-                general, glm52, stepfun, mistral, "openai", "anthropic",
+                general, glm52, stepfun, mistral,
             ],
         }
 
         chain = category_chains.get(category, [
-            glm52, mistral, stepfun, general, "anthropic", "openai",
+            glm52, mistral, stepfun, general,
         ])
 
         # Filter to only available providers, removing None entries
@@ -389,7 +389,7 @@ class SmartRouter:
         agent_id: str = "",
         preferred_provider: Optional[str] = None,
     ) -> ModelProvider:
-        """Select the best provider for a given task.
+        """Select the best provider for a given task with intelligent failover.
 
         Args:
             task_description: The task description to classify (if no profile)
@@ -423,7 +423,7 @@ class SmartRouter:
             if provider and provider.available and not isinstance(provider, MockProvider):
                 return provider
 
-        # Fallback: any real provider
+        # Fallback: any real provider (NVIDIA-only)
         for provider in self._providers.values():
             if provider.available and not isinstance(provider, MockProvider):
                 return provider
@@ -432,7 +432,7 @@ class SmartRouter:
         if settings.real_providers_only or not settings.debug:
             raise RuntimeError(
                 "No real AI provider available. "
-                "Configure at least one provider API key (NVIDIA, Anthropic, or OpenAI) "
+                "Configure at least one NVIDIA provider API key "
                 "or set REAL_PROVIDERS_ONLY=false for development."
             )
 

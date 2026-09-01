@@ -265,9 +265,9 @@ class ExecutiveRuntimeLoop:
                 f"Executive {self.exec_id} runtime loop stopped",
             )
 
-    async def trigger_cycle(self, cycle_type: str = "manual") -> Dict[str, Any]:
-        """Manually trigger an executive cycle (for testing or ad-hoc)."""
-        return await self._execute_cycle(cycle_type)
+    async def trigger_cycle(self, cycle_type: str = "manual", context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+            """Manually trigger an executive cycle (for testing or ad-hoc)."""
+            return await self._execute_cycle(cycle_type, context)
 
     # ── Core Loop ──────────────────────────────────────────────────────
 
@@ -325,8 +325,8 @@ class ExecutiveRuntimeLoop:
 
     # ── Cycle Execution ────────────────────────────────────────────────
 
-    async def _execute_cycle(self, cycle_type: str) -> Dict[str, Any]:
-        """Execute one full executive cycle."""
+        async def _execute_cycle(self, cycle_type: str, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+            """Execute one full executive cycle."""
         self._cycle_count += 1
 
         # 1. Inspect organization state
