@@ -18,20 +18,36 @@ class RuntimeLogger:
     def __init__(self) -> None:
         self._log_dir = settings.log_dir
 
-    def info(self, component: str, message: str, **kwargs: Any) -> None:
-        """Log an informational message."""
+    def info(self, component: Optional[str] = None, message: Optional[str] = None, **kwargs: Any) -> None:
+        """Log an informational message.
+
+        Supports both the older single-argument pattern (logger.info("message"))
+        and the structured component+message pattern (logger.info("component", "message")).
+        """
+        if message is None:
+            message = str(component) if component is not None else "No message"
+            component = "runtime"
         self._log("INFO", component, message, **kwargs)
 
-    def warning(self, component: str, message: str, **kwargs: Any) -> None:
+    def warning(self, component: Optional[str] = None, message: Optional[str] = None, **kwargs: Any) -> None:
         """Log a warning message."""
+        if message is None:
+            message = str(component) if component is not None else "No message"
+            component = "runtime"
         self._log("WARNING", component, message, **kwargs)
 
-    def error(self, component: str, message: str, **kwargs: Any) -> None:
+    def error(self, component: Optional[str] = None, message: Optional[str] = None, **kwargs: Any) -> None:
         """Log an error message."""
+        if message is None:
+            message = str(component) if component is not None else "No message"
+            component = "runtime"
         self._log("ERROR", component, message, **kwargs)
 
-    def debug(self, component: str, message: str, **kwargs: Any) -> None:
+    def debug(self, component: Optional[str] = None, message: Optional[str] = None, **kwargs: Any) -> None:
         """Log a debug message."""
+        if message is None:
+            message = str(component) if component is not None else "No message"
+            component = "runtime"
         self._log("DEBUG", component, message, **kwargs)
 
     def workflow_event(self, instance_id: str, event: str, details: Optional[Dict[str, Any]] = None) -> None:
