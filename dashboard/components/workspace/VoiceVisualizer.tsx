@@ -41,10 +41,11 @@ export function VoiceVisualizer({
   const config = COLOR_CONFIG[color];
 
   const handleSpeak = useCallback((message: VoiceWSMessage) => {
-    if (message.type === "speak" && message.executive && message.text) {
+    const data = message.data ?? {};
+    if (message.event === "executive_speaking" && data.executive && data.text) {
       setIsSpeaking(true);
-      setCurrentExecutive(message.executive);
-      setUrgency(message.urgency || "normal");
+      setCurrentExecutive(data.executive);
+      setUrgency(data.urgency || "normal");
 
       // Map urgency for use in JSX
       const urgencyMap: Record<string, "normal" | "high" | "emergency"> = {
@@ -55,17 +56,18 @@ export function VoiceVisualizer({
         critical: "emergency",
         escalation: "emergency",
       };
-      setMappedUrgency(urgencyMap[message.urgency || "normal"] || "normal");
+      setMappedUrgency(urgencyMap[data.urgency || "normal"] || "normal");
 
       // Generate dynamic waveform based on speech
-      generateWaveform(message.text.length, message.urgency);
+      generateWaveform(data.text.length, data.urgency);
     }
   }, []);
 
   const handleStatus = useCallback((message: VoiceWSMessage) => {
-    if (message.type === "status") {
+    const data = message.data ?? {};
+    if (message.event === "status") {
       // Check if this executive is done speaking
-      if ("is_listening" in message && message.is_listening === false && "listening_executive" in message) {
+      if ("is_listening" in data && data.is_listening === false && "listening_executive" in data) {
         // Stop animation after a delay
         setTimeout(() => {
           setIsSpeaking(false);

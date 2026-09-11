@@ -325,8 +325,8 @@ class ExecutiveRuntimeLoop:
 
     # ── Cycle Execution ────────────────────────────────────────────────
 
-        async def _execute_cycle(self, cycle_type: str, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-            """Execute one full executive cycle."""
+    async def _execute_cycle(self, cycle_type: str, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        """Execute one full executive cycle."""
         self._cycle_count += 1
 
         # 1. Inspect organization state
@@ -356,6 +356,7 @@ class ExecutiveRuntimeLoop:
             memory_state=memory_state,
             active_workflows=active_workflows,
             completed_work=completed_work,
+            context=context,
         )
 
         # 7. Launch workflows based on priorities
@@ -521,6 +522,7 @@ class ExecutiveRuntimeLoop:
         memory_state: Dict[str, str],
         active_workflows: List[Dict[str, Any]],
         completed_work: List[Dict[str, Any]],
+        context: Optional[Dict[str, Any]] = None,
     ) -> List[str]:
         """Decide priorities using the Intelligence Engine.
 
@@ -538,6 +540,14 @@ class ExecutiveRuntimeLoop:
                     "active_workflows": active_workflows,
                     "completed_work": completed_work,
                     "departments": self.departments,
+                    "voice_command": (
+                        context.get("voice_command")
+                        if context else None
+                    ),
+                    "conversation_history": (
+                        context.get("conversation_history", [])
+                        if context else []
+                    ),
                     "objective": (
                         f"Review {cycle_type} state for {self.exec_id} and identify "
                         f"top 3 priorities. Consider active workflows, memory context, "

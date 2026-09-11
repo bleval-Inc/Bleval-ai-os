@@ -1733,10 +1733,10 @@ def _generate_executive_response(exec_id: str, transcript: str, result: Any) -> 
 
     if any(kw in lower for kw in ["workflow", "launch", "start", "run", "execute"]):
         return exec_responses.get("workflow", exec_responses["default"])
-    elif any(kw in lower for kw in ["status", "how are", "what's up", "check"]):
-        return exec_responses.get("status", exec_responses["default"])
     elif any(kw in lower for kw in ["schedule", "calendar", "meeting", "appointment"]):
         return exec_responses.get("schedule", exec_responses["default"])
+    elif any(kw in lower for kw in ["status", "how are", "what's up", "check"]):
+        return exec_responses.get("status", exec_responses["default"])
 
     return exec_responses["default"]
 

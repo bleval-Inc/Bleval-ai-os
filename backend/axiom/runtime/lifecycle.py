@@ -406,43 +406,55 @@ class AxiomRuntime:
 
     async def start(self) -> None:
         """Start all background processors and wire event subscriptions."""
+        print(f"[STARTUP_VOICE] AxiomRuntime.start ENTER: id={id(self)}, _running={self._running}")
         if self._running:
+            print("[STARTUP_VOICE] AxiomRuntime.start: already running, returning")
             return
 
+        print("[STARTUP_VOICE] AxiomRuntime.start: calling bootstrap()")
         await self.bootstrap()
+        print(f"[STARTUP_VOICE] AxiomRuntime.start: bootstrap() completed, _initialised={self._initialised}")
 
         # Start event engine first (background pub/sub processor)
+        print("[STARTUP_VOICE] AxiomRuntime.start: starting event engine")
         if self.event:
             await self.event.start()
             # Wire event → workflow auto-launch subscriptions
             await self._wire_event_workflow_auto_launch()
 
         # Start scheduler (background cron loop)
+        print("[STARTUP_VOICE] AxiomRuntime.start: starting scheduler")
         if self.scheduler:
             await self.scheduler.start()
 
         # Start dispatcher (background task processing)
+        print("[STARTUP_VOICE] AxiomRuntime.start: starting dispatcher")
         if self.dispatcher:
             await self.dispatcher.start()
 
         # Start learning engine (background consolidation loop + event subscriptions)
+        print("[STARTUP_VOICE] AxiomRuntime.start: starting learning engine")
         if self.learning:
             await self._wire_learning_engine()
             await self.learning.start()
 
         # Start health monitor (background health checks)
+        print("[STARTUP_VOICE] AxiomRuntime.start: starting health monitor")
         if self.monitor:
             await self.monitor.start()
 
         # Initialise system monitor (JARVIS telemetry — async sensor detection)
+        print("[STARTUP_VOICE] AxiomRuntime.start: initialising system monitor")
         if self.system_monitor:
             await self.system_monitor.initialise()
 
         # Wire system tools into the intelligence engine for function-calling
+        print("[STARTUP_VOICE] AxiomRuntime.start: wiring system tools")
         if self.system_tools and self.intelligence:
             await self._wire_system_tools()
 
         # Load any persisted workflow state from disk
+        print("[STARTUP_VOICE] AxiomRuntime.start: loading persisted workflow state")
         if self.workflow:
             persisted = self.workflow.load_all_persisted()
             if self.logger:
@@ -454,16 +466,32 @@ class AxiomRuntime:
         # ── PHASE C: Start Autonomous Components ────────────────────────
 
         # Start Specialist Agent Engine (background task processors)
+        print("[STARTUP_VOICE] AxiomRuntime.start: starting specialist agent engine")
         if self.specialist_engine:
             await self.specialist_engine.start()
 
         # Start Autonomous Workflow Monitor (background monitoring loop)
+        print("[STARTUP_VOICE] AxiomRuntime.start: starting autonomous workflow monitor")
         if self.autonomous_workflow:
             await self.autonomous_workflow.start_monitor()
 
         # Start Background Executor (persistent background execution §6)
+        print("[STARTUP_VOICE] AxiomRuntime.start: starting background executor")
         if self.background_executor:
             await self.background_executor.start()
+
+        # Start voice pipeline
+        print("[STARTUP_VOICE] AxiomRuntime.start: starting voice pipeline")
+        if self.voice_pipeline:
+            print(f"[STARTUP_VOICE] AxiomRuntime.start: voice_pipeline exists, id={id(self.voice_pipeline)}")
+            if not self.voice_pipeline.start():
+                self.logger.error("Failed to start voice pipeline")
+                print("[STARTUP_VOICE] AxiomRuntime.start: voice_pipeline.start() returned False")
+            else:
+                self.logger.info("Voice pipeline started")
+                print("[STARTUP_VOICE] AxiomRuntime.start: voice_pipeline.start() returned True")
+        else:
+            print("[STARTUP_VOICE] AxiomRuntime.start: voice_pipeline is None")
 
         if self.logger:
             self.logger.info(
@@ -472,205 +500,15 @@ class AxiomRuntime:
                 "SpecialistEngine + AutonomousWorkflow + MultiModel + BackgroundExecutor + Observer"
             )
 
-        # ── End PHASE C ─────────────────────────────────────────────────
-
-        # ── PHASE D: Start Quality Control + Founder Authority ──────────
-        # QC Manager doesn't need background tasks — it runs on demand.
-        if self.qc_manager:
-            # Wire QC callbacks to the QC-to-Learning pipeline
-            if self.qc_learning_pipeline:
-                self.qc_manager.set_on_qc_passed(self._on_qc_passed_for_learning)
-                self.qc_manager.set_on_qc_failed(self._on_qc_failed_for_learning)
-
-            if self.logger:
-                self.logger.info(
-                    "lifecycle",
-                    "PHASE D — Quality Control + Founder Authority initialised: "
-                    "QCManager + FounderAuthority + FounderGateway + QCHandler"
-                )
-
-        # ── PHASE E: Wire Executive Intelligence + QC Learning ─────────
-        if self.logger:
-            self.logger.info(
-                "lifecycle",
-                "PHASE E — Executive Intelligence + QC Learning initialised: "
-                "ExecutiveIntelligence + ExecutiveGreeter + QCtoLearningPipeline"
-            )
-
-        # ── End PHASE E ─────────────────────────────────────────────────
-
-        # ── PHASE 1: Initialize Integration Layer ───────────────────────────
-
-        # Now that event engine is started, initialize the integration layer
-        from axiom.integrations.layer import IntegrationLayer
-        self.integration_layer = IntegrationLayer(logger=self.logger)
-        await self.integration_layer.initialize(event_engine=self.event)
-
-        # Start scheduled integrations
-        started = await self.integration_layer.start_all_scheduled()
-        if self.logger:
-            self.logger.info(
-                "lifecycle",
-                f"PHASE 1 — Unified Integration Layer started: {started} scheduled integrations running"
-            )
-
-        # ── End PHASE 1 ────────────────────────────────────────────────────
-
-        # ── PHASE 7: Initialize Resource-Aware Runtime ──────────────────────
-
-        # Initialize orchestrator with all components
-        self.runtime_orchestrator = RuntimeOrchestrator(
-            logger=self.logger,
-            event_engine=self.event,
-            integration_layer=self.integration_layer,
-            executive_loops={
-                exec_id: self.executive_board.get_loop(exec_id)
-                for exec_id in self.executive_board.EXECUTIVE_IDS
-            } if self.executive_board else {},
-        )
-        await self.runtime_orchestrator.start()
-
-        if self.logger:
-            self.logger.info(
-                "lifecycle",
-                "PHASE 7 — Resource-Aware Runtime started: Monitor + Scheduler + Quotas + Orchestrator"
-            )
-
-        # ── End PHASE 7 ────────────────────────────────────────────────────
-
-        # Start Board Room (autonomous meeting scheduling)
-        if self.board_room:
-            await self.board_room.start()
-
-        # Wire communication coordinator into executive board loops
-        if self.executive_board and self.communication:
-            self.executive_board.set_communication_coordinator(self.communication)
-            # Wire board room into executive board for meeting triggers
-            self.executive_board.set_board_room(self.board_room)
-
-        # Start Executive Board (autonomous executive runtime loops)
-        if self.executive_board:
-            await self.executive_board.start_all()
-
-        # Execute AXIOM Core boot sequence (greeting, system awareness init)
-        if self.axiom:
-            boot_result = await self.axiom.boot()
-            if self.logger:
-                self.logger.info(
-                    "lifecycle",
-                    f"AXIOM boot: {boot_result.system_state.value} "
-                    f"({len(boot_result.stages_completed)}/{len(boot_result.stage_timings)} stages in "
-                    f"{boot_result.duration_ms:.0f}ms)",
-                )
-
-        # ── PHASE 8: Initialize Executive Integration ────────────────────────
-
-        # Initialize database manager
-        database_manager = DatabaseManager()
-
-        # Initialize Executive Integration with all system components
-        self.executive_integration = ExecutiveIntegration(
-            runtime=self,
-            config=ExecutiveIntegrationConfig(),
-            logger=self.logger,
-        )
-        await self.executive_integration.initialize(
-            executive_board=self.executive_board,
-            axiom_core=self.axiom,
-            resource_orchestrator=self.runtime_orchestrator,
-            integration_layer=self.integration_layer,
-            database_manager=database_manager,
-            intelligence_engine=self.intelligence,
-        )
-
-        # Start executive sync loop
-        await self.executive_integration.start_sync_loop()
-
-        if self.logger:
-            self.logger.info(
-                "lifecycle",
-                "PHASE 8 — Executive Integration started: Jenson/Bleval + Valta Prime/Trading + Yamako/Personal fully integrated"
-            )
-
-        # ── End PHASE 8 ────────────────────────────────────────────────────
-
-        # Start Voice Pipeline
-        if self.voice_pipeline:
-            if self.voice_pipeline.initialize():
-                self.voice_pipeline.start()
-                if self.logger:
-                    self.logger.info("lifecycle", "Voice Pipeline started")
-            else:
-                if self.logger:
-                    self.logger.warning("lifecycle", "Voice Pipeline initialization failed")
-
+        print(f"[STARTUP_VOICE] AxiomRuntime.start: setting _running=True, final _running={self._running}")
         self._running = True
+        print("[STARTUP_VOICE] AxiomRuntime.start EXIT")
 
-        if self.logger:
-            self.logger.info("lifecycle", "Axiom OS runtime started")
 
     async def shutdown(self) -> None:
-        """Graceful shutdown of all background processors."""
-        self._running = False
-
-        if self.logger:
-            self.logger.info("lifecycle", "Axiom OS runtime shutting down")
-
-        # Stop in reverse order
-        # ── PHASE 8: Shutdown Executive Integration ──────────────────────────
-        if self.executive_integration:
-            await self.executive_integration.stop_sync_loop()
-            if self.logger:
-                self.logger.info("lifecycle", "PHASE 8 — Executive Integration shutdown complete")
-
-        # ── End PHASE 8 ────────────────────────────────────────────────────
-
-        # ── PHASE 7: Shutdown Resource-Aware Runtime ─────────────────────────
-        if self.runtime_orchestrator:
-            await self.runtime_orchestrator.stop()
-            if self.logger:
-                self.logger.info("lifecycle", "PHASE 7 — Resource-Aware Runtime shutdown complete")
-
-        # ── End PHASE 7 ────────────────────────────────────────────────────
-
-        # ── PHASE 1: Shutdown Integration Layer ──────────────────────────────
-        if self.integration_layer:
-            await self.integration_layer.shutdown()
-            if self.logger:
-                self.logger.info("lifecycle", "PHASE 1 — Unified Integration Layer shutdown complete")
-
-        # ── End PHASE 1 ────────────────────────────────────────────────────
-
-        # ── PHASE H: Shutdown Platform Integrations ──────────────────────────
-        if self.provider_registry:
-            await self.provider_registry.shutdown_all()
-            if self.logger:
-                self.logger.info("lifecycle", "PHASE H — Platform Integrations shutdown complete")
-
-        # ── End PHASE H ────────────────────────────────────────────────────
-
-        # Stop Voice Pipeline
-        if self.voice_pipeline:
-            self.voice_pipeline.stop()
-            if self.logger:
-                self.logger.info("lifecycle", "Voice Pipeline stopped")
-
-        # ── PHASE D: Shutdown Quality Control + Founder Authority ──────
-        # No background tasks to stop — all on-demand execution.
-
-        # ── End PHASE D ──────────────────────────────────────────────────
-
-        # ── PHASE C: Shutdown Autonomous Components ─────────────────────
-        if self.background_executor:
-            await self.background_executor.stop()
-
-        if self.autonomous_workflow:
-            await self.autonomous_workflow.stop_monitor()
-
-        if self.specialist_engine:
-            await self.specialist_engine.stop()
-
-        # ── End PHASE C ──────────────────────────────────────────────────
+        """Stop all background processors and clean up resources."""
+        if not self._running:
+            return
 
         if self.system_monitor:
             await self.system_monitor.shutdown()
@@ -702,6 +540,8 @@ class AxiomRuntime:
 
         if self.logger:
             self.logger.info("lifecycle", "Axiom OS runtime stopped")
+
+        self._running = False
 
     # ── Event → Workflow Auto-Launch ────────────────────────────────
 

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import subprocess
+import sys
 import tempfile
 import threading
 from pathlib import Path
@@ -23,7 +24,9 @@ class PiperTTS(TTSProvider):
     def __init__(self, config: Optional[Dict[str, Any]] = None):
         super().__init__(config)
         self.models_dir = Path(config.get("models_dir", voice_config.tts.piper_models_dir))
-        self._piper_bin = config.get("piper_bin", "piper")
+        configured_bin = config.get("piper_bin")
+        venv_bin = Path(sys.executable).with_name("piper.exe")
+        self._piper_bin = configured_bin or (str(venv_bin) if venv_bin.exists() else "piper")
         self._model_cache: Dict[str, Path] = {}
         self._lock = threading.Lock()
         
@@ -41,7 +44,11 @@ class PiperTTS(TTSProvider):
                 timeout=5,
             )
             if result.returncode != 0:
-                logger.error("Piper binary not found or not executable")
+                error = result.stderr.decode("utf-8", errors="replace").strip()
+                logger.warning(
+                    "Piper is installed but unavailable; voice output is disabled"
+                    + (f": {error}" if error else "")
+                )
                 return False
             
             # Check models directory
@@ -56,8 +63,23 @@ class PiperTTS(TTSProvider):
             logger.info(f"Piper TTS initialized with {len(self._model_cache)} models")
             return True
             
+        except subprocess.TimeoutExpired:
+            logger.warning(
+                "Piper executable was found but did not respond; "
+                "voice output is disabled"
+            )
+            return False
         except FileNotFoundError:
-            logger.error("Piper not installed. Install with: pip install piper-tts")
+            logger.warning(
+                "Piper executable was not found in the active environment. "
+                "Install it with: python -m pip install piper-tts"
+            )
+            return False
+        except OSError as e:
+            logger.warning(
+                "Piper is installed but its native runtime could not load: "
+                f"{type(e).__name__}: {e}"
+            )
             return False
         except Exception as e:
             logger.error(f"Piper initialization failed: {e}")

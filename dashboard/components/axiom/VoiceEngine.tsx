@@ -4,7 +4,6 @@ import { useEffect, useRef, useCallback, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAxiomStore } from "../../lib/store/axiom-store";
 import {
-  speak,
   stopSpeaking,
   loadVoices as loadSpeakVoices,
 } from "../../lib/voice/speak";
@@ -57,7 +56,7 @@ const EXECUTIVE_CONFIG: Record<ExecutiveId, {
   shortName: string;
 }> = {
   axiom: {
-    wakeWords: ["axiom on", "axiom", "hey axiom", "ok axiom"],
+    wakeWords: ["axiom on", "axiom", "hey axiom", "Bring Yourself Online"],
     label: "AXIOM",
     color: "bg-indigo-400",
     avatar: "A",
@@ -162,42 +161,45 @@ export default function VoiceEngine() {
   const voiceWs = useVoiceWebSocket({
     clientId,
     autoConnect: false, // We'll connect manually when backend is ready
-    onResponse: (message) => {
-      if (message.response) {
-        requestSpeak(message.executive as SpeakerId, message.response, "normal");
-      }
-      if (message.workflow_triggered) {
-        addNotification({
-          id: `wf-${Date.now()}`,
-          type: "success",
-          title: "Workflow Launched",
-          message: `${message.workflow_triggered} has been triggered by ${message.executive}`,
-          timestamp: Date.now(),
-          read: false,
-        });
-      }
-      if (message.requires_approval && message.approval_id) {
-        addNotification({
-          id: `appr-${Date.now()}`,
-          type: "warning",
-          title: "Approval Required",
-          message: `Founder approval needed for ${message.action_taken || "action"}`,
-          timestamp: Date.now(),
-          read: false,
-        });
-      }
-    },
+    onEvent: (message) => {
+        const data = message.data ?? {};
+        if (data.response) {
+          requestSpeak(data.executive as SpeakerId, data.response, "normal");
+        }
+        if (data.workflow_triggered) {
+          addNotification({
+            id: `wf-${Date.now()}`,
+            type: "success",
+            title: "Workflow Launched",
+            message: `${data.workflow_triggered} has been triggered by ${data.executive}`,
+            timestamp: Date.now(),
+            read: false,
+          });
+        }
+        if (data.requires_approval && data.approval_id) {
+          addNotification({
+            id: `appr-${Date.now()}`,
+            type: "warning",
+            title: "Approval Required",
+            message: `Founder approval needed for ${data.action_taken || "action"}`,
+            timestamp: Date.now(),
+            read: false,
+          });
+        }
+      },
     onSpeak: (message) => {
-      if (message.text) {
-        requestSpeak(message.executive as SpeakerId, message.text, message.urgency || "normal");
+      const data = message.data ?? {};
+      if (data.text) {
+        requestSpeak(data.executive as SpeakerId, data.text, data.urgency || "normal");
       }
     },
     onStatus: (message) => {
-      if (message.executive && typeof message.is_listening === "boolean") {
-        if (message.is_listening) {
+      const data = message.data ?? {};
+      if (data.executive && typeof data.is_listening === "boolean") {
+        if (data.is_listening) {
           setIsListening(true);
           setIsAwake(true);
-          setListeningExecutive(message.executive as ExecutiveId);
+          setListeningExecutive(data.executive as ExecutiveId);
         } else {
           setIsListening(false);
           setIsAwake(false);
@@ -596,7 +598,7 @@ export default function VoiceEngine() {
               </span>
               <div>
                 <span className="text-[10px] font-medium text-[var(--axiom-text-secondary)]">
-                  {listeningExecutive ? EXECUTIVE_CONFIG[listeningExecutive].label : "AXIOM"} ON
+                  {listeningExecutive ? EXECUTIVE_CONFIG[listeningExecutive as ExecutiveId].label : "AXIOM"} ON
                 </span>
                 <span className="text-[9px] text-[var(--axiom-text-tertiary)] block">
                   {pttActive ? "Push-to-Talk active — speak now" : "Listening for command..."}

@@ -72,6 +72,10 @@ class ExecutiveContext(BaseModel):
     axiom_core: Optional[AXIOMCore] = None
     intelligence_engine: Optional[IntelligenceEngine] = None
 
+    # Voice context
+    voice_command: Optional[str] = None
+    conversation_history: List[Dict[str, Any]] = Field(default_factory=list)
+
     # Executive-specific
     custom_data: Dict[str, Any] = Field(default_factory=dict)
 
@@ -380,9 +384,23 @@ class ExecutiveIntegration:
     ) -> Callable:
         """Create an integrated cycle handler for an executive."""
 
-        async def _integrated_cycle(cycle_type: str) -> Dict[str, Any]:
+        async def _integrated_cycle(
+            cycle_type: str,
+            cycle_context: Optional[Dict[str, Any]] = None,
+        ) -> Dict[str, Any]:
             """Enhanced cycle with full system integration."""
             start_time = datetime.utcnow()
+
+            # Preserve the integration context while allowing callers
+            # such as the voice pipeline to provide per-cycle context.
+            if cycle_context:
+                context.voice_command = cycle_context.get(
+                    "voice_command"
+                )
+                context.conversation_history = cycle_context.get(
+                    "conversation_history",
+                    [],
+                )
 
             # ============================================================
             # PHASE 1: SYSTEM INSPECTION (via all integrated layers)

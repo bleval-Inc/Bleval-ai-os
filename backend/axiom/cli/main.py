@@ -44,7 +44,7 @@ def callback():
 def status():
     """Show runtime status and component health."""
     rt = _sync_run(_bootstrap_and_get())
-    info = rt.get_summary()
+    info = rt.get_status()
     _print_json(info)
 
 

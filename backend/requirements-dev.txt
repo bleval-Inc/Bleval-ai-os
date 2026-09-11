@@ -11,3 +11,4 @@ uvicorn[standard]>=0.32.0
 
 # Dev/test
 pytest>=9.0
+openwakeword>=0.6.0

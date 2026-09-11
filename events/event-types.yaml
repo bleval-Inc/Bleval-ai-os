@@ -140,3 +140,9 @@ event_types:
     channel: executive
     emitted_by: [jenson, valta_prime, yamako]
     subscribed_by: [jenson, valta_prime, yamako]
+
+  executive.cycle_completed:
+    description: "Executive cycle completed and results are available for learning and monitoring"
+    channel: executive
+    emitted_by: [jenson, valta_prime, yamako]
+    subscribed_by: []

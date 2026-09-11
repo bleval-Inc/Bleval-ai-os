@@ -2,9 +2,9 @@
 
 from pathlib import Path
 from typing import Dict, List, Optional
+
 from pydantic import BaseModel
 from axiom.config import settings
-
 
 # Executive wake word configuration
 EXECUTIVE_WAKE_WORDS: Dict[str, List[str]] = {
@@ -30,7 +30,7 @@ WAKEWORD_MODELS_DIR = settings.state_dir / "models" / "wakeword"
 class WakeWordConfig(BaseModel):
     """Configuration for wake word detection."""
     # Confidence threshold for wake word detection (0.0 - 1.0)
-    confidence_threshold: float = 0.5
+    confidence_threshold: float = 0.70
     # Sample rate for audio capture
     sample_rate: int = 16000
     # Chunk size for processing
@@ -44,7 +44,6 @@ class WakeWordConfig(BaseModel):
         "valta_prime": str(WAKEWORD_MODELS_DIR / "valta_prime.onnx"),
         "yamako": str(WAKEWORD_MODELS_DIR / "yamako.onnx"),
     }
-
 
 class STTConfig(BaseModel):
     """Configuration for Speech-to-Text."""
@@ -62,7 +61,6 @@ class STTConfig(BaseModel):
     beam_size: int = 5
     # Sample rate for audio
     sample_rate: int = 16000
-
 
 class TTSConfig(BaseModel):
     """Configuration for Text-to-Speech."""
@@ -116,20 +114,19 @@ class TTSConfig(BaseModel):
         "valta_prime": "",
     }
 
-
 class CaptureConfig(BaseModel):
     """Configuration for audio capture after wake word."""
     # Use VAD to detect end of speech
     use_vad: bool = True
     # VAD aggressiveness (0-3)
     vad_aggressiveness: int = 2
+    vad_engine: str = "silero"
     # Maximum capture duration (seconds)
     max_duration: float = 10.0
     # Minimum capture duration (seconds)
     min_duration: float = 1.0
     # Silence timeout after speech ends (seconds)
     silence_timeout: float = 1.5
-
 
 class PipelineConfig(BaseModel):
     """Main voice pipeline configuration."""
@@ -140,11 +137,10 @@ class PipelineConfig(BaseModel):
     
     # WebSocket settings
     ws_host: str = "0.0.0.0"
-    ws_port: int = 8000
+    ws_port: int = 8001  # Changed from 8000 to avoid conflict with main server
     
     # Audio input device (None for default)
-    audio_device: Optional[str] = None
-
+    audio_device: Optional[int] = 5
 
 # Global config instance
 voice_config = PipelineConfig()

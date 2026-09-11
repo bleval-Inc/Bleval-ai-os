@@ -4,7 +4,6 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAxiomStore } from "../../lib/store/axiom-store";
 import { useVoiceBroadcast } from "../../lib/voice/voice-websocket";
-import { useVoiceWebSocket } from "../../lib/voice/voice-websocket";
 import { cn } from "../../lib/utils";
 
 interface HeroCommandPromptProps {
@@ -40,9 +39,10 @@ export function HeroCommandPrompt({
     const [voiceExecutive, setVoiceExecutive] = useState<string | null>(null);
     const { isConnected: voiceConnected } = useVoiceBroadcast({
       onSpeak: (msg) => {
-        if (msg.executive && msg.text) {
+        const data = msg.data ?? {};
+        if (data.executive && data.text) {
           setVoiceSpeaking(true);
-          setVoiceExecutive(msg.executive);
+          setVoiceExecutive(data.executive);
           // Auto-hide after speech ends
           const timeout = setTimeout(() => {
             setVoiceSpeaking(false);
@@ -55,7 +55,8 @@ export function HeroCommandPrompt({
         // Update store based on voice status if needed
         console.log("Voice status:", msg);
         // Check if message has the listening state (status messages from broadcast)
-        if (msg.type === "status" && "is_listening" in msg && msg.is_listening === false) {
+        const data = msg.data ?? {};
+        if (msg.event === "status" && "is_listening" in data && data.is_listening === false) {
           setVoiceSpeaking(false);
           setVoiceExecutive(null);
         }

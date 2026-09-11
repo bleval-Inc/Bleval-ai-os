@@ -30,7 +30,7 @@ EXECUTIVE_WAKE_WORDS = {
     "axiom": ["axiom on", "axiom", "hey axiom", "ok axiom"],
     "jenson": ["jenson", "hey jenson", "hey good jenson", "jensen"],
     "valta_prime": ["valta prime", "valta", "hey valta", "prime"],
-    "yamako": ["yamako", "hey yamako", "hey good yamako"],
+    "yamako": ["yamako", "hey yamako", "hey good yamako", "ok yamako"],
 }
 
 SAMPLE_RATE = 16000
@@ -165,7 +165,7 @@ def main():
         return 0
     
     if args.device is not None:
-        sd.default.device = args.device
+        sd.default.device = (args.device, sd.default.device[1])
     
     output_dir = Path(args.output_dir)
     

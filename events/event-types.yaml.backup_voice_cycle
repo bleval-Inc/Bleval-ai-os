@@ -1,0 +1,142 @@
+# Bleval AI OS — Event Type Definitions
+# Version: 3.0.0
+
+version: "3.0"
+
+event_types:
+  # ── Lead Events ─────────────────────────────────────────
+  lead-discovered:
+    description: "Atlas has identified a new qualified lead"
+    channel: organization
+    emitted_by: [atlas]
+    subscribed_by: [jenson, apollo, closer]
+    schema: events/schemas/lead-discovered.yaml
+    example_payload:
+      lead_id: "ld-001"
+      company: "ABC Services"
+      industry: "plumbing"
+      contact: {}
+      opportunity_score: 78
+      report_path: "memory/agents/atlas/reports/ld-001.md"
+
+  lead-qualified:
+    description: "Lead has been qualified and is ready for outreach"
+    channel: department.sales
+    emitted_by: [jenson]
+    subscribed_by: [apollo]
+    schema: events/schemas/lead-qualified.yaml
+
+  # ── Campaign Events ──────────────────────────────────────
+  campaign-created:
+    description: "Apollo has created a new outreach campaign"
+    channel: department.sales
+    emitted_by: [apollo]
+    subscribed_by: [jenson, closer]
+
+  outreach-sent:
+    description: "Outreach message has been sent to a prospect"
+    channel: department.sales
+    emitted_by: [apollo]
+    subscribed_by: [jenson]
+
+  response-received:
+    description: "Response received from a prospect"
+    channel: department.sales
+    emitted_by: [apollo]
+    subscribed_by: [jenson, closer]
+
+  # ── Deal Events ─────────────────────────────────────────
+  opportunity-created:
+    description: "New sales opportunity has been created"
+    channel: organization
+    emitted_by: [closer]
+    subscribed_by: [jenson, ledger]
+
+  deal-closed-won:
+    description: "Deal has been closed won"
+    channel: organization
+    emitted_by: [closer]
+    subscribed_by: [jenson, ledger, pulse]
+
+  deal-closed-lost:
+    description: "Deal has been closed lost"
+    channel: organization
+    emitted_by: [closer]
+    subscribed_by: [jenson]
+
+  # ── Content Events ──────────────────────────────────────
+  content-researched:
+    description: "Market research and content opportunity analysis complete"
+    channel: department.marketing
+    emitted_by: [nova]
+    subscribed_by: [jenson, creator]
+
+  content-created:
+    description: "Content piece has been produced"
+    channel: department.marketing
+    emitted_by: [creator]
+    subscribed_by: [jenson, analyst]
+
+  content-published:
+    description: "Content has been published to distribution channels"
+    channel: department.marketing
+    emitted_by: [creator]
+    subscribed_by: [jenson, analyst]
+
+  # ── Development Events ──────────────────────────────────
+  feature-requested:
+    description: "New feature or change has been requested"
+    channel: organization
+    emitted_by: [jenson]
+    subscribed_by: [forge]
+
+  development-completed:
+    description: "Development work has been completed and is ready for QA"
+    channel: department.development
+    emitted_by: [forge]
+    subscribed_by: [jenson, tester]
+
+  test-completed:
+    description: "Testing has been completed"
+    channel: department.development
+    emitted_by: [tester]
+    subscribed_by: [jenson, forge]
+
+  # ── Operations Events ───────────────────────────────────
+  report-ready:
+    description: "Operations or financial report is ready"
+    channel: organization
+    emitted_by: [ledger, pulse]
+    subscribed_by: [jenson]
+
+  metric-updated:
+    description: "Key business metric has been updated"
+    channel: organization
+    emitted_by: [ledger, pulse]
+    subscribed_by: [jenson]
+
+  # ── Client Events ───────────────────────────────────────
+  client-onboarded:
+    description: "New client has been onboarded"
+    channel: organization
+    emitted_by: [pulse]
+    subscribed_by: [jenson, forge]
+
+  client-risk-detected:
+    description: "Client retention risk has been identified"
+    channel: organization
+    emitted_by: [pulse]
+    subscribed_by: [jenson]
+
+  # ── Cross-org Events ────────────────────────────────────
+  executive-message:
+    description: "Structured message from one executive to another"
+    channel: executive
+    emitted_by: [jenson, valta_prime, yamako]
+    subscribed_by: [jenson, valta_prime, yamako]
+
+  escalation:
+    description: "Issue that requires cross-org executive attention"
+    channel: executive
+    emitted_by: [jenson, valta_prime, yamako]
+    subscribed_by: [jenson, valta_prime, yamako]

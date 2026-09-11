@@ -31,8 +31,11 @@ class WhisperEngine:
         """Load the faster-whisper model."""
         try:
             from faster_whisper import WhisperModel
-        except ImportError:
-            logger.error("faster-whisper not installed. Install with: pip install faster-whisper")
+        except Exception as e:
+            logger.warning(
+                "faster-whisper is unavailable; voice input is disabled: "
+                f"{type(e).__name__}: {e}"
+            )
             return False
         
         try:
