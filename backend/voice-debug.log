@@ -1,0 +1,56 @@
+ElevenLabs API key not configured
+INFO:     Started server process [7776]
+INFO:     Waiting for application startup.
+Using cache found in C:\Users\byagi/.cache\torch\hub\snakers4_silero-vad_master
+C:\Users\byagi\Desktop\Bleval-ai-os\backend\.venv\Lib\site-packages\torch\jit\_serialization.py:176: FutureWarning: `torch.jit.load` is deprecated. Please switch to `torch.export`.
+  warnings.warn(
+[STARTUP_VOICE] Lifespan startup: about to call runtime.start()
+[STARTUP_VOICE] AxiomRuntime.start ENTER: id=2783240982224, _running=False
+[STARTUP_VOICE] AxiomRuntime.start: calling bootstrap()
+[STARTUP_VOICE] initialize_pipeline ENTER: runtime=<axiom.runtime.lifecycle.AxiomRuntime object at 0x0000028806170ED0>, use_mock=False
+[STARTUP_VOICE] initialize_pipeline: VoicePipelineOrchestrator created id=2783241062928
+Loading wake word models...
+Feature model path: C:\Users\byagi\Desktop\Bleval-ai-os\backend\runtime\state\models\wakeword\melspectrogram.onnx
+Feature model exists: True
+Set OPENWAKEWORD_FEATURE_MODEL to: C:\Users\byagi\Desktop\Bleval-ai-os\backend\runtime\state\models\wakeword\melspectrogram.onnx
+OPENWAKEWORD_FEATURE_MODEL is set to: C:\Users\byagi\Desktop\Bleval-ai-os\backend\runtime\state\models\wakeword\melspectrogram.onnx
+Checking model path for axiom: C:\Users\byagi\Desktop\Bleval-ai-os\backend\runtime\state\models\wakeword\axiom.onnx
+Loading wake word model from: C:\Users\byagi\Desktop\Bleval-ai-os\backend\runtime\state\models\wakeword\axiom.onnx
+Loaded custom wake word model for axiom: C:\Users\byagi\Desktop\Bleval-ai-os\backend\runtime\state\models\wakeword\axiom.onnx
+Checking model path for jenson: C:\Users\byagi\Desktop\Bleval-ai-os\backend\runtime\state\models\wakeword\jenson.onnx
+Loading wake word model from: C:\Users\byagi\Desktop\Bleval-ai-os\backend\runtime\state\models\wakeword\jenson.onnx
+Loaded custom wake word model for jenson: C:\Users\byagi\Desktop\Bleval-ai-os\backend\runtime\state\models\wakeword\jenson.onnx
+Checking model path for valta_prime: C:\Users\byagi\Desktop\Bleval-ai-os\backend\runtime\state\models\wakeword\valta_prime.onnx
+Loading wake word model from: C:\Users\byagi\Desktop\Bleval-ai-os\backend\runtime\state\models\wakeword\valta_prime.onnx
+Loaded custom wake word model for valta_prime: C:\Users\byagi\Desktop\Bleval-ai-os\backend\runtime\state\models\wakeword\valta_prime.onnx
+Checking model path for yamako: C:\Users\byagi\Desktop\Bleval-ai-os\backend\runtime\state\models\wakeword\yamako.onnx
+Loading wake word model from: C:\Users\byagi\Desktop\Bleval-ai-os\backend\runtime\state\models\wakeword\yamako.onnx
+Loaded custom wake word model for yamako: C:\Users\byagi\Desktop\Bleval-ai-os\backend\runtime\state\models\wakeword\yamako.onnx
+Loaded 4/4 wake word models
+[STARTUP_VOICE] initialize_pipeline: VoicePipelineOrchestrator.initialize() returned True
+[STARTUP_VOICE] AxiomRuntime.start: bootstrap() completed, _initialised=True
+[STARTUP_VOICE] AxiomRuntime.start: starting event engine
+[STARTUP_VOICE] AxiomRuntime.start: starting scheduler
+[STARTUP_VOICE] AxiomRuntime.start: starting dispatcher
+[STARTUP_VOICE] AxiomRuntime.start: starting learning engine
+[STARTUP_VOICE] AxiomRuntime.start: starting health monitor
+[STARTUP_VOICE] AxiomRuntime.start: initialising system monitor
+[STARTUP_VOICE] AxiomRuntime.start: wiring system tools
+[STARTUP_VOICE] AxiomRuntime.start: loading persisted workflow state
+[STARTUP_VOICE] AxiomRuntime.start: starting specialist agent engine
+[STARTUP_VOICE] AxiomRuntime.start: starting autonomous workflow monitor
+[STARTUP_VOICE] AxiomRuntime.start: starting background executor
+[STARTUP_VOICE] AxiomRuntime.start: starting voice pipeline
+[STARTUP_VOICE] AxiomRuntime.start: voice_pipeline exists, id=2783241062928
+INFO:     Started server process [7776]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8007 (Press CTRL+C to quit)
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+[EXECUTE_VIA_RUNTIME] No executive loop found for entity: valta_prime
+[EXECUTE_VIA_RUNTIME] No executive loop found for entity: valta_prime
+[EXECUTE_VIA_RUNTIME] No executive loop found for entity: axiom
+[EXECUTE_VIA_RUNTIME] No executive loop found for entity: axiom
+[EXECUTE_VIA_RUNTIME] No executive loop found for entity: axiom
+[EXECUTE_VIA_RUNTIME] No executive loop found for entity: axiom

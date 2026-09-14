@@ -25,7 +25,7 @@ EXECUTIVE_WORKSTATIONS: Dict[str, str] = {
 }
 
 # Wake word model paths (trained .onnx models)
-WAKEWORD_MODELS_DIR = settings.state_dir / "models" / "wakeword"
+WAKEWORD_MODELS_DIR = Path(__file__).resolve().parent.parent.parent / "runtime" / "state" / "models" / "wakeword"
 
 class WakeWordConfig(BaseModel):
     """Configuration for wake word detection."""
@@ -137,7 +137,7 @@ class PipelineConfig(BaseModel):
     
     # WebSocket settings
     ws_host: str = "0.0.0.0"
-    ws_port: int = 8001  # Changed from 8000 to avoid conflict with main server
+    ws_port: int = 8007  # Changed from 8005 to avoid conflict with existing server
     
     # Audio input device (None for default)
     audio_device: Optional[int] = 5

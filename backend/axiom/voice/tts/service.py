@@ -21,20 +21,26 @@ logger = logging.getLogger("axiom.voice.tts.service")
 class TextToSpeechService:
     """
     High-level TTS service for executive speech synthesis.
-    
+
     Handles provider selection, voice profiles, and audio output.
     """
-    
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+
+    def __init__(self, config: Optional[Dict[str, Any]] = None, use_mock: bool = False):
         self.config = config if config is not None else {}
         self._default_provider_name = self.config.get("default_provider", voice_config.tts.provider)
+        self._use_mock = use_mock
         self._lock = threading.Lock()
         self._initialized = False
-        
+
     def initialize(self) -> bool:
         """Initialize all registered providers."""
+        if self._use_mock:
+            # In mock mode, we skip initialization and assume success.
+            self._initialized = True
+            return True
+
         results = tts_registry.initialize_all()
-        
+
         # Set default provider
         if self._default_provider_name in tts_registry._providers:
             tts_registry.set_default(self._default_provider_name)
@@ -48,7 +54,7 @@ class TextToSpeechService:
             else:
                 logger.error("No TTS providers available")
                 return False
-        
+
         self._initialized = True
         return True
     
@@ -130,11 +136,11 @@ class TextToSpeechService:
 _tts_service_instance: Optional[TextToSpeechService] = None
 
 
-def get_tts_service() -> TextToSpeechService:
+def get_tts_service(use_mock: bool = False) -> TextToSpeechService:
     """Get or create the global TTS service instance."""
     global _tts_service_instance
     if _tts_service_instance is None:
-        _tts_service_instance = TextToSpeechService()
+        _tts_service_instance = TextToSpeechService(use_mock=use_mock)
     return _tts_service_instance
 
 
