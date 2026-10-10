@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useBootStore } from "../../lib/store/boot-store";
 import { system } from "../../lib/api";
 import { speak, stopSpeaking, loadVoices } from "../../lib/voice/speak";
-import type { RuntimeStatus } from "../../lib/api-types";
+import type { RuntimeStatus, HealthSummary } from "../../lib/api-types";
 
 /* ── Boot Particle Canvas ─────────────────────────────────────────── */
 
@@ -276,7 +276,9 @@ export default function BootSequence({ onComplete }: { onComplete: () => void })
         }, 1800); // "System Ready" stays visible for 1.8s
       }
     }, duration);
-    return () => clearTimeout(t);
+    return () => {
+      clearTimeout(t);
+    };
   }, [phase, currentStage, stages, advanceStage]);
 
   // ── Phase 4: Ready → Fetch runtime → Prepare greeting ────────
@@ -293,23 +295,53 @@ export default function BootSequence({ onComplete }: { onComplete: () => void })
       setGreetingText(timeGreeting);
 
       try {
-        const status = await system.status();
+        // Try to get detailed status first
+        const status: RuntimeStatus = await system.status();
         const parts: string[] = [];
+
+        // Check overall health
         if (status.health?.overall === "healthy") {
           parts.push("All systems are online and operational.");
+        } else if (status.health?.overall === "unhealthy") {
+          parts.push("System is operational with some degraded components.");
+        } else {
+          parts.push("System status unknown.");
         }
+
+        // Add executive count if available
         const execCount = status.executives ?? 0;
         if (execCount > 0) {
           parts.push(`${execCount} executives online.`);
         }
+
+        // Add workflow count if available
         const wfCount = status.workflows_defined ?? 0;
         if (wfCount > 0) {
           parts.push(`${wfCount} workflows available.`);
         }
+
+        // Add organization count if available
+        const orgCount = status.org_count ?? 0;
+        if (orgCount > 0) {
+          parts.push(`${orgCount} organizations configured.`);
+        }
+
+        // Final message
         parts.push("Ready to rock.");
         setRuntimeSummary(parts.join(" "));
-      } catch {
-        setRuntimeSummary("All systems are operational.");
+      } catch (error) {
+        // Fallback to health endpoint if status fails
+        try {
+          const health: HealthSummary = await system.health();
+          if (health.overall === "healthy") {
+            setRuntimeSummary("All systems are healthy and operational.");
+          } else {
+            setRuntimeSummary("System is operational with some components degraded.");
+          }
+        } catch (healthError) {
+          // Final fallback
+          setRuntimeSummary("AXIOM OS is initializing...");
+        }
       }
 
       // Transition to greeting after a deliberate pause
@@ -335,19 +367,24 @@ export default function BootSequence({ onComplete }: { onComplete: () => void })
     const t = setTimeout(async () => {
       setSpeaking(true);
 
-      await speak(fullGreeting, {
-        rate: 0.85,
-        pitch: 1.08,
-        onStart: () => setSpeaking(true),
-        onEnd: () => {
-          setSpeaking(false);
-          speechEndedRef.current = true;
-        },
-        onError: () => {
-          setSpeaking(false);
-          speechEndedRef.current = true;
-        },
-      });
+      try {
+        await speak(fullGreeting, {
+          rate: 0.85,
+          pitch: 1.08,
+          onStart: () => setSpeaking(true),
+          onEnd: () => {
+            setSpeaking(false);
+            speechEndedRef.current = true;
+          },
+          onError: () => {
+            setSpeaking(false);
+            speechEndedRef.current = true;
+          },
+        });
+      } finally {
+        setSpeaking(false);
+        speechEndedRef.current = true;
+      }
     }, 600);
 
     return () => clearTimeout(t);

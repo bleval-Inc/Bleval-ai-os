@@ -93,6 +93,8 @@ from axiom.engine.intelligence import IntelligenceEngine
 
 # Voice Pipeline
 from axiom.voice.pipeline_orchestrator import VoicePipelineOrchestrator, initialize_pipeline
+from axiom.engine.provider_registry import ProviderRegistry
+from axiom.integrations.layer.integration_layer import IntegrationLayer
 
 
 class AxiomRuntime:
@@ -183,6 +185,9 @@ class AxiomRuntime:
         """
         if self._initialised:
             return
+
+        # Validate configuration
+        settings.validate()
 
         # Ensure runtime directories exist
         settings.ensure_dirs()

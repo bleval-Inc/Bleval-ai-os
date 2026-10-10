@@ -153,6 +153,8 @@ export async function speak(
   text: string,
   options?: SpeechOptions,
 ): Promise<void> {
+  const fallbackTimeoutMs = 3000;
+
   // Cancel any current speech first
   stopSpeaking();
 
@@ -166,7 +168,19 @@ export async function speak(
         const audio = playAudio(audioData, options?.onStart, options?.onEnd, options?.onError);
         if (audio) {
           elevenLabsModule.setCurrentAudio(audio);
-          return;
+          return new Promise((resolve) => {
+            const finish = () => {
+              clearTimeout(timer);
+              resolve();
+            };
+            const timer = setTimeout(finish, fallbackTimeoutMs);
+            audio.onended = () => {
+              finish();
+            };
+            audio.onerror = () => {
+              finish();
+            };
+          });
         }
       }
     } catch {
@@ -174,38 +188,82 @@ export async function speak(
     }
   }
 
-  // Primary: browser SpeechSynthesis (free, unlimited)
-  const utterance = new SpeechSynthesisUtterance(text);
-
-  // Select the best natural voice
-  const voice = getAxiomVoice();
-  if (voice) {
-    utterance.voice = voice;
+  if (typeof window === "undefined" || !("speechSynthesis" in window)) {
+    options?.onError?.();
+    return;
   }
 
-  // Warm, conversational, flirty-professional tuning
-  utterance.rate = options?.rate ?? WARMTH_RATE;
-  utterance.pitch = options?.pitch ?? WARMTH_PITCH;
-  utterance.volume = options?.volume ?? 1.0;
+  return new Promise<void>((resolve) => {
+    const SpeechCtor =
+      typeof SpeechSynthesisUtterance === "function"
+        ? SpeechSynthesisUtterance
+        : class {
+            text: string;
+            rate: number;
+            pitch: number;
+            volume: number;
+            voice: SpeechSynthesisVoice | null;
+            onstart: (() => void) | null;
+            onend: (() => void) | null;
+            onerror: (() => void) | null;
 
-  const onStart = () => {
-    _onSpeakingStarted?.();
-    options?.onStart?.();
-  };
+            constructor(message: string) {
+              this.text = message;
+              this.rate = 1;
+              this.pitch = 1;
+              this.volume = 1;
+              this.voice = null;
+              this.onstart = null;
+              this.onend = null;
+              this.onerror = null;
+            }
+          };
 
-  const onEnd = () => {
-    _onSpeakingEnded?.();
-    options?.onEnd?.();
-  };
+    const utterance = new SpeechCtor(text) as any;
 
-  utterance.onstart = onStart;
-  utterance.onend = onEnd;
-  utterance.onerror = () => {
-    _onSpeakingEnded?.();
-    options?.onError?.();
-  };
+    // Select the best natural voice
+    const voice = getAxiomVoice();
+    if (voice) {
+      utterance.voice = voice;
+    }
 
-  window.speechSynthesis.speak(utterance);
+    // Warm, conversational, flirty-professional tuning
+    utterance.rate = options?.rate ?? WARMTH_RATE;
+    utterance.pitch = options?.pitch ?? WARMTH_PITCH;
+    utterance.volume = options?.volume ?? 1.0;
+
+    const finish = () => {
+      clearTimeout(fallbackTimer);
+      resolve();
+    };
+
+    const fallbackTimer = setTimeout(() => {
+      _onSpeakingEnded?.();
+      options?.onError?.();
+      finish();
+    }, fallbackTimeoutMs);
+
+    const onStart = () => {
+      _onSpeakingStarted?.();
+      options?.onStart?.();
+    };
+
+    const onEnd = () => {
+      _onSpeakingEnded?.();
+      options?.onEnd?.();
+      finish();
+    };
+
+    utterance.onstart = onStart;
+    utterance.onend = onEnd;
+    utterance.onerror = () => {
+      _onSpeakingEnded?.();
+      options?.onError?.();
+      finish();
+    };
+
+    window.speechSynthesis.speak(utterance);
+  });
 }
 
 // Stop

@@ -1,0 +1,33 @@
+Failed to proxy http://127.0.0.1:8000/api/v1/executives/yamako/loop/schedules Error: connect ECONNREFUSED 127.0.0.1:8000
+    at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:8000) {
+  errno: -4078,
+  code: 'ECONNREFUSED',
+  syscall: 'connect',
+  address: '127.0.0.1',
+  port: 8000
+}
+Error: connect ECONNREFUSED 127.0.0.1:8000
+    at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:8000) {
+  errno: -4078,
+  code: 'ECONNREFUSED',
+  syscall: 'connect',
+  address: '127.0.0.1',
+  port: 8000
+}
+Failed to proxy http://127.0.0.1:8000/api/v1/health Error: connect ECONNREFUSED 127.0.0.1:8000
+    at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:8000) {
+  errno: -4078,
+  code: 'ECONNREFUSED',
+  syscall: 'connect',
+  address: '127.0.0.1',
+  port: 8000
+}
+Error: connect ECONNREFUSED 127.0.0.1:8000
+    at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:8000) {
+  errno: -4078,
+  code: 'ECONNREFUSED',
+  syscall: 'connect',
+  address: '127.0.0.1',
+  port: 8000
+}
+^C^C

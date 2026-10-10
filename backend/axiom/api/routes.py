@@ -145,6 +145,29 @@ async def get_health():
     return {"error": "Monitor not available"}
 
 
+@router.get("/liveness")
+async def liveness_probe():
+    """Kubernetes liveness probe - returns 200 if the application is running."""
+    rt = _get_runtime()
+    if rt is not None and rt._running:
+        return {"status": "alive"}
+    return {"status": "dead"}
+
+
+@router.get("/readiness")
+async def readiness_probe():
+    """Kubernetes readiness probe - returns 200 if the application is ready to serve traffic."""
+    rt = _get_runtime()
+    if rt is not None and rt._running and rt._initialised:
+        # Check if critical components are healthy
+        if rt.monitor:
+            summary = rt.monitor.get_summary()
+            # Consider ready if no unhealthy components
+            if summary.get("unhealthy", 0) == 0:
+                return {"status": "ready", "details": summary}
+    return {"status": "not ready"}, 503
+
+
 # ── Organisation Routes ─────────────────────────────────────────────────
 
 @router.get("/organisations")
