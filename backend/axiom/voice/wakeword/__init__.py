@@ -1,25 +1,11 @@
-"""Axiom OS Wake Word Detection package."""
+"""Wake word detection and voice activity detection modules."""
 
-from axiom.voice.wakeword.detector import (
-    WakeWordDetector,
-    MockWakeWordDetector,
-    create_wake_word_detector,
-)
-from axiom.voice.wakeword.vad import (
-    SileroVAD,
-    WebRTCVAD,
-    VADCaptureManager,
-    MockVADCaptureManager,
-    create_vad_capture_manager,
-)
+from .detector import WakeWordDetector
+from .vad import SileroVAD, VoiceActivityDetector, WebRTCVAD
 
 __all__ = [
     "WakeWordDetector",
-    "MockWakeWordDetector",
-    "create_wake_word_detector",
+    "VoiceActivityDetector",
     "SileroVAD",
     "WebRTCVAD",
-    "VADCaptureManager",
-    "MockVADCaptureManager",
-    "create_vad_capture_manager",
 ]

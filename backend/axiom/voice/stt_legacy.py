@@ -28,17 +28,7 @@ from axiom.config import settings
 
 logger = logging.getLogger("axiom.voice.stt")
 
-# Executive wake-word configuration — kept in sync with the frontend
-# (dashboard/components/axiom/VoiceEngine.tsx) and /voice/executives.
-EXECUTIVE_WAKE_WORDS: Dict[str, List[str]] = {
-    "axiom": ["axiom on", "axiom", "hey axiom", "ok axiom"],
-    "jenson": ["jenson", "hey jenson", "jensen"],
-    "valta_prime": ["valta prime", "valta", "hey valta", "prime"],
-    "yamako": ["yamako", "hey yamako"],
-}
-
-# Official executive IDs accepted by the voice pipeline.
-VALID_EXECUTIVES = ["axiom", "jenson", "valta_prime", "yamako"]
+from axiom.voice.config import voice_config
 
 # Vosk small English model — good accuracy / size trade-off for on-device use.
 VOSK_MODEL_URL = "https://alphacephei.com/vosk/models/vosk-model-small-en-us-0.15.zip"
@@ -252,7 +242,7 @@ def detect_wake_word(transcript: str) -> Tuple[Optional[str], Optional[str]]:
     Returns (executive_id, wake_word) or (None, None) if no wake word found.
     """
     lower = transcript.lower()
-    for exec_id, words in EXECUTIVE_WAKE_WORDS.items():
+    for exec_id, words in voice_config.executive_wake_words.items():
         for ww in words:
             if ww in lower:
                 return exec_id, ww
@@ -270,7 +260,7 @@ def extract_command_after_wake(transcript: str, exec_id: Optional[str], wake_wor
         return transcript[idx + len(wake_word):].strip()
     if exec_id:
         # Also strip the bare executive name when it leads the phrase.
-        for ww in EXECUTIVE_WAKE_WORDS[exec_id]:
+        for ww in voice_config.executive_wake_words[exec_id]:
             if lower.startswith(ww):
                 return transcript[len(ww):].strip()
     return transcript.strip()

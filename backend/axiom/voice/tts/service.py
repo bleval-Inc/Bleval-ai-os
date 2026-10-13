@@ -6,12 +6,13 @@ import logging
 import threading
 from typing import Any, Dict, Optional
 
-from axiom.voice.tts.provider_base import TTSProvider, VoiceProfile, tts_registry
+from axiom.voice.tts.provider_base import TTSProvider, tts_registry
 from axiom.voice.tts.voice_profiles import (
     EXECUTIVE_VOICE_PROFILES,
     EXECUTIVE_GREETINGS,
     get_best_voice_profile,
     get_voice_profile,
+    VoiceProfile,
 )
 from axiom.voice.config import voice_config
 
@@ -57,48 +58,50 @@ class TextToSpeechService:
 
         self._initialized = True
         return True
-    
+
     def synthesize(
         self,
         text: str,
         executive_id: str,
         provider_name: Optional[str] = None,
-    ) -> bytes:
+    ) -> Optional[SynthesizedAudio]:
         """
         Synthesize text for an executive.
-        
+
         Args:
             text: Text to synthesize
             executive_id: Executive identifier (axiom, jenson, valta_prime, yamako)
             provider_name: Optional specific provider to use
-            
+
         Returns:
-            Audio data as bytes
+            SynthesizedAudio object containing audio bytes and metadata, or None if synthesis failed
         """
         if not self._initialized:
             self.initialize()
-        
+
         # Get voice profile
         voice_profile = get_best_voice_profile(executive_id)
-        
+
         # Get provider
         if provider_name:
             provider = tts_registry.get(provider_name)
         else:
             provider = tts_registry.get(voice_profile.provider)
-        
+
         if not provider:
             # Fall back to default
             provider = tts_registry.get_default()
             if not provider:
-                raise RuntimeError("No TTS provider available")
+                logger.error("No TTS provider available")
+                return None
             logger.warning(f"Requested provider not available, using default: {provider.name}")
-        
+
         if not provider.is_available():
-            raise RuntimeError(f"Provider {provider.name} not available")
-        
+            logger.error(f"Provider {provider.name} not available")
+            return None
+
         logger.info(f"Synthesizing for {executive_id} using {provider.name}: '{text[:50]}...'")
-        
+
         try:
             audio_data = provider.synthesize(text, voice_profile)
             return audio_data
@@ -113,20 +116,20 @@ class TextToSpeechService:
                         return fallback.synthesize(text, voice_profile)
                     except Exception as fallback_error:
                         logger.error(f"Fallback also failed: {fallback_error}")
-            raise
-    
-    def synthesize_greeting(self, executive_id: str) -> bytes:
+            return None
+
+    def synthesize_greeting(self, executive_id: str) -> Optional[SynthesizedAudio]:
         """Synthesize the standard greeting for an executive."""
         greeting = EXECUTIVE_GREETINGS.get(executive_id.lower(), f"{executive_id} online.")
         return self.synthesize(greeting, executive_id)
-    
+
     def get_available_providers(self) -> Dict[str, bool]:
         """Get status of all providers."""
         return {
             name: provider.is_available()
             for name, provider in tts_registry._providers.items()
         }
-    
+
     def get_voice_profile(self, executive_id: str) -> Optional[VoiceProfile]:
         """Get the voice profile for an executive."""
         return get_voice_profile(executive_id)
@@ -152,11 +155,11 @@ def speak_executive(
     executive_id: str,
     text: str,
     provider_name: Optional[str] = None,
-) -> bytes:
+) -> Optional[SynthesizedAudio]:
     """Convenience function to synthesize executive speech."""
     return get_tts_service().synthesize(text, executive_id, provider_name)
 
 
-def speak_greeting(executive_id: str) -> bytes:
+def speak_greeting(executive_id: str) -> Optional[SynthesizedAudio]:
     """Convenience function to synthesize executive greeting."""
     return get_tts_service().synthesize_greeting(executive_id)

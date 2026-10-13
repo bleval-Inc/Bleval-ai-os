@@ -11,11 +11,7 @@ from typing import Any, Callable, Dict, Optional, Tuple
 
 import numpy as np
 
-from axiom.voice.config import (
-    voice_config,
-    EXECUTIVE_WAKE_WORDS,
-    VALID_EXECUTIVES,
-)
+from axiom.voice.config import voice_config
 
 logger = logging.getLogger("axiom.voice.wakeword.detector")
 logger.info("WakeWordDetector module initializing")
@@ -91,7 +87,7 @@ class WakeWordDetector:
         # ---------------------------------------------------------
         # Load custom executive-specific models.
         # ---------------------------------------------------------
-        for exec_id in VALID_EXECUTIVES:
+        for exec_id in voice_config.valid_executives:
             model_path = self.config.model_paths.get(exec_id)
 
             if not model_path:
@@ -256,7 +252,7 @@ class WakeWordDetector:
         compatibility with the existing detector architecture.
         """
 
-        return EXECUTIVE_WAKE_WORDS.get(
+        return voice_config.executive_wake_words.get(
             exec_id,
             [exec_id],
         )[0]

@@ -1,162 +1,135 @@
-"""Intent router for voice commands."""
+"""
+Intent Router - determines which entity should handle a command.
 
-from __future__ import annotations
+Wake word largely determines routing, with Axiom capable of delegating to subordinates.
+"""
 
 import logging
-from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
+from typing import Optional
 
-from axiom.voice.config import EXECUTIVE_WORKSTATIONS, VALID_EXECUTIVES
+from ..config import ENTITIES, IntentRouterConfig, intent_router_config
+from ..models import IntentRouterOutput, IntentType
 
-logger = logging.getLogger("axiom.voice.router.intent_router")
-
-
-@dataclass
-class RouterOutput:
-    """Output from the intent router."""
-    target_entity: str
-    raw_text: str
-    delegated_by: Optional[str]  # "axiom" if Axiom delegated, None if direct wake
-    timestamp: str
-    confidence: float = 1.0
-    wake_word: str = ""
-    target_workstation: str = ""
+logger = logging.getLogger(__name__)
 
 
 class IntentRouter:
     """
-    Routes transcribed voice commands to the appropriate executive.
+    Routes transcribed commands to the appropriate entity.
     
-    Routing is primarily deterministic based on wake word, with one exception:
-    If Axiom is woken, Axiom's intelligence engine does secondary classification
-    to decide if it should handle directly or delegate to an executive.
+    Routing logic:
+    - If wake_entity is Jenson, Yamako, or Valta Prime: route directly to that entity
+    - If wake_entity is Axiom: 
+        - If delegation_enabled, perform secondary classification to route to a subordinate
+        - Otherwise, handle at Axiom level
     """
     
-    def __init__(self):
-        # Keywords that suggest delegation from Axiom to specific executives
-        self.delegation_keywords: Dict[str, List[str]] = {
-            "jenson": [
-                "operations", "project", "team", "meeting", "schedule", "agency",
-                "bleval", "inc", "company", "business", "workflow", "task",
-                "department", "employee", "hire", "onboard", "process",
-            ],
-            "valta_prime": [
-                "trade", "trading", "market", "portfolio", "position", "risk",
-                "gold", "forex", "crypto", "stock", "analysis", "chart",
-                "technical", "fundamental", "entry", "exit", "stop loss",
-                "take profit", "leverage", "margin", "drawdown", "pnl",
-                "profit", "loss", "strategy", "backtest", "signal",
-            ],
-            "yamako": [
-                "personal", "habit", "remind", "reminder", "calendar", "schedule",
-                "health", "fitness", "exercise", "meditation", "sleep", "water",
-                "daily", "routine", "goal", "journal", "note", "todo", "task",
-                "appointment", "birthday", "anniversary", "contact", "call",
-            ],
-        }
+    def __init__(self, config: IntentRouterConfig = None):
+        """
+        Initialize the intent router.
         
-        # Axiom's own domain keywords (when it should handle directly)
-        self.axiom_keywords = [
-            "system", "status", "health", "memory", "knowledge", "research",
-            "search", "find", "lookup", "what is", "who is", "define",
-            "explain", "how to", "help", "settings", "config", "restart",
-            "shutdown", "backup", "sync", "update", "version", "log",
-        ]
+        Args:
+            config: IntentRouterConfig instance. If None, uses global intent_router_config.
+        """
+        self.config = config or intent_router_config
     
     def route(
         self,
-        transcript: str,
         wake_entity: str,
-        confidence: float = 1.0,
-        wake_word: str = "",
-    ) -> RouterOutput:
+        raw_text: str,
+    ) -> Optional[IntentRouterOutput]:
         """
-        Route a transcribed command to the target executive.
+        Route a command to the appropriate entity.
         
         Args:
-            transcript: The transcribed command text
-            wake_entity: The executive that was woken (from wake word detection)
-            confidence: Wake word detection confidence
-            wake_word: The specific wake word that triggered
+            wake_entity: The entity that was woken (axiom, jenson, yamako, valtaprime)
+            raw_text: The transcribed user command
             
         Returns:
-            RouterOutput with target_entity and routing info
+            IntentRouterOutput with target entity and metadata, or None if routing fails
         """
-        timestamp = self._get_timestamp()
-        lower_text = transcript.lower().strip()
+        if wake_entity not in ENTITIES:
+            logger.error(f"Unknown wake entity: {wake_entity}")
+            return None
         
-        # Direct wake word routing (most common case)
-        if wake_entity != "axiom":
-            return RouterOutput(
-                target_entity=wake_entity,
-                raw_text=transcript,
-                delegated_by=None,
-                timestamp=timestamp,
-                confidence=confidence,
-                wake_word=wake_word,
-                target_workstation=EXECUTIVE_WORKSTATIONS.get(wake_entity, "os"),
-            )
+        target_entity = wake_entity
+        delegated_by = None
+        intent_type = self._classify_intent(raw_text)
         
-        # Axiom was woken - check if it should delegate
-        delegated_to = self._check_delegation(lower_text)
+        # If Axiom is the wake entity and delegation is enabled, perform secondary routing
+        if wake_entity == "axiom" and self.config.axiom_delegation_enabled:
+            target_entity, delegated_by = self._axiom_delegate(raw_text)
         
-        if delegated_to:
-            logger.info(f"Axiom delegating to {delegated_to}: '{transcript}'")
-            return RouterOutput(
-                target_entity=delegated_to,
-                raw_text=transcript,
-                delegated_by="axiom",
-                timestamp=timestamp,
-                confidence=confidence,
-                wake_word=wake_word,
-                target_workstation=EXECUTIVE_WORKSTATIONS.get(delegated_to, "os"),
-            )
-        
-        # Axiom handles directly
-        return RouterOutput(
-            target_entity="axiom",
-            raw_text=transcript,
-            delegated_by=None,
-            timestamp=timestamp,
-            confidence=confidence,
-            wake_word=wake_word,
-            target_workstation="os",
+        logger.info(
+            f"Routing: '{raw_text}' -> {target_entity}"
+            f" (wake_entity={wake_entity}, intent={intent_type})"
         )
-    
-    def _check_delegation(self, text: str) -> Optional[str]:
-        """Check if Axiom should delegate to an executive based on command content."""
-        scores: Dict[str, int] = {exec_id: 0 for exec_id in VALID_EXECUTIVES if exec_id != "axiom"}
         
-        for exec_id, keywords in self.delegation_keywords.items():
-            for keyword in keywords:
-                if keyword in text:
-                    scores[exec_id] += 1
+        return IntentRouterOutput(
+            target_entity=target_entity,
+            raw_text=raw_text,
+            intent_type=intent_type,
+            delegated_by=delegated_by,
+            confidence=1.0,  # Routing is deterministic
+        )
+
+
+    # Alias for backward compatibility
+    RouterOutput = IntentRouterOutput
+
+    def _axiom_delegate(self, raw_text: str) -> tuple[str, Optional[str]]:
+        """
+        When Axiom is woken, determine if the command should be delegated.
         
-        # Also check Axiom keywords - if strong match, don't delegate
-        axiom_score = sum(1 for kw in self.axiom_keywords if kw in text)
+        Performs lightweight keyword matching to determine if the command is about
+        a specific domain (trading, agency, personal) or OS-level.
         
-        # Find highest scoring executive
-        if scores:
-            best_exec = max(scores, key=scores.get)
-            best_score = scores[best_exec]
+        Args:
+            raw_text: The transcribed command
             
-            # Delegate if executive score > axiom score and executive score > 0
-            if best_score > axiom_score and best_score > 0:
-                return best_exec
+        Returns:
+            Tuple of (target_entity, delegated_by)
+            - If delegation occurs: (delegated_entity, "axiom")
+            - If no delegation: ("axiom", None)
+        """
+        raw_text_lower = raw_text.lower()
         
-        return None
+        # Check delegation keywords for each entity
+        for entity_name, keywords in self.config.delegation_keywords.items():
+            if any(keyword in raw_text_lower for keyword in keywords):
+                logger.debug(
+                    f"Axiom delegating to {entity_name} based on keywords in: {raw_text}"
+                )
+                return entity_name, "axiom"
+        
+        # No delegation keywords matched - handle at Axiom level
+        logger.debug(f"Axiom handling command at OS level: {raw_text}")
+        return "axiom", None
     
-    def _get_timestamp(self) -> str:
-        from datetime import datetime
-        return datetime.utcnow().isoformat() + "Z"
-    
-    def get_workstation_for_entity(self, entity: str) -> str:
-        """Get the target workstation for an entity."""
-        return EXECUTIVE_WORKSTATIONS.get(entity, "os")
+    def _classify_intent(self, raw_text: str) -> IntentType:
+        """
+        Classify the intent type of a command.
+        
+        This is a lightweight classification. A full implementation might use
+        the intelligence engine's NLU capabilities.
+        
+        Args:
+            raw_text: The transcribed command
+            
+        Returns:
+            IntentType classification
+        """
+        raw_text_lower = raw_text.lower()
+        
+        # Heuristic classification based on keywords
+        if any(word in raw_text_lower for word in ["search", "find", "look up", "show"]):
+            return IntentType.SEARCH
+        elif any(word in raw_text_lower for word in ["get", "fetch", "retrieve", "check", "status"]):
+            return IntentType.DATA_QUERY
+        elif any(word in raw_text_lower for word in ["do", "execute", "run", "perform", "cancel", "stop"]):
+            return IntentType.ACTION
+        else:
+            return IntentType.GENERAL
 
-
-# Backward compatibility function
-def route_command(transcript: str, wake_entity: str, **kwargs) -> RouterOutput:
-    """Convenience function for simple routing."""
-    router = IntentRouter()
-    return router.route(transcript, wake_entity, **kwargs)
+    # Alias for backward compatibility
+    RouterOutput = IntentRouterOutput

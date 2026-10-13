@@ -5,22 +5,24 @@ speech-to-text (faster-whisper), intent routing, TTS (Piper/ElevenLabs),
 and WebSocket relay to frontend.
 """
 
-from axiom.voice.config import voice_config, EXECUTIVE_WAKE_WORDS, VALID_EXECUTIVES
-from axiom.voice.stt import (
+from .config import voice_config
+EXECUTIVE_WAKE_WORDS = voice_config.executive_wake_words
+VALID_EXECUTIVES = voice_config.valid_executives
+from .stt import (
     SpeechToTextError,
     detect_wake_word,
     extract_command_after_wake,
     is_available,
     transcribe_wav,
 )
-from axiom.voice.pipeline_orchestrator import (
+from .pipeline_orchestrator import (
     VoicePipelineOrchestrator,
     VoiceEvent,
     get_pipeline,
     initialize_pipeline,
 )
-from axiom.voice.tts.service import tts_service, TextToSpeechService
-from axiom.voice.tts.voice_profiles import (
+from .tts.service import tts_service, TextToSpeechService
+from .tts.voice_profiles import (
     EXECUTIVE_VOICE_PROFILES,
     EXECUTIVE_GREETINGS,
     get_voice_profile,

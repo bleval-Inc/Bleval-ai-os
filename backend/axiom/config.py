@@ -11,12 +11,12 @@ from typing import Any, Dict, List, Optional
 
 from dotenv import load_dotenv
 
-load_dotenv()
-
 # ── Root path resolution ────────────────────────────────────────────────
 # backend/axiom/config.py  ->  repo root
 REPO_ROOT: Path = Path(__file__).resolve().parent.parent.parent
 CONFIG_ROOT: Path = REPO_ROOT / "agent_system" if (REPO_ROOT / "agent_system").exists() else REPO_ROOT
+
+load_dotenv(dotenv_path=REPO_ROOT / ".env")
 
 
 # ── Environment settings ────────────────────────────────────────────────

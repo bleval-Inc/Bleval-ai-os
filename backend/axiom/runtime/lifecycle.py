@@ -93,6 +93,8 @@ from axiom.engine.intelligence import IntelligenceEngine
 
 # Voice Pipeline
 from axiom.voice.pipeline_orchestrator import VoicePipelineOrchestrator, initialize_pipeline
+from axiom.voice.voice_intelligence_callback import VoiceIntelligenceCallback
+from axiom.voice.microphone_capture import MicrophoneCapture
 from axiom.engine.provider_registry import ProviderRegistry
 from axiom.integrations.layer.integration_layer import IntegrationLayer
 
@@ -175,6 +177,8 @@ class AxiomRuntime:
 
         # Voice Pipeline
         self.voice_pipeline: Optional[VoicePipelineOrchestrator] = None
+        self.voice_intelligence_callback: Optional[VoiceIntelligenceCallback] = None
+        self.microphone_capture: Optional[MicrophoneCapture] = None
 
     # ── Bootstrap ────────────────────────────────────────────────────────
 
@@ -405,6 +409,12 @@ class AxiomRuntime:
         # Voice Pipeline — initialize after core components
         self.voice_pipeline = initialize_pipeline(runtime=self, use_mock=False)
 
+        # Voice Intelligence Callback — for intelligence engine integration
+        self.voice_intelligence_callback = VoiceIntelligenceCallback(self)
+
+        # Microphone Capture — for audio input
+        self.microphone_capture = MicrophoneCapture()
+
         self._initialised = True
         if self.logger:
             self.logger.info("lifecycle", "Axiom OS runtime initialised")
@@ -498,6 +508,10 @@ class AxiomRuntime:
         else:
             print("[STARTUP_VOICE] AxiomRuntime.start: voice_pipeline is None")
 
+        # Wire up voice pipeline for audio processing
+        print("[STARTUP_VOICE] AxiomRuntime.start: wiring voice pipeline")
+        await self._wire_voice_pipeline()
+
         if self.logger:
             self.logger.info(
                 "lifecycle",
@@ -514,6 +528,21 @@ class AxiomRuntime:
         """Stop all background processors and clean up resources."""
         if not self._running:
             return
+
+        # Stop voice processing task
+        if hasattr(self, '_voice_processing_task') and self._voice_processing_task:
+            self._voice_processing_task.cancel()
+            try:
+                await self._voice_processing_task
+            except asyncio.CancelledError:
+                pass
+            except Exception as e:
+                if self.logger:
+                    self.logger.error("lifecycle", f"Error stopping voice processing task: {e}")
+
+        # Stop microphone capture
+        if self.microphone_capture:
+            await self.microphone_capture.stop()
 
         if self.system_monitor:
             await self.system_monitor.shutdown()
@@ -838,6 +867,52 @@ class AxiomRuntime:
             except Exception as e:
                 if self.logger:
                     self.logger.error("lifecycle", f"Failed to initialize providers for org {org_id}: {e}")
+
+    # ── Voice Pipeline Wiring ────────────────────────────────────────
+    async def _wire_voice_pipeline(self) -> None:
+        """Wire up the voice pipeline for audio processing from microphone.
+
+        This sets up:
+        1. Microphone capture for audio input
+        2. Voice intelligence callback for AI processing
+        3. Starts the audio processing loop that connects microphone → pipeline
+        """
+        if not self.voice_pipeline or not self.voice_intelligence_callback or not self.microphone_capture:
+            if self.logger:
+                self.logger.warning("lifecycle", "Voice pipeline components not fully initialized")
+            return
+
+        try:
+            # Start microphone capture
+            await self.microphone_capture.start()
+
+            # Create audio processing task that connects microphone to pipeline
+            async def voice_processing_task():
+                """Background task to process audio from microphone through voice pipeline."""
+                try:
+                    # Get audio stream from microphone capture
+                    audio_source = self.microphone_capture.audio_stream_generator()
+
+                    # Process audio through voice pipeline with intelligence callback
+                    await self.voice_pipeline.process_audio_stream(
+                        audio_source=audio_source,
+                        on_intelligence_result=self.voice_intelligence_callback.process_command
+                    )
+                except Exception as e:
+                    if self.logger:
+                        self.logger.error("lifecycle", f"Voice processing task error: {e}")
+                    # Don't raise - let it be handled by the task supervisor
+
+            # Start the voice processing task as a background task
+            # We'll create a task and keep track of it so it can be cleaned up
+            if not hasattr(self, '_voice_processing_task'):
+                self._voice_processing_task = asyncio.create_task(voice_processing_task())
+                if self.logger:
+                    self.logger.info("lifecycle", "Voice pipeline wiring completed - audio processing started")
+
+        except Exception as e:
+            if self.logger:
+                self.logger.error("lifecycle", f"Failed to wire voice pipeline: {e}")
 
     # ── Wire System Tools ────────────────────────────────────────────
 

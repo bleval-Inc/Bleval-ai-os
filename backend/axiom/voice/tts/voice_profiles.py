@@ -66,10 +66,10 @@ def get_elevenlabs_voice_profile(executive_id: str) -> Optional[VoiceProfile]:
     """Get the ElevenLabs voice profile for an executive (if configured)."""
     voice_ids = voice_config.tts.elevenlabs_voice_ids
     exec_id = executive_id.lower()
-    
+
     if not voice_ids.get(exec_id):
         return None
-    
+
     # Base profiles for ElevenLabs (would need actual voice IDs)
     base_profiles = {
         "axiom": {
@@ -105,14 +105,14 @@ def get_elevenlabs_voice_profile(executive_id: str) -> Optional[VoiceProfile]:
             "use_speaker_boost": True,
         },
     }
-    
+
     if exec_id not in base_profiles:
         return None
-    
+
     profile_data = base_profiles[exec_id]
     if not profile_data["voice_id"]:
         return None
-    
+
     return VoiceProfile(
         provider="elevenlabs",
         model=exec_id,
@@ -123,7 +123,7 @@ def get_elevenlabs_voice_profile(executive_id: str) -> Optional[VoiceProfile]:
 def get_best_voice_profile(executive_id: str) -> VoiceProfile:
     """
     Get the best available voice profile for an executive.
-    
+
     Prefers ElevenLabs if configured and available, falls back to Piper.
     """
     # Try ElevenLabs first
@@ -131,11 +131,11 @@ def get_best_voice_profile(executive_id: str) -> VoiceProfile:
     if elevenlabs_profile:
         from axiom.voice.tts.elevenlabs_provider import ElevenLabsTTS
         from axiom.voice.tts.provider_base import tts_registry
-        
+
         provider = tts_registry.get("elevenlabs")
         if provider and isinstance(provider, ElevenLabsTTS) and provider.is_available():
             return elevenlabs_profile
-    
+
     # Fall back to Piper
     return get_voice_profile(executive_id) or EXECUTIVE_VOICE_PROFILES["axiom"]
 

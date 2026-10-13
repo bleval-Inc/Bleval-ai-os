@@ -1,15 +1,7 @@
-"""Axiom OS Speech-to-Text package."""
+"""Speech-to-text using faster-whisper."""
 
-from axiom.voice.stt.whisper_engine import (
-    WhisperEngine,
-    MockWhisperEngine,
-    create_whisper_engine,
-)
-
-# Also export from the original stt module for backward compatibility
-from axiom.voice.stt_legacy import (
-    EXECUTIVE_WAKE_WORDS,
-    VALID_EXECUTIVES,
+from .whisper_engine import WhisperEngine
+from ..stt_legacy import (
     SpeechToTextError,
     detect_wake_word,
     extract_command_after_wake,
@@ -18,12 +10,8 @@ from axiom.voice.stt_legacy import (
 )
 
 __all__ = [
-    "WhisperEngine",
-    "MockWhisperEngine",
-    "create_whisper_engine",
-    "EXECUTIVE_WAKE_WORDS",
-    "VALID_EXECUTIVES",
     "SpeechToTextError",
+    "WhisperEngine",
     "detect_wake_word",
     "extract_command_after_wake",
     "is_available",

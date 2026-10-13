@@ -1,145 +1,132 @@
-"""ElevenLabs TTS provider implementation (optional fallback)."""
+"""
+ElevenLabs TTS provider implementation (optional fallback).
 
-from __future__ import annotations
+Provides higher quality voices with emotional direction.
+Can be used as hybrid with Piper fallback.
+"""
 
 import logging
-import os
-from typing import Any, Dict, Optional
+from typing import Optional
 
-import requests
+from ..models import SynthesizedAudio
+from .provider_base import TTSProvider, TTSProviderFactory
 
-from axiom.voice.tts.provider_base import TTSProvider, VoiceProfile
-from axiom.voice.config import voice_config
-
-logger = logging.getLogger("axiom.voice.tts.elevenlabs_provider")
+logger = logging.getLogger(__name__)
 
 
 class ElevenLabsTTS(TTSProvider):
-    """ElevenLabs TTS provider for high-quality cloud synthesis."""
+    """
+    Text-to-Speech using ElevenLabs API.
     
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
-        super().__init__(config)
-        self.api_key = config.get("api_key") or os.getenv("ELEVENLABS_API_KEY") or voice_config.tts.elevenlabs_api_key
-        self.base_url = "https://api.elevenlabs.io/v1"
-        self._voice_ids = config.get("voice_ids", voice_config.tts.elevenlabs_voice_ids)
-        self._session = None
-        
-    @property
-    def name(self) -> str:
-        return "elevenlabs"
+    Provides high-quality, emotionally-controlled voices.
+    Requires ELEVENLABS_API_KEY environment variable.
+    """
     
-    def initialize(self) -> bool:
-        """Check if ElevenLabs API is available."""
-        if not self.api_key:
-            logger.warning("ElevenLabs API key not configured")
-            return False
-        
-        try:
-            import requests
-            self._session = requests.Session()
-            self._session.headers.update({
-                "xi-api-key": self.api_key,
-                "Content-Type": "application/json",
-            })
-            
-            # Test API with a simple request
-            response = self._session.get(f"{self.base_url}/voices", timeout=10)
-            if response.status_code == 200:
-                voices = response.json().get("voices", [])
-                logger.info(f"ElevenLabs initialized with {len(voices)} voices available")
-                self._initialized = True
-                return True
-            else:
-                logger.error(f"ElevenLabs API error: {response.status_code}")
-                return False
-                
-        except ImportError:
-            logger.error("requests library not installed. Install with: pip install requests")
-            return False
-        except Exception as e:
-            logger.error(f"ElevenLabs initialization failed: {e}")
-            return False
-    
-    def is_available(self) -> bool:
-        return self._initialized and self.api_key is not None
-    
-    def synthesize(self, text: str, voice_profile: VoiceProfile) -> bytes:
+    def __init__(self, api_key: str = "", **kwargs):
         """
-        Synthesize text to speech using ElevenLabs.
+        Initialize ElevenLabs TTS.
         
         Args:
-            text: Text to synthesize
-            voice_profile: Voice profile with voice_id and parameters
-            
-        Returns:
-            MP3 audio data as bytes
+            api_key: ElevenLabs API key
+            **kwargs: Additional config options
         """
-        if not self.is_available():
-            raise RuntimeError("ElevenLabs TTS not available")
-        
-        voice_id = voice_profile.extra.get("voice_id") or self._voice_ids.get(voice_profile.model, "")
-        
-        if not voice_id:
-            # Try to find a matching voice
-            raise RuntimeError(f"No ElevenLabs voice_id configured for {voice_profile.model}")
-        
-        # Build request
-        url = f"{self.base_url}/text-to-speech/{voice_id}"
-        
-        payload = {
-            "text": text,
-            "model_id": voice_profile.extra.get("model_id", "eleven_monolingual_v1"),
-            "voice_settings": {
-                "stability": voice_profile.extra.get("stability", 0.5),
-                "similarity_boost": voice_profile.extra.get("similarity_boost", 0.75),
-                "style": voice_profile.extra.get("style", 0.0),
-                "use_speaker_boost": voice_profile.extra.get("use_speaker_boost", True),
-            },
-        }
-        
-        try:
-            response = self._session.post(url, json=payload, timeout=30)
-            
-            if response.status_code == 200:
-                audio_data = response.content
-                logger.info(f"ElevenLabs synthesized {len(text)} chars -> {len(audio_data)} bytes")
-                return audio_data
-            else:
-                error_msg = response.text
-                logger.error(f"ElevenLabs synthesis failed: {response.status_code} - {error_msg}")
-                raise RuntimeError(f"ElevenLabs synthesis failed: {error_msg}")
-                
-        except requests.exceptions.Timeout:
-            raise RuntimeError("ElevenLabs request timed out")
-        except Exception as e:
-            logger.error(f"ElevenLabs synthesis error: {e}")
-            raise
+        self.api_key = api_key
+        self.client = None
+        self._load_client()
     
-    def list_voices(self) -> list:
-        """List available ElevenLabs voices."""
-        if not self.is_available():
-            return []
+    def _load_client(self):
+        """Load the ElevenLabs client."""
+        if not self.api_key:
+            logger.warning("ElevenLabs API key not configured")
+            return
         
         try:
-            response = self._session.get(f"{self.base_url}/voices", timeout=10)
-            if response.status_code == 200:
-                return response.json().get("voices", [])
+            from elevenlabs import ElevenLabs
+            
+            logger.info("Initializing ElevenLabs client")
+            self.client = ElevenLabs(api_key=self.api_key)
+            logger.info("ElevenLabs client initialized")
+        except ImportError:
+            logger.warning(
+                "elevenlabs not installed. Install with: pip install elevenlabs"
+            )
         except Exception as e:
-            logger.error(f"Failed to list voices: {e}")
-        return []
+            logger.error(f"Error initializing ElevenLabs: {e}")
+    
+    def synthesize(
+        self,
+        text: str,
+        voice_profile: VoiceProfile,
+    ) -> Optional[SynthesizedAudio]:
+        """
+        Synthesize text to speech using ElevenLabs.
+
+        Args:
+            text: Text to synthesize
+            voice_profile: Voice profile to use
+
+        Returns:
+            SynthesizedAudio with audio bytes
+        """
+        if not self.client:
+            logger.error("ElevenLabs client not initialized")
+            return None
+
+        # Extract voice ID from the voice profile's extra data
+        # For ElevenLabs, the voice ID is stored in the extra field as voice_id
+        voice_id = voice_profile.extra.get("voice_id", "") if voice_profile.extra else ""
+        if not voice_id:
+            logger.error("ElevenLabs voice ID not configured in voice profile")
+            return None
+
+        try:
+            logger.debug(
+                f"Synthesizing with ElevenLabs: voice={voice_id}, text='{text[:50]}...'"
+            )
+
+            # Call ElevenLabs API
+            audio = self.client.generate(
+                text=text,
+                voice=voice_id,
+                model="eleven_monolingual_v1",  # or "eleven_multilingual_v2"
+            )
+
+            audio_bytes = b''.join(audio)
+
+            if not audio_bytes:
+                logger.error("ElevenLabs returned empty audio")
+                return None
+
+            # Estimate duration (ElevenLabs returns MP3, so we estimate)
+            # Typical MP3 bitrate is 128-192 kbps
+            estimated_duration = len(audio_bytes) / (128 * 1024 / 8)
+
+            logger.info(f"ElevenLabs synthesis complete: ~{estimated_duration:.2f}s audio")
+
+            return SynthesizedAudio(
+                audio_bytes=audio_bytes,
+                audio_url=None,
+                duration_seconds=estimated_duration,
+                sample_rate=24000,  # ElevenLabs uses 24kHz
+            )
+
+        except Exception as e:
+            logger.error(f"Error in ElevenLabs synthesis: {e}")
+            return None
+    
+    def health_check(self) -> bool:
+        """Check if ElevenLabs is configured and accessible."""
+        if not self.client:
+            return False
+        
+        try:
+            # Try to get voices as a health check
+            voices = self.client.voices.get_all()
+            return len(voices.voices) > 0
+        except Exception as e:
+            logger.warning(f"ElevenLabs health check failed: {e}")
+            return False
 
 
-# Try to register ElevenLabs if configured
-try:
-    elevenlabs_provider = ElevenLabsTTS({
-        "api_key": voice_config.tts.elevenlabs_api_key,
-        "voice_ids": voice_config.tts.elevenlabs_voice_ids,
-    })
-    if elevenlabs_provider.initialize():
-        from axiom.voice.tts.provider_base import tts_registry
-        tts_registry.register(elevenlabs_provider)
-        logger.info("ElevenLabs TTS provider registered as fallback")
-    else:
-        logger.info("ElevenLabs TTS not configured, using Piper only")
-except Exception as e:
-    logger.debug(f"ElevenLabs provider not registered: {e}")
+# Register ElevenLabs as a TTS provider
+TTSProviderFactory.register("elevenlabs", ElevenLabsTTS)

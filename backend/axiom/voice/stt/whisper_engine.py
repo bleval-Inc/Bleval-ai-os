@@ -17,16 +17,59 @@ logger = logging.getLogger("axiom.voice.stt.whisper_engine")
 class WhisperEngine:
     """
     Wrapper around faster-whisper for local speech-to-text.
-    
+
     Runs transcription only on captured post-wake-word audio windows,
     not continuously (to save resources).
     """
-    
+
     def __init__(self, config: Optional[Any] = None):
         self.config = config or voice_config.stt
         self._model = None
         self._lock = threading.Lock()
-        
+
+    def health_check(self) -> bool:
+        """
+        Check if the Whisper engine is healthy and ready for transcription.
+
+        Returns:
+            True if dependencies are available and configuration is valid, False otherwise
+        """
+        # Check if faster-whisper dependency is available
+        try:
+            from faster_whisper import WhisperModel
+        except ImportError:
+            logger.warning("faster-whisper dependency not available")
+            return False
+
+        # Check if we have a valid configuration
+        if not hasattr(self, 'config') or self.config is None:
+            logger.warning("WhisperEngine configuration not available")
+            return False
+
+        # Check if model is already loaded
+        if self._model is not None:
+            return True
+
+        # Check if we can potentially load the model (without actually loading it)
+        try:
+            # Validate configuration parameters
+            if not isinstance(self.config.model_size, str) or not self.config.model_size:
+                logger.warning(f"Invalid model_size: {self.config.model_size}")
+                return False
+
+            if self.config.device not in ["cpu", "cuda"]:
+                logger.warning(f"Invalid device: {self.config.device}")
+                return False
+
+            if self.config.compute_type not in ["int8", "float16", "float32"]:
+                logger.warning(f"Invalid compute_type: {self.config.compute_type}")
+                return False
+
+            return True
+        except Exception as e:
+            logger.warning(f"Error checking WhisperEngine health: {e}")
+            return False
+
     def load(self) -> bool:
         """Load the faster-whisper model."""
         try:
@@ -37,7 +80,7 @@ class WhisperEngine:
                 f"{type(e).__name__}: {e}"
             )
             return False
-        
+
         try:
             logger.info(f"Loading faster-whisper model: {self.config.model_size}")
             self._model = WhisperModel(
@@ -50,7 +93,7 @@ class WhisperEngine:
         except Exception as e:
             logger.error(f"Failed to load faster-whisper model: {e}")
             return False
-    
+
     def transcribe(
         self,
         audio: np.ndarray,
@@ -58,25 +101,25 @@ class WhisperEngine:
     ) -> Tuple[str, float]:
         """
         Transcribe audio to text.
-        
+
         Args:
             audio: Float32 audio array at 16kHz mono
             language: Language code (None for auto-detect)
-            
+
         Returns:
             Tuple of (transcribed_text, confidence)
         """
         if self._model is None:
             if not self.load():
                 raise RuntimeError("Whisper model not loaded")
-        
+
         try:
             # Ensure audio is float32 and normalized
             if audio.dtype != np.float32:
                 audio = audio.astype(np.float32)
             if audio.max() > 1.0:
                 audio = audio / 32768.0
-            
+
             # Run transcription
             segments, info = self._model.transcribe(
                 audio,
@@ -84,27 +127,25 @@ class WhisperEngine:
                 beam_size=self.config.beam_size,
                 vad_filter=self.config.vad_filter,
             )
-            
+
             # Combine all segments
             full_text = " ".join([seg.text for seg in segments]).strip()
-            
-            # Calculate average confidence (using no_speech_prob as inverse)
             confidences = [1.0 - seg.no_speech_prob for seg in segments]
             avg_confidence = sum(confidences) / len(confidences) if confidences else 0.0
-            
+
             logger.info(f"Transcription: '{full_text}' (confidence: {avg_confidence:.3f})")
             return full_text, avg_confidence
-            
+
         except Exception as e:
             logger.error(f"Transcription failed: {e}")
             raise
-    
+
     def transcribe_file(self, file_path: str) -> Tuple[str, float]:
         """Transcribe an audio file."""
         if self._model is None:
             if not self.load():
                 raise RuntimeError("Whisper model not loaded")
-        
+
         try:
             segments, info = self._model.transcribe(
                 file_path,
@@ -112,11 +153,11 @@ class WhisperEngine:
                 beam_size=self.config.beam_size,
                 vad_filter=self.config.vad_filter,
             )
-            
+
             full_text = " ".join([seg.text for seg in segments]).strip()
             confidences = [1.0 - seg.no_speech_prob for seg in segments]
             avg_confidence = sum(confidences) / len(confidences) if confidences else 0.0
-            
+
             return full_text, avg_confidence
         except Exception as e:
             logger.error(f"File transcription failed: {e}")
@@ -125,14 +166,14 @@ class WhisperEngine:
 
 class MockWhisperEngine:
     """Mock STT engine for testing."""
-    
+
     def __init__(self, config: Optional[Any] = None):
         self.config = config or voice_config.stt
-        
+
     def load(self) -> bool:
         logger.info("Mock Whisper engine 'loaded'")
         return True
-    
+
     def transcribe(self, audio: np.ndarray, language: Optional[str] = None) -> Tuple[str, float]:
         """Return a mock transcription."""
         import random
@@ -148,7 +189,7 @@ class MockWhisperEngine:
         confidence = random.uniform(0.7, 0.95)
         logger.info(f"[MOCK] Transcription: '{text}' (confidence: {confidence:.3f})")
         return text, confidence
-    
+
     def transcribe_file(self, file_path: str) -> Tuple[str, float]:
         return self.transcribe(np.zeros(16000))
 

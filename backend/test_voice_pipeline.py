@@ -113,39 +113,39 @@ def test_intent_router():
     router = IntentRouter()
 
     # Test direct wake word routing
-    result = router.route("check my trades", "valta_prime", 0.9, "valta prime")
-    assert result.target_entity == "valta_prime"
+    result = router.route("valtaprime", "check my trades")
+    assert result.target_entity == "valtaprime"
     assert result.delegated_by is None
     print("[PASS] Direct wake word routing (Valta Prime)")
 
-    result = router.route("schedule a meeting", "jenson", 0.9, "jenson")
+    result = router.route("jenson", "schedule a meeting")
     assert result.target_entity == "jenson"
     assert result.delegated_by is None
     print("[PASS] Direct wake word routing (Jenson)")
 
-    result = router.route("remind me to drink water", "yamako", 0.9, "yamako")
+    result = router.route("yamako", "remind me to drink water")
     assert result.target_entity == "yamako"
     assert result.delegated_by is None
     print("[PASS] Direct wake word routing (Yamako)")
 
     # Test Axiom delegation
-    result = router.route("analyze gold price action", "axiom", 0.9, "axiom")
-    assert result.target_entity == "valta_prime"
+    result = router.route("axiom", "analyze gold price action")
+    assert result.target_entity == "valtaprime"
     assert result.delegated_by == "axiom"
     print("[PASS] Axiom delegation to Valta Prime")
 
-    result = router.route("create a new project for the agency", "axiom", 0.9, "axiom")
+    result = router.route("axiom", "create a new project for the agency")
     assert result.target_entity == "jenson"
     assert result.delegated_by == "axiom"
     print("[PASS] Axiom delegation to Jenson")
 
-    result = router.route("set a reminder for tomorrow", "axiom", 0.9, "axiom")
+    result = router.route("axiom", "set a reminder for tomorrow")
     assert result.target_entity == "yamako"
     assert result.delegated_by == "axiom"
     print("[PASS] Axiom delegation to Yamako")
 
     # Test Axiom direct handling
-    result = router.route("what is the system status", "axiom", 0.9, "axiom")
+    result = router.route("axiom", "what is the system status")
     assert result.target_entity == "axiom"
     assert result.delegated_by is None
     print("[PASS] Axiom direct handling")

@@ -192,6 +192,101 @@ class WebRTCVAD:
         return segments
 
 
+class VoiceActivityDetector:
+    """
+    Wrapper for VAD engines with configurable silence detection.
+
+    Tracks speech/silence transitions to determine when user has stopped speaking.
+    """
+
+    def __init__(self, config: Any = None):
+        """
+        Initialize the VAD detector.
+
+        Args:
+            config: VADConfig instance. If None, uses global vad_config.
+        """
+        # Avoid circular import by importing inside the function
+        from ..config import vad_config
+        self.config = config or vad_config
+        self.engine = self._create_engine()
+
+        # State tracking
+        self.speech_frames = []
+        self.silence_frames = 0
+        self.in_speech = False
+
+    def _create_engine(self) -> Any:
+        """Create the configured VAD engine."""
+        if self.config.engine == "silero":
+            return SileroVAD(threshold=self.config.vad_threshold)
+        elif self.config.engine == "webrtcvad":
+            return WebRTCVAD(aggressiveness=int(self.config.vad_threshold * 3))
+        else:
+            logger.warning(f"Unknown VAD engine: {self.config.engine}. Using Silero.")
+            return SileroVAD()
+
+    def process_frame(self, audio_frame: np.ndarray) -> tuple[bool, bool]:
+        """
+        Process a single audio frame and detect speech/silence.
+
+        Args:
+            audio_frame: Audio samples for one frame
+
+        Returns:
+            Tuple of (has_speech, speech_ended)
+            - has_speech: True if current frame contains speech
+            - speech_ended: True if speech session just ended
+        """
+        speech_prob = self.engine.process(audio_frame)
+        has_speech = speech_prob >= self.config.vad_threshold
+
+        speech_ended = False
+
+        if has_speech:
+            self.silence_frames = 0
+            if not self.in_speech:
+                self.in_speech = True
+                logger.debug("Speech started")
+            self.speech_frames.append(audio_frame)
+        else:
+            # Silence frame detected
+            if self.in_speech:
+                self.silence_frames += 1
+
+                # Check if silence duration exceeds threshold
+                silence_duration = (
+                    self.silence_frames * len(audio_frame) / self.config.sample_rate
+                )
+
+                if silence_duration >= self.config.silence_duration:
+                    self.in_speech = False
+                    speech_ended = True
+                    logger.debug("Speech ended")
+
+        return has_speech, speech_ended
+
+    def get_captured_audio(self) -> Optional[np.ndarray]:
+        """
+        Get all captured speech frames as a single audio array.
+
+        Returns:
+            Concatenated audio array or None if no speech captured
+        """
+        if not self.speech_frames:
+            return None
+
+        return np.concatenate(self.speech_frames)
+
+    def reset(self):
+        """Reset VAD state for a new capture window."""
+        self.speech_frames = []
+        self.silence_frames = 0
+        self.in_speech = False
+        logger.debug("VAD state reset")
+
+
+# VAD Capture Manager and related classes from the other backup
 class VADCaptureManager:
     """
     Manages audio capture after wake word detection using VAD
@@ -233,7 +328,6 @@ class VADCaptureManager:
         self._capturing = False
         self._audio_buffer: list = []
         self._preroll_buffer: list = []
-        self._preroll_samples = int(sample_rate * 1.0)
         self._preroll_sample_count = 0
         self._silence_start: Optional[float] = None
         self._speech_detected = False
@@ -383,9 +477,9 @@ class VADCaptureManager:
 
         def finish_capture() -> None:
             audio = self.stop_capture()
-            if audio is not None and self.on_capture_complete:
+            if audio is not None and self._on_capture_complete:
                 try:
-                    self.on_capture_complete(audio)
+                    self._on_capture_complete(audio)
                 except Exception as e:
                     logger.error(f"Capture callback failed: {e}")
 
