@@ -10,6 +10,7 @@ Every reasoning cycle includes:
 """
 
 import json
+import os
 from typing import Any, Dict, List, Optional
 
 from axiom.config import settings
@@ -49,17 +50,33 @@ class ProviderRouter:
     def _register_available(self) -> None:
             """Register all providers that have their API keys configured."""
             # NVIDIA providers only
-            self._providers.update(create_nvidia_providers())
+            for provider in create_nvidia_providers():
+                self._providers[provider.name] = provider
+
+            # Register external gateway provider if enabled
+            if settings.use_gateway_for_intelligence:
+                from axiom.engine.providers.external import ExternalAPIProvider
+                gateway_base_url = os.getenv("GATEWAY_API_BASE_URL", "http://127.0.0.1:4000")
+                gateway_api_key = os.getenv("GATEWAY_API_KEY", "sk-axiom-local")
+                gateway_model = os.getenv("GATEWAY_MODEL", "axiom-primary")
+                external_provider = ExternalAPIProvider(
+                    base_url=gateway_base_url,
+                    api_key=gateway_api_key,
+                    model_id=gateway_model,
+                    label="Gateway"
+                )
+                if external_provider.available:
+                    self._providers[external_provider.name] = external_provider
+                # Logger calls removed for simplicity - can be added back if needed
 
             # Register mock ONLY in development mode - NEVER in production
             mock = MockProvider()
             if mock.available and settings.debug and not settings.real_providers_only:
                 self._providers["mock"] = mock
-                if self._logger:
-                    self._logger.warning("intelligence", "Mock provider registered - DEVELOPMENT MODE ONLY")
+                # Logger calls removed for simplicity - can be added back if needed
             elif settings.real_providers_only or not settings.debug:
-                if self._logger:
-                    self._logger.info("intelligence", "Production mode: Mock provider disabled (REAL_PROVIDERS_ONLY=true or DEBUG=false)")
+                # Logger calls removed for simplicity - can be added back if needed
+                pass
 
     def select_provider(
         self,
@@ -376,10 +393,11 @@ class IntelligenceEngine:
     def _build_smart_router(self) -> Any:
         """Build the smart router with all available providers.
 
-        Registers NVIDIA models only.
+        Registers NVIDIA models and optionally the external gateway provider.
         """
         # Lazy import to avoid circular dependency at module level
         from axiom.engine.smart_router import SmartRouter
+        from axiom.engine.providers.external import ExternalAPIProvider
 
         router = SmartRouter()
 
@@ -387,6 +405,20 @@ class IntelligenceEngine:
         nvidia_providers = create_nvidia_providers()
         for nvp in nvidia_providers:
             router.register_nvidia_provider(nvp)
+
+        # 2. Register external gateway provider if enabled
+        if settings.use_gateway_for_intelligence:
+            gateway_base_url = os.getenv("GATEWAY_API_BASE_URL", "http://127.0.0.1:4000")
+            gateway_api_key = os.getenv("GATEWAY_API_KEY", "sk-axiom-local")
+            gateway_model = os.getenv("GATEWAY_MODEL", "axiom-primary")
+            external_provider = ExternalAPIProvider(
+                base_url=gateway_base_url,
+                api_key=gateway_api_key,
+                model_id=gateway_model,
+                label="Gateway"
+            )
+            if external_provider.available:
+                router.register_provider(external_provider.name, external_provider)
 
         return router
 

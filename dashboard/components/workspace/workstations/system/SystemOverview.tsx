@@ -198,8 +198,8 @@ export default function SystemOverview() {
           <Panel title="Services">
             {telemetry?.services.length ? (
               <div className="flex flex-wrap gap-2">
-                {telemetry.services.slice(0, 12).map((s) => (
-                  <ServiceBadge key={s.name} name={s.name} status={s.status} />
+                {telemetry.services.slice(0, 12).map((s, index) => (
+                  <ServiceBadge key={`${s.name}-${index}`} name={s.name} status={s.status} />
                 ))}
                 {telemetry.services.length > 12 && (
                   <span className="text-[9px] text-[var(--axiom-text-tertiary)] self-center">+{telemetry.services.length - 12}</span>

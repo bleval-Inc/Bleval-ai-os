@@ -274,32 +274,45 @@ export function MonthlyBarChart({ series, height = 180 }: { series: MonthResult[
   const barW = Math.min(34, slotW * 0.42);
   const groupW = slotW * 0.8;
 
-  const gridTicks = [top, top / 2, 0];
+  const gridTicks = [top, top / 2, 0].filter(g => !isNaN(g) && g !== -Infinity && g !== Infinity);
 
-  const toH = (v: number) => (v / top) * innerH;
+  const toH = (v: number) => {
+    const safeV = isNaN(v) ? 0 : v;
+    return (safeV / top) * innerH;
+  };
 
   return (
     <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-full" role="img" aria-label="Monthly profit, loss and net performance">
       {gridTicks.map((g) => {
+        // Skip invalid values that could cause NaN in SVG attributes
+        if (isNaN(g) || g === -Infinity || g === Infinity) {
+          return null;
+        }
         const y = padY + innerH - toH(g);
+        // Skip if y calculation results in invalid SVG attribute values
+        if (isNaN(y) || y === -Infinity || y === Infinity) {
+          return null;
+        }
         return (
-          <g key={g}>
+          <g key={g.toString()}>
             <line x1={0} x2={width} y1={y} y2={y} stroke="rgba(240,241,243,0.05)" strokeWidth="1" />
             <text x={padX - 6} y={y + 3} textAnchor="end" fill="rgba(240,241,243,0.3)" fontSize="9" fontWeight="500" fontFamily="var(--axiom-font-mono)">
               ${g}
             </text>
           </g>
         );
-      })}
+      }).filter(Boolean)} // Remove null values
 
       {series.map((s, i) => {
+        // Ensure we have a valid key, using index as fallback to prevent duplicates
+        const monthKey = s.month !== undefined && s.month !== null ? `${s.month}` : `month-${i}`;
         const cx = padX + slotW * i + slotW / 2;
         const profitH = toH(s.profit);
         const lossH = toH(s.loss);
         const netH = toH(Math.abs(s.net));
 
         return (
-          <g key={s.month}>
+          <g key={monthKey}>
             {/* Profit */}
             <motion.rect
               x={cx - barW * 1.5 - 2}
@@ -351,8 +364,21 @@ export function MonthlyBarChart({ series, height = 180 }: { series: MonthResult[
 
 // ── KPI sparkline ───────────────────────────────────────────────────────────
 export function Sparkline({ series, height = 36, width = 64 }: { series: number[]; height?: number; width?: number }) {
+  // Handle empty series case
+  if (series.length === 0) {
+    return (
+      <svg viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none" className="w-full h-full" aria-hidden>
+        <text x={width / 2} y={height / 2} textAnchor="middle" fill="rgba(240,241,243,0.45)" fontSize="10" fontFamily="var(--axiom-font-mono)">
+          No data
+        </text>
+      </svg>
+    );
+  }
+
   const { d, pts } = useMemo(() => buildPath(series, { width, height }), [series, height, width]);
-  const lastX = pts[pts.length - 1].x;
+  // Ensure pts is not empty before accessing the last element
+  const lastX = pts.length > 0 ? pts[pts.length - 1].x : 0;
+
   return (
     <svg viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none" className="w-full h-full" aria-hidden>
       <defs>

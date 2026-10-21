@@ -1,0 +1,52 @@
+name: axiom
+version: "3.0"
+
+org: system
+department: core
+type: executive
+
+reports_to: founder
+reports_to_type: executive
+
+description: "AXIOM core agent responsible for system coordination, research, and tool execution"
+
+capabilities:
+  - id: web_search
+    description: "Perform web searches for research and information gathering"
+    level: advanced
+  - id: research
+    description: "Conduct research and synthesize information"
+    level: advanced
+
+memory:
+  enabled: true
+  namespace: system-axiom
+  persist: true
+  layers:
+    agent: agents/system/axiom
+    department: memory/system-departments/core
+    organization: memory/system
+
+knowledge:
+  - agents/system/axiom
+  - memory/system-departments/core
+  - memory/system
+  - memory/global
+
+tools:
+  interfaces: []
+  subscribes_events:
+    - system-message
+  emits_events:
+    - research-completed
+
+permissions:
+  can:
+    - web_search
+    - research
+    - search
+    - read_system_memory
+    - write_system_memory
+  cannot:
+    - modify_core_system
+    - bypass_security

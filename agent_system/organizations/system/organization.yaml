@@ -1,0 +1,15 @@
+# System Operations — Organization Definition
+# Version: 3.0.0
+
+id: system
+name: System Operations
+description: "Core system operations and infrastructure"
+executives:
+  - axiom
+departments:
+  - core
+enabled_tools:
+  - web_search
+workflows: []
+memory_locations:
+  - memory/system

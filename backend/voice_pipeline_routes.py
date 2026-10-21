@@ -14,7 +14,8 @@ from pydantic import BaseModel
 
 # Use axiom.voice package (the actual voice pipeline implementation)
 from axiom.voice.config import voice_config, EXECUTIVE_WAKE_WORDS, VALID_EXECUTIVES
-from axiom.voice.pipeline_orchestrator import VoicePipelineOrchestrator, VoiceConnectionManager
+from axiom.voice.pipeline_orchestrator import VoicePipelineOrchestrator
+from axiom.voice.relay.ws_server import WebSocketConnectionManager as VoiceConnectionManager
 
 logger = logging.getLogger(__name__)
 

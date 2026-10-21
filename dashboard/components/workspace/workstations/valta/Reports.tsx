@@ -7,7 +7,17 @@ import { Sparkline, DonutChart } from "./valta-charts";
 import { profitDistribution } from "./valta-data";
 
 export default function Reports() {
-  const latest = monthlyReports[monthlyReports.length - 1];
+  const latest = monthlyReports.length > 0 ? monthlyReports[monthlyReports.length - 1] : {
+    month: "No data",
+    totalProfit: 0,
+    netProfit: 0,
+    profitFactor: 0,
+    winRate: 0,
+    drawdown: 0,
+    trades: 0,
+    avgWin: 0,
+    avgLoss: 0
+  };
 
   return (
     <div className="flex flex-col gap-5 p-6 md:p-8 pb-32 min-w-0">

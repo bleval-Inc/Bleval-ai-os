@@ -120,7 +120,9 @@ function HolographicWeatherIcon({ condition, temp }: { condition: string; temp: 
   const isPartlyCloudy = c.includes("partly") || (isSunny && isCloudy);
 
   const glowColor = "rgba(120, 170, 255, 0.6)";
-  const pulse = Math.sin(time * 2) * 0.15 + 1;
+  // Ensure time is a valid number to prevent NaN in calculations
+  const safeTime = isNaN(time) ? 0 : time;
+  const pulse = Math.sin(safeTime * 2) * 0.15 + 1;
 
   return (
     <span className="inline-flex items-center gap-1" style={{ filter: `drop-shadow(0 0 ${2 * pulse}px ${glowColor})` }}>
@@ -140,7 +142,7 @@ function HolographicWeatherIcon({ condition, temp }: { condition: string; temp: 
                 style={{
                   transformOrigin: "12px 12px",
                   animation: `spin ${20}s linear infinite`,
-                  opacity: 0.5 + 0.3 * Math.sin(time + angle * 0.1),
+                  opacity: 0.5 + 0.3 * Math.sin(safeTime + angle * 0.1),
                 }}
               />
             ))}
@@ -163,11 +165,11 @@ function HolographicWeatherIcon({ condition, temp }: { condition: string; temp: 
             {[1, 2, 3].map((i) => (
               <circle
                 key={i}
-                cx={10 + i * 3 + Math.sin(time * 0.5 + i) * 2}
-                cy={16 + Math.cos(time * 0.3 + i) * 1.5}
+                cx={10 + i * 3 + Math.sin(safeTime * 0.5 + i) * 2}
+                cy={16 + Math.cos(safeTime * 0.3 + i) * 1.5}
                 r={0.8}
                 fill="#7aa0ff"
-                opacity={0.3 + 0.2 * Math.sin(time + i)}
+                opacity={0.3 + 0.2 * Math.sin(safeTime + i)}
               />
             ))}
           </g>
@@ -186,7 +188,7 @@ function HolographicWeatherIcon({ condition, temp }: { condition: string; temp: 
                 y2={22}
                 stroke="#7aa0ff"
                 strokeWidth="1"
-                opacity={0.5 + 0.3 * Math.sin(time * 3 + i)}
+                opacity={0.5 + 0.3 * Math.sin(safeTime * 3 + i)}
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: [0.5, 1, 0.5], y: [0, 6, 0] }}
                 transition={{ duration: 0.8, repeat: Infinity, delay: i * 0.15, ease: "linear" }}
@@ -229,11 +231,11 @@ function HolographicWeatherIcon({ condition, temp }: { condition: string; temp: 
             {[1, 2, 3, 4, 5, 6].map((i) => (
               <motion.circle
                 key={i}
-                cx={6 + i * 2.5 + Math.sin(time * 0.7 + i * 2) * 1.5}
-                cy={16 + ((time * 30 + i * 40) % 12)}
+                cx={6 + i * 2.5 + Math.sin(safeTime * 0.7 + i * 2) * 1.5}
+                cy={16 + ((safeTime * 30 + i * 40) % 12)}
                 r={1}
                 fill="#ffffff"
-                opacity={0.4 + 0.3 * Math.sin(time + i)}
+                opacity={0.4 + 0.3 * Math.sin(safeTime + i)}
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: [0.4, 1, 0.4], y: [0, 12, 0] }}
                 transition={{ duration: 2, repeat: Infinity, delay: i * 0.2, ease: "easeInOut" }}
@@ -275,8 +277,10 @@ function HolographicDateTime({ date, time }: { date: string; time: string }) {
     };
   }, []);
 
-  const pulse = Math.sin(t * 1.5) * 0.08 + 1;
-  const glow = `rgba(120, 170, 255, ${0.15 + 0.1 * Math.sin(t * 0.7)})`;
+  // Ensure t is a valid number to prevent NaN in calculations
+  const safeT = isNaN(t) ? 0 : t;
+  const pulse = Math.sin(safeT * 1.5) * 0.08 + 1;
+  const glow = `rgba(120, 170, 255, ${0.15 + 0.1 * Math.sin(safeT * 0.7)})`;
 
   return (
     <>

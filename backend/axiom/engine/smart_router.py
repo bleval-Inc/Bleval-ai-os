@@ -370,6 +370,15 @@ class SmartRouter:
             ],
         }
 
+        # If external gateway is available, prioritize it for general tasks
+        external_gateway_name = "external-gateway"
+        if (external_gateway_name in self._providers and
+            self._providers[external_gateway_name].available):
+            # Add gateway to the front of GENERAL chain for priority
+            category_chains[TaskCategory.GENERAL] = [
+                external_gateway_name
+            ] + category_chains[TaskCategory.GENERAL]
+
         chain = category_chains.get(category, [
             glm52, mistral, stepfun, general,
         ])

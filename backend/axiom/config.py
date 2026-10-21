@@ -24,31 +24,89 @@ class AxiomSettings:
     """Loads settings from environment variables with sensible defaults."""
 
     def __init__(self) -> None:
-        self.openai_api_key: Optional[str] = os.getenv("OPENAI_API_KEY")
-        self.anthropic_api_key: Optional[str] = os.getenv("ANTHROPIC_API_KEY")
+        pass
 
-        # Neon Postgres (source of truth for MT5 trading data)
-        self.neon_database_url: Optional[str] = os.getenv("NEON_DATABASE_URL")
+    @property
+    def openai_api_key(self) -> Optional[str]:
+        return os.getenv("OPENAI_API_KEY")
 
-        self.state_dir: Path = Path(
+    @property
+    def anthropic_api_key(self) -> Optional[str]:
+        return os.getenv("ANTHROPIC_API_KEY")
+
+    # Neon Postgres (source of truth for MT5 trading data)
+    @property
+    def neon_database_url(self) -> Optional[str]:
+        return os.getenv("NEON_DATABASE_URL")
+
+    @property
+    def state_dir(self) -> Path:
+        return Path(
             os.getenv("AXIOM_STATE_DIR", str(REPO_ROOT / "backend" / "runtime" / "state"))
         )
-        self.event_log_dir: Path = Path(
+
+    @property
+    def event_log_dir(self) -> Path:
+        return Path(
             os.getenv("AXIOM_EVENT_LOG_DIR", str(REPO_ROOT / "backend" / "runtime" / "events"))
         )
-        self.log_dir: Path = Path(
+
+    @property
+    def log_dir(self) -> Path:
+        return Path(
             os.getenv("AXIOM_LOG_DIR", str(REPO_ROOT / "backend" / "runtime" / "logs"))
         )
-        self.secrets_dir: Optional[str] = os.getenv("AXIOM_SECRETS_DIR")
 
-        # Production mode: only real providers allowed
-        self.real_providers_only: bool = os.getenv("REAL_PROVIDERS_ONLY", "false").lower() in ("true", "1", "yes")
+    @property
+    def secrets_dir(self) -> Optional[str]:
+        return os.getenv("AXIOM_SECRETS_DIR")
 
-        # Debug mode
-        self.debug: bool = os.getenv("DEBUG", "false").lower() in ("true", "1", "yes")
+    # Production mode: only real providers allowed
+    @property
+    def real_providers_only(self) -> bool:
+        return os.getenv("REAL_PROVIDERS_ONLY", "false").lower() in ("true", "1", "yes")
 
-        # Environment
-        self.env: str = os.getenv("AXIOM_ENV", "development")
+    # Debug mode
+    @property
+    def debug(self) -> bool:
+        return os.getenv("DEBUG", "false").lower() in ("true", "1", "yes")
+
+    # Environment
+    @property
+    def env(self) -> str:
+        return os.getenv("AXIOM_ENV", "development")
+
+    # Use gateway for intelligence engine (experimental)
+    @property
+    def use_gateway_for_intelligence(self) -> bool:
+        return os.getenv("AXIOM_USE_GATEWAY_FOR_INTELLIGENCE", "false").lower() in ("true", "1", "yes")
+
+    def ensure_dirs(self) -> None:
+        """Create runtime directories if they do not exist."""
+        self.state_dir.mkdir(parents=True, exist_ok=True)
+        self.event_log_dir.mkdir(parents=True, exist_ok=True)
+        self.log_dir.mkdir(parents=True, exist_ok=True)
+
+    def validate(self) -> None:
+        """Validate the configuration, especially for production mode."""
+        if self.real_providers_only:
+            # Check if we have at least one real provider configured
+            has_real_provider = bool(
+                self.openai_api_key or
+                self.anthropic_api_key or
+                self.neon_database_url  # Neon DB counts as a real provider for data
+            )
+
+            if not has_real_provider:
+                # In a production environment, we should log a warning but not fail
+                # since the system might be designed to work with mock data in some contexts
+                # However, for AXIOM OS with REAL_PROVIDERS_ONLY=true, we expect real providers
+                import logging
+                logging.warning(
+                    "AXIOM OS is running in REAL_PROVIDERS_ONLY=true mode but no real "
+                    "providers are configured. The system may not function correctly "
+                    "without at least one of: OPENAI_API_KEY, ANTHROPIC_API_KEY, or NEON_DATABASE_URL"
+                )
 
     def ensure_dirs(self) -> None:
         """Create runtime directories if they do not exist."""

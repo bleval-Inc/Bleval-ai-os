@@ -706,17 +706,74 @@ class AXIOMCore:
                 )
                 return result
 
-            # If it's a research request, route to research
+            # If it's a research request, execute actual web search
             if classified.category.value == "research":
-                return {
-                    "response": (
-                        f"I'll research that for you. Let me gather information "
-                        f"on: {classified.intent}"
-                    ),
-                    "agent_id": "axiom",
-                    "category": "research",
-                    "intent": classified.intent,
-                }
+                # Use the original message as the search query for better results
+                search_query = message
+                search_result = await self._conduct_web_search(search_query, "axiom")
+
+                if "error" not in search_result:
+                    # Search was successful, use intelligence engine to synthesize results
+                    try:
+                        # Build synthesis prompt with search results
+                        synthesis_prompt = (
+                            f"Based on the following search results, provide a comprehensive answer to: '{message}'\n\n"
+                            f"{search_result.get('formatted_results', 'No formatted results available')}\n\n"
+                            f"Please provide a clear, concise answer with key findings. "
+                            f"If citing specific information, reference the source URLs when appropriate."
+                        )
+
+                        # Generate synthesized response using intelligence engine
+                        synthesized_response = await self._intelligence.generate(
+                            agent_id="axiom",
+                            task_description=synthesis_prompt,
+                            max_tokens=1024,
+                            temperature=0.5
+                        )
+
+                        # Format final response with sources
+                        sources = []
+                        for result in search_result.get("results", [])[:3]:  # Top 3 sources
+                            if result.get("url") and result.get("title"):
+                                sources.append({
+                                    "title": result["title"],
+                                    "url": result["url"]
+                                })
+
+                        final_response = synthesized_response
+                        if sources:
+                            final_response += "\n\nSources:\n"
+                            for source in sources:
+                                final_response += f"- {source['title']}: {source['url']}\n"
+
+                        return {
+                            "response": final_response,
+                            "agent_id": "axiom",
+                            "category": "research",
+                            "intent": classified.intent,
+                            "search_results": search_result.get("results", []),
+                            "sources": sources
+                        }
+                    except Exception as synthesis_error:
+                        # Fallback to raw search results if synthesis fails
+                        formatted_results = search_result.get("formatted_results", "Search completed but synthesis failed.")
+                        return {
+                            "response": f"I've researched '{search_query}' and found the following information:\n\n{formatted_results}",
+                            "agent_id": "axiom",
+                            "category": "research",
+                            "intent": classified.intent,
+                            "search_results": search_result.get("results", []),
+                            "sources": []
+                        }
+                else:
+                    # Search failed, return error message
+                    error_msg = search_result.get("error", "Unknown search error")
+                    return {
+                        "response": f"I encountered an issue while researching '{search_query}': {error_msg}",
+                        "agent_id": "axiom",
+                        "category": "error",
+                        "intent": classified.intent
+                    }
 
         # Default: generate response via intelligence engine
         try:
@@ -810,8 +867,58 @@ class AXIOMCore:
             )
             result["response"] = comm_result.get("response", "")
         elif routed.handler == "research":
-            result["response"] = "Initiating research..."
-            result["research"] = True
+            # Execute actual web search instead of placeholder
+            search_query = message
+            search_result = await self._conduct_web_search(search_query, "axiom")
+
+            if "error" not in search_result:
+                # Search was successful, format results for response
+                try:
+                    # Build synthesis prompt with search results
+                    synthesis_prompt = (
+                        f"Based on the following search results, provide a comprehensive answer to: '{message}'\n\n"
+                        f"{search_result.get('formatted_results', 'No formatted results available')}\n\n"
+                        f"Please provide a clear, concise answer with key findings. "
+                        f"If citing specific information, reference the source URLs when appropriate."
+                    )
+
+                    # Generate synthesized response using intelligence engine
+                    synthesized_response = await self._intelligence.generate(
+                        agent_id="axiom",
+                        task_description=synthesis_prompt,
+                        max_tokens=1024,
+                        temperature=0.5
+                    )
+
+                    # Format final response with sources
+                    sources = []
+                    for res in search_result.get("results", [])[:3]:  # Top 3 sources
+                        if res.get("url") and res.get("title"):
+                            sources.append({
+                                "title": res["title"],
+                                "url": res["url"]
+                            })
+
+                    final_response = synthesized_response
+                    if sources:
+                        final_response += "\n\nSources:\n"
+                        for source in sources:
+                            final_response += f"- {source['title']}: {source['url']}\n"
+
+                    result["response"] = final_response
+                    result["search_results"] = search_result.get("results", [])
+                    result["sources"] = sources
+                except Exception as synthesis_error:
+                    # Fallback to raw search results if synthesis fails
+                    formatted_results = search_result.get("formatted_results", "Search completed but synthesis failed.")
+                    result["response"] = f"I've researched '{search_query}' and found the following information:\n\n{formatted_results}"
+                    result["search_results"] = search_result.get("results", [])
+                    result["sources"] = []
+            else:
+                # Search failed, return error message
+                error_msg = search_result.get("error", "Unknown search error")
+                result["response"] = f"I encountered an issue while researching '{search_query}': {error_msg}"
+                result["error"] = True
         else:
             chat_result = await self.chat(message)
             result["response"] = chat_result.get("response", "")
@@ -844,6 +951,46 @@ class AXIOMCore:
             "  • \"Show me Operations\""
         )
 
+    async def _conduct_web_search(self, query: str, agent_id: str = "axiom") -> Dict[str, Any]:
+        """Conduct a web search using the ToolEngine and format results for synthesis.
+
+        Args:
+            query: The search query
+            agent_id: The agent ID to use for permission checking
+
+        Returns:
+            Dictionary containing search results or error information
+        """
+        if self._tool is None:
+            return {"error": "Tool engine not available"}
+
+        # Execute the web search
+        search_result = await self._tool.execute_tool(
+            agent_id=agent_id,
+            tool_id="web_search",
+            action="search",
+            params={"query": query, "max_results": 10}
+        )
+
+        # If search was successful, format results for synthesis
+        if "error" not in search_result and "results" in search_result:
+            results = search_result["results"]
+            if results:
+                # Format results as a string for the intelligence engine
+                formatted_results = "Search results:\n\n"
+                for i, result in enumerate(results, 1):
+                    formatted_results += f"{i}. {result.get('title', 'No title')}\n"
+                    formatted_results += f"   URL: {result.get('url', 'No URL')}\n"
+                    formatted_results += f"   Summary: {result.get('description', 'No description')}\n\n"
+
+                # Add the formatted results to the search result for later use
+                search_result["formatted_results"] = formatted_results.strip()
+            else:
+                search_result["formatted_results"] = "No search results found."
+                search_result["results"] = []
+
+        return search_result
+
     # ── Executive Communication ──────────────────────────────────────────
 
     async def _communicate_with_executive(
@@ -868,6 +1015,7 @@ class AXIOMCore:
             # Attempt to trigger a cycle with the message logged
             result = await loop.trigger_cycle(
                 cycle_type="founder_message",
+                context=context or {},
             )
             return {
                 "response": f"Message routed to {exec_id}. ",

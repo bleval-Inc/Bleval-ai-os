@@ -20,23 +20,10 @@ const GLOBAL_NAV_ITEMS: { id: WorkspaceId | WorkstationId; label: string; shortL
     ),
   },
   {
-    id: "bleval",
-    label: "BLEVAL",
-    shortLabel: "BLEVAL",
-    shortcut: "⌘2",
-    icon: (
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M12 2L2 7l10 5 10-5-10-5z" />
-        <path d="M2 17l10 5 10-5" />
-        <path d="M2 12l10 5 10-5" />
-      </svg>
-    ),
-  },
-  {
     id: "valta",
     label: "HOUSE OF VALTA",
     shortLabel: "VALTA",
-    shortcut: "⌘3",
+    shortcut: "⌘2",
     icon: (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
         <path d="M21 12V7H5V2H1v5H1" />
@@ -48,7 +35,7 @@ const GLOBAL_NAV_ITEMS: { id: WorkspaceId | WorkstationId; label: string; shortL
     id: "personal",
     label: "PERSONAL",
     shortLabel: "PERSONAL",
-    shortcut: "⌘4",
+    shortcut: "⌘3",
     icon: (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
         <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
@@ -60,7 +47,7 @@ const GLOBAL_NAV_ITEMS: { id: WorkspaceId | WorkstationId; label: string; shortL
     id: "boardroom",
     label: "BOARDROOM",
     shortLabel: "BOARDROOM",
-    shortcut: "⌘B",
+    shortcut: "⌘4",
     icon: (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
         <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />

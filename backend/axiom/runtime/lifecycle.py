@@ -499,7 +499,8 @@ class AxiomRuntime:
         print("[STARTUP_VOICE] AxiomRuntime.start: starting voice pipeline")
         if self.voice_pipeline:
             print(f"[STARTUP_VOICE] AxiomRuntime.start: voice_pipeline exists, id={id(self.voice_pipeline)}")
-            if not self.voice_pipeline.start():
+            start_result = await self.voice_pipeline.start()
+            if not start_result:
                 self.logger.error("Failed to start voice pipeline")
                 print("[STARTUP_VOICE] AxiomRuntime.start: voice_pipeline.start() returned False")
             else:

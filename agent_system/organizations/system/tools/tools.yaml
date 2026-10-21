@@ -1,0 +1,11 @@
+# System Organization — Tool Registry
+# Version: 3.0.0
+# System-level tools available to core AXIOM components
+
+tools:
+  - id: web_search
+    interface: search
+    description: "Web search for research and information gathering"
+    capabilities:
+      - search
+      - web_search

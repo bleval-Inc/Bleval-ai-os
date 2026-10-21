@@ -44,6 +44,15 @@ agents:
       - coordination
       - decision-support
 
+  - id: axiom
+    org: system
+    type: executive
+    department: core
+    reports_to: founder
+    capabilities:
+      - web_search
+      - research
+
   # ── Sales Department ────────────────────────────────────
   - id: atlas
     org: bleval

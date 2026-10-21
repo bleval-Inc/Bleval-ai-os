@@ -2,7 +2,6 @@
 
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import BLEVALConsole from "@/components/dashboard/BLEVALConsole";
 import ValtaConsole from "@/components/dashboard/ValtaConsole";
 import PersonalConsole from "@/components/dashboard/PersonalConsole";
 import AxiomSystemConsole from "@/components/dashboard/AxiomSystemConsole";
@@ -46,28 +45,18 @@ export default function HomeDashboard() {
             </motion.button>
           </div>
 
-          {/* Workstation cards - strict 2x2 grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* BLEVAL INC premium console */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, ease: "easeOut" }}
-              className="min-w-0 h-[560px]"
-            >
-              <BLEVALConsole />
-            </motion.div>
+          {/* HOUSE OF VALTA premium console - full width top section */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
+            className="min-w-0 h-[560px]"
+          >
+            <ValtaConsole />
+          </motion.div>
 
-            {/* HOUSE OF VALTA premium console */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.05, ease: "easeOut" }}
-              className="min-w-0 h-[560px]"
-            >
-              <ValtaConsole />
-            </motion.div>
-
+          {/* Lower section - House of Valta Personal | AXIOM System */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
             {/* PERSONAL premium console */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}

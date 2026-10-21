@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useAxiomStore, type WorkstationId } from "../../../lib/store/axiom-store";
 import { cn } from "../../../lib/utils";
 
-const DOCK_WORKSTATIONS: WorkstationId[] = ["bleval", "valta", "personal"];
+const DOCK_WORKSTATIONS: WorkstationId[] = ["valta", "personal"];
 
 const WORKSTATION_CONFIG: Record<WorkstationId, { label: string; shortLabel: string; icon: React.ReactNode }> = {
   axiom: {

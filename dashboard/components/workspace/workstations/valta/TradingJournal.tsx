@@ -53,8 +53,8 @@ function VoiceControl() {
 }
 
 export default function TradingJournal() {
-  const [selectedId, setSelectedId] = useState(journalEntries[0].id);
-  const selected = journalEntries.find((e) => e.id === selectedId) ?? journalEntries[0];
+  const [selectedId, setSelectedId] = useState(journalEntries.length > 0 ? journalEntries[0].id : '');
+  const selected = journalEntries.find((e) => e.id === selectedId) ?? journalEntries[0] ?? null;
 
   return (
     <div className="flex flex-col gap-5 p-6 md:p-8 pb-32 min-w-0">
@@ -120,14 +120,15 @@ export default function TradingJournal() {
 
         {/* Selected entry detail + setup information */}
         <Panel className="min-w-0">
-          <SectionTitle title="Journal entry" hint={selected.date} />
-          <AnimatePresence mode="wait">
-            <motion.div key={selected.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.18 }} className="px-4 pb-4">
-              <div className="flex items-center gap-3 mb-4">
-                <AssetChip label={selected.symbol} />
-                <span className={cn("text-[10px] font-semibold px-2 py-0.5 rounded-full", selected.direction === "BUY" ? "text-emerald-400 bg-emerald-400/10" : "text-rose-400 bg-rose-400/10")}>{selected.direction}</span>
-                <PlText value={selected.pl} className="text-sm font-semibold" />
-              </div>
+          <SectionTitle title="Journal entry" hint={selected?.date ?? 'No entries'} />
+          {selected ? (
+            <AnimatePresence mode="wait">
+              <motion.div key={selected.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.18 }} className="px-4 pb-4">
+                <div className="flex items-center gap-3 mb-4">
+                  <AssetChip label={selected.symbol} />
+                  <span className={cn("text-[10px] font-semibold px-2 py-0.5 rounded-full", selected.direction === "BUY" ? "text-emerald-400 bg-emerald-400/10" : "text-rose-400 bg-rose-400/10")}>{selected.direction}</span>
+                  <PlText value={selected.pl} className="text-sm font-semibold" />
+                </div>
 
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 mb-4">
                 {SETUP_FIELDS.slice(0, 8).map((f) => (
@@ -154,6 +155,11 @@ export default function TradingJournal() {
               </div>
             </motion.div>
           </AnimatePresence>
+        ) : (
+          <div className="px-4 pb-4 text-center py-8">
+            <p className="text-[var(--axiom-text-secondary)]">No journal entries available</p>
+          </div>
+        )}
         </Panel>
       </div>
     </div>

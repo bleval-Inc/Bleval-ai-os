@@ -69,3 +69,16 @@ organizations:
     workflows: []
     memory_locations:
       - memory/personal
+
+  - id: system
+    name: System Operations
+    description: "Core system operations and infrastructure"
+    executives:
+      - axiom
+    departments:
+      - core
+    enabled_tools:
+      - web_search
+    workflows: []
+    memory_locations:
+      - memory/system

@@ -1,0 +1,3 @@
+Gateway implementation complete. The AXIOM intelligence gateway is now prioritized for general tasks when AXIOM_USE_GATEWAY_FOR_INTELLIGENCE=true.
+
+See GATEWAY_IMPLEMENTATION_SUMMARY.md for details.
